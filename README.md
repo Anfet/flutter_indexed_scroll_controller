@@ -1,39 +1,60 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
-
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages).
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages).
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+This is a 1 file package for indexed scroll controller to a flutter ListView.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+A scroll controller lets you scroll to a targeted item in the list. If the item was already
+constructed, was scrolled to or was scrolled throught the controller will jump to
+~ 1.5 screen size height near the targeted widget and then smoothly scroll to it.
 
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+If the item was not constructed, viewed or traversed through, the list will animate
+rapidly to the desired item.
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
+Firstly we need items and a scrollController. We can define the `items` as `late` and fill them
+in `initState`
 ```dart
-const like = 'sample';
+late final IndexedScrollController scrollController;
+late List<String> items;
+
+@override
+void initState() {
+  scrollController = IndexedScrollController(scrollDuration: const Duration(milliseconds: 300));
+  items = List.generate(1000, (index) => lorem(paragraphs: 1, words: 5 + randomizer.nextInt(25)));
+  super.initState();
+}
+```
+
+Then create a `ListView` and assign our `scrollController` to it.
+Use the scrollController `watch` method or wrap your items in `IndexedScrollItem` widget.
+```dart
+ListView.builder(
+    controller: scrollController,
+    itemCount: items.length,
+    itemBuilder: (context, index) {
+      return scrollController.watch(
+        index: index,
+        child: Container(
+          color: Color(randomizer.nextInt(0x00ffffff)).withAlpha(30),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Text('$index --> ${items[index]}'),
+        ),
+      );
+    },
+);
+```
+
+For scrolling to an arbitrary item, use the `scrollTo` method.
+```dart
+scrollController.scrollTo(
+    scrollToIndex,
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.linear,
+);
 ```
 
 ## Additional information
+The `IndexedScrollController` implements a regular `ScrollController` with an internal field delegating and
+preserving all it's functions for compatibility purposes.
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+You can use example for more info.
