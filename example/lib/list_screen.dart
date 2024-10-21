@@ -21,8 +21,8 @@ class _ScreenDState extends State<ListScreen> {
 
   @override
   void initState() {
-    items = List.generate(1000, (index) => lorem(paragraphs: 1, words: 5 + randomizer.nextInt(25)));
-    scrollToIndex = randomizer.nextInt(items.length) * 1.0 + randomizer.nextDouble();
+    items = List.generate(50, (index) => lorem(paragraphs: 1, words: 5 + randomizer.nextInt(5)));
+    scrollToIndex = 2 + randomizer.nextInt(items.length - 2).toDouble(); // * 1.0 + randomizer.nextDouble();
     super.initState();
   }
 
@@ -61,7 +61,7 @@ class _ScreenDState extends State<ListScreen> {
           Expanded(
             child: NotificationListener<UserScrollNotification>(
               onNotification: (notification) {
-                scrollController.cancelScroll();
+                //scrollController.cancelScroll();
                 return false;
               },
               child: ListView.builder(
@@ -95,10 +95,11 @@ class _ScreenDState extends State<ListScreen> {
                         scrollToIndex,
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.linear,
+                        alignment: 0.5,
                       );
 
                       setState(() {
-                        scrollToIndex = randomizer.nextInt(items.length) * 1.0 + randomizer.nextDouble();
+                        scrollToIndex = 2 + randomizer.nextInt(items.length - 2).toDouble(); // * 1.0 + randomizer.nextDouble();
                       });
                     },
                   ),

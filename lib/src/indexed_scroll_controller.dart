@@ -10,8 +10,6 @@ class IndexedScrollController implements ScrollController {
 
   final Map<int, Size> _sizes = {};
 
-  double? _isWorking;
-
   IndexedScrollController({
     double initialScrollOffset = 0.0,
     bool keepScrollOffset = true,
@@ -45,50 +43,47 @@ class IndexedScrollController implements ScrollController {
     double minVisibleIndex,
     Duration duration,
     Curve curve,
+    double alignment,
   ) async {
-    _isWorking = scrollToIndex;
-    try {
-      var animateSign = minVisibleIndex > scrollToIndex ? -1 : 1;
-      final itemIndex = scrollToIndex.truncate();
-      var step = viewportSize * 1.5 * animateSign;
-      if (!_sizes.containsKey(itemIndex)) {
-        var offset = scrollPosition;
-        while (_isWorking != null && offset + step < position.maxScrollExtent && !_sizes.containsKey(itemIndex)) {
-          offset += step;
-          position.jumpTo(offset);
-          await WidgetsBinding.instance.endOfFrame;
-        }
-
-        scrollPosition = position.pixels;
-      }
-
-      if (_isWorking == null) {
-        return;
-      }
-
-      var priorItems = 0.0;
-      for (int i = 0; i < itemIndex; i++) {
-        priorItems += _sizes[i]!.height;
-      }
-
-      var fraction = scrollToIndex - scrollToIndex.truncate();
-      var targetPixels = priorItems + _sizes[itemIndex]!.height * fraction;
-      var remaining = (targetPixels - scrollPosition).abs();
-
-      var scrollLimit = viewportSize * 1.5;
-      if ((remaining - scrollLimit) > 0) {
-        var jumpingPosition = targetPixels + step * -1;
-        position.jumpTo(jumpingPosition);
+    var animateSign = minVisibleIndex > scrollToIndex ? -1 : 1;
+    final itemIndex = scrollToIndex.truncate();
+    var step = viewportSize * animateSign;
+    if (!_sizes.containsKey(itemIndex)) {
+      var offset = scrollPosition;
+      while (!_sizes.containsKey(itemIndex)) { //offset + step < position.maxScrollExtent &&
+        offset += step;
+        await position.animateTo(offset, duration: duration, curve: curve);
+        // position.jumpTo(offset);
         await WidgetsBinding.instance.endOfFrame;
       }
-      if (duration.inMicroseconds == 0) {
-        position.jumpTo(targetPixels);
-        await WidgetsBinding.instance.endOfFrame;
-      } else {
-        await position.animateTo(targetPixels, duration: duration, curve: curve);
-      }
-    } finally {
-      _isWorking = null;
+
+      scrollPosition = position.pixels;
+    }
+
+    var priorItems = 0.0;
+    for (int i = 0; i < itemIndex; i++) {
+      priorItems += _sizes[i]!.height;
+    }
+
+    var fraction = scrollToIndex - scrollToIndex.truncate();
+    var height = _sizes[itemIndex]!.height;
+    var alignmentAdjust = -(viewportSize - height) * alignment;
+    var targetPixels = priorItems + height * fraction + alignmentAdjust;
+    var remaining = (targetPixels - scrollPosition).abs();
+    var scrollLimit = viewportSize;
+    if ((remaining - scrollLimit) > 0) {
+      var jumpingPosition = targetPixels + step * -1;
+      // position.jumpTo(jumpingPosition);
+      await position.animateTo(jumpingPosition, duration: duration, curve: curve);
+
+      await WidgetsBinding.instance.endOfFrame;
+    }
+
+    if (duration.inMicroseconds == 0) {
+      position.jumpTo(targetPixels);
+      await WidgetsBinding.instance.endOfFrame;
+    } else {
+      await position.animateTo(targetPixels, duration: duration, curve: curve);
     }
   }
 
@@ -96,11 +91,8 @@ class IndexedScrollController implements ScrollController {
     double scrollToIndex, {
     Duration? duration,
     Curve? curve,
+    double alignment = 0.0,
   }) async {
-    if (_isWorking != null) {
-      await cancelScroll();
-    }
-
     var position = _scrollController.position;
     var viewportSize = position.viewportDimension;
     var scrollPosition = position.pixels;
@@ -114,6 +106,9 @@ class IndexedScrollController implements ScrollController {
     var isMinFound = false;
     var isMaxFound = false;
     while (index < _sizes.length) {
+      if (_sizes[index] == null) {
+        print('no size for index [$index]');
+      }
       var size = _sizes[index]!;
       if (scrolledWidgetHeights + size.height > scrollPosition && !isMinFound) {
         minVisibleIndex = index;
@@ -140,12 +135,7 @@ class IndexedScrollController implements ScrollController {
       return Future.value();
     }
 
-    return _animateTo(scrollToIndex, scrollPosition, viewportSize, minVisibleIndex, duration ?? scrollDuration, curve ?? this.curve);
-  }
-
-  Future<void> cancelScroll() async {
-    _isWorking = null;
-    await WidgetsBinding.instance.endOfFrame;
+    return _animateTo(scrollToIndex, scrollPosition, viewportSize, minVisibleIndex, duration ?? scrollDuration, curve ?? this.curve, alignment);
   }
 
   @override
