@@ -1,0 +1,25 @@
+# A .pubignore file replaces .gitignore-based exclusion entirely for `pub
+# publish`, so it must repeat the build/tooling exclusions .gitignore
+# already covers, not just add package-specific ones.
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+*.iml
+*.ipr
+*.iws
+.idea/
+/pubspec.lock
+**/doc/api/
+.dart_tool/
+build/
+
+# Internal engineering process notes, not relevant to package consumers.
+todo.md
+eng-review.md

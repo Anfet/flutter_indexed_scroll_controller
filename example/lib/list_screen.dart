@@ -18,6 +18,7 @@ class _ScreenDState extends State<ListScreen> {
   final IndexedScrollController scrollController = IndexedScrollController(scrollDuration: const Duration(milliseconds: 300));
   late List<String> items;
   double scrollToIndex = 0.0;
+  String? lastError;
 
   @override
   void initState() {
@@ -50,8 +51,13 @@ class _ScreenDState extends State<ListScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('offset -> ${scrollController.offset}'),
-                    Text('maxScrollExtent -> ${scrollController.position.maxScrollExtent}'),
+                    Text('offset -> ${scrollController.offset.toStringAsFixed(1)}'),
+                    Text('maxScrollExtent -> ${scrollController.position.maxScrollExtent.toStringAsFixed(1)}'),
+                    if (lastError != null)
+                      Text(
+                        lastError!,
+                        style: const TextStyle(color: Color(0xFFCC0000), fontWeight: FontWeight.bold),
+                      ),
                   ],
                 ),
               );
@@ -59,9 +65,19 @@ class _ScreenDState extends State<ListScreen> {
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: NotificationListener<UserScrollNotification>(
+            child: NotificationListener<ScrollStartNotification>(
+              // A user drag never implicitly interrupts an in-flight
+              // scrollTo() — see the package Dartdoc. Calling
+              // cancelScroll() here is what gives the user's gesture
+              // priority over a scroll that is still animating. But
+              // scrollTo()'s own internal animateTo() calls also emit
+              // ScrollStartNotification, so cancelling unconditionally
+              // would make a programmatic scroll cancel itself. Only real
+              // user drags carry dragDetails, so that's the guard.
               onNotification: (notification) {
-                //scrollController.cancelScroll();
+                if (notification.dragDetails != null) {
+                  scrollController.cancelScroll();
+                }
                 return false;
               },
               child: ListView.builder(
@@ -91,16 +107,26 @@ class _ScreenDState extends State<ListScreen> {
                   child: ElevatedButton(
                     child: Text('Scroll to ${sprintf('%2.2f', [scrollToIndex])}'),
                     onPressed: () async {
-                      scrollController.scrollTo(
-                        scrollToIndex,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.linear,
-                        alignment: 0.5,
-                      );
-
-                      setState(() {
-                        scrollToIndex = 2 + randomizer.nextInt(items.length - 2).toDouble(); // * 1.0 + randomizer.nextDouble();
-                      });
+                      try {
+                        await scrollController.scrollTo(
+                          scrollToIndex,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.linear,
+                          alignment: 0.5,
+                        );
+                        setState(() {
+                          lastError = null;
+                          scrollToIndex = 2 + randomizer.nextInt(items.length - 2).toDouble();
+                        });
+                      } on ScrollCancelledException catch (e) {
+                        setState(() {
+                          lastError = 'Scroll cancelled: ${e.reason}';
+                        });
+                      } catch (e) {
+                        setState(() {
+                          lastError = 'Error: $e';
+                        });
+                      }
                     },
                   ),
                 ),
@@ -109,6 +135,18 @@ class _ScreenDState extends State<ListScreen> {
                   child: ElevatedButton(
                     child: const Text('top'),
                     onPressed: () => scrollController.scrollTo(0),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    child: const Text('invalidate'),
+                    onPressed: () {
+                      scrollController.invalidateMeasurements();
+                      setState(() {
+                        lastError = 'Measurements invalidated';
+                      });
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
