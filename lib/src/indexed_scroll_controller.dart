@@ -8,13 +8,7 @@ part 'indexed_scroll_item.dart';
 
 /// Why an in-flight [IndexedScrollController.scrollTo] was cancelled.
 ///
-/// This enum is part of the public cancellation contract fixed by ISC-03.
-/// [superseded], [detached], and [disposed] are thrown by the operation
-/// ownership mechanism added in ISC-07. [explicitCancel] is thrown by that
-/// same mechanism when `cancelScroll()` (ISC-09) is called explicitly.
-/// [dataInvalidated] is thrown by that same mechanism when
-/// `invalidateMeasurements()` (ISC-13) is called while a scroll is in
-/// flight.
+/// Each value identifies the source of the cancellation.
 enum ScrollCancelReason {
   /// A newer [IndexedScrollController.scrollTo] call superseded this one
   /// before it finished.
@@ -40,18 +34,13 @@ enum ScrollCancelReason {
 /// Thrown to complete a [IndexedScrollController.scrollTo] [Future] when the
 /// operation is cancelled rather than reaching its target.
 ///
-/// This is the single public cancellation type fixed by ISC-03 for all
-/// cancellation sources described in [ScrollCancelReason]: supersession by a
-/// newer call, `cancelScroll()`, data invalidation, `detach`, and `dispose`.
+/// This is the single public cancellation type for all cancellation sources
+/// described in [ScrollCancelReason]: supersession by a newer call,
+/// `cancelScroll()`, data invalidation, `detach`, and `dispose`.
 /// Every source completes the cancelled call's `Future` the same way — by
 /// throwing this exception — so callers can catch one type regardless of
 /// why the scroll stopped.
 ///
-/// [ScrollCancelReason.superseded], [ScrollCancelReason.detached], and
-/// [ScrollCancelReason.disposed] are thrown by the operation ownership
-/// mechanism added in ISC-07. `cancelScroll()` (ISC-09) and
-/// `invalidateMeasurements()` (ISC-13) both reuse that same mechanism
-/// instead of inventing their own.
 class ScrollCancelledException implements Exception {
   /// Why the scroll was cancelled.
   final ScrollCancelReason reason;
@@ -73,25 +62,18 @@ class IndexedScrollController extends ScrollController {
   /// Measured heights by logical index, summed linearly by [scrollTo] to
   /// locate a target offset.
   ///
-  /// ISC-12B measured this deliberately instead of assuming it: summing
-  /// 5000 entries takes on the order of 60-80us (test/
-  /// prefix_sum_cost_benchmark_test.dart), a small fraction of one 16ms
-  /// animation frame and negligible next to the ~120-frame sequential
-  /// search pass a long `scrollTo` call already needs (ISC-04). Prefix sums
-  /// or a Fenwick tree would only speed up this summation, not the
-  /// measuring pass that actually dominates, so they stay out of scope
-  /// until a real workload measures otherwise.
+  /// The map is intentionally summed linearly. The sequential measurement
+  /// pass required for unmeasured rows is the dominant cost of a long jump,
+  /// so a more complex prefix-sum structure would not improve that path.
   final Map<int, Size> _sizes = {};
 
   /// Read-only, live view of measured item sizes by index. For testing only.
   ///
   /// Backed by [_sizes] through [UnmodifiableMapView], so reads always
   /// reflect the controller's current measurement state without needing to
-  /// re-fetch this getter after every measurement (ISC-02 onward relies on
-  /// that live behavior) — but any write attempt (e.g. `measurementsSizes[i]
-  /// = ...`) throws [UnsupportedError] instead of corrupting `_sizes` (ISC-36
-  /// showed the previous live-reference getter let external code silently
-  /// poison offsets computed by `scrollTo`'s already-measured fast path).
+  /// re-fetch this getter after every measurement. Any write attempt (e.g.
+  /// `measurementsSizes[i] = ...`) throws [UnsupportedError] instead of
+  /// corrupting the controller's measurements.
   @visibleForTesting
   Map<int, Size> get measurementsSizes => UnmodifiableMapView(_sizes);
 
@@ -204,7 +186,7 @@ class IndexedScrollController extends ScrollController {
   /// throw `StateError` naming the missing indices 3–49, instead of the confusing
   /// `_TypeError` that would result from a broken internal lookup.
   ///
-  /// **Index identity contract (ISC-27/ISC-28):** `index` must equal the
+  /// **Index identity contract:** `index` must equal the
   /// *physical position* the enclosing `ListView.builder` passes to its
   /// `itemBuilder` — the same value as the `index` argument of that builder
   /// callback — not a stable record id from your data model. `scrollTo(k)`
@@ -250,15 +232,15 @@ class IndexedScrollController extends ScrollController {
   /// row's actual physical position in the sliver, keyed by the logical
   /// index that was passed to `watch(index:)`.
   ///
-  /// ISC-28: per ISC-27's contract, `watch(index:)` must equal the physical
+  /// `watch(index:)` must equal the physical
   /// position the sliver assigns the row (its
   /// `SliverMultiBoxAdaptorParentData.index`). A caller that instead passes
   /// a stable record id, or otherwise reorders `watch()` indices without
   /// making them track physical slot order, produces a full, contiguous
-  /// `0..n-1` key set in [_sizes] that the pre-existing continuity check
+  /// `0..n-1` key set in [_sizes] that the continuity check
   /// (`_sizeOrThrow`/`_hasCompletePrefix`) cannot distinguish from a correct
   /// registration -- every key is present, just attached to the wrong row
-  /// (see test/scroll_watch_index_order_test.dart, ISC-26). This map records
+  /// This map records
   /// every such mismatch observed since the row was last (re)measured, so
   /// [scrollTo] can refuse to complete successfully once it depends on an
   /// index found here, instead of silently summing an offset that does not
@@ -284,7 +266,7 @@ class IndexedScrollController extends ScrollController {
 
   /// Removes the live-registration entry for [owner] at [index], but only if
   /// [owner] is still that index's registered owner (identity check, not
-  /// `==` — ISC-11).
+  /// `==`).
   ///
   /// [index] is passed explicitly, rather than read from [owner.index],
   /// because this is called from two different moments with two different
@@ -292,8 +274,8 @@ class IndexedScrollController extends ScrollController {
   ///
   /// * [_RenderIndexedScrollItem.detach] calls this with the object's index
   ///   at detach time (an ordinary unmount, e.g. the row scrolled out of the
-  ///   viewport) — unchanged since ISC-11.
-  /// * ISC-35: the `index`/`controller` setters call this with the object's
+  ///   viewport).
+  /// * The `index`/`controller` setters call this with the object's
   ///   OLD index/controller, *before* either field is updated, when
   ///   [IndexedScrollItem.updateRenderObject] reassigns an already-attached
   ///   row to a new index or a new controller. Without this, a row moved
@@ -301,7 +283,7 @@ class IndexedScrollController extends ScrollController {
   ///   leave a stale `_liveOwners[3]` entry that nothing could ever remove:
   ///   [detach] only ever consults the object's CURRENT index/controller at
   ///   the time it fires, never a prior one, so the old entry would survive
-  ///   for as long as the (old) controller lives — the ISC-34 leak, which
+  ///   for as long as the (old) controller lives — a leak which
   ///   also applies within a single controller across an index-only change.
   ///
   /// This intentionally leaves [_sizes] untouched in both cases — an
@@ -320,11 +302,11 @@ class IndexedScrollController extends ScrollController {
   /// Whether [_sizes] currently holds a size for every logical index from 0
   /// up to and including [targetItemIndex].
   ///
-  /// ISC-31: after [invalidateMeasurements] clears [_sizes], a target index
+  /// After [invalidateMeasurements] clears [_sizes], a target index
   /// that happens to already be live (e.g. still on screen) can end up back
   /// in [_sizes] the moment its row relays out — while indices below it that
   /// are off-screen remain missing. Trusting [_sizes] on the strength of
-  /// `containsKey(targetItemIndex)` alone (as the pre-ISC-31 fast path and
+  /// `containsKey(targetItemIndex)` alone
   /// the [_runAnimateTo] search-skip condition both did) can silently sum a
   /// prefix with a hole in it via [_sizeOrThrow], or skip the search pass
   /// entirely while the prefix is still incomplete. This full-prefix check
@@ -346,12 +328,12 @@ class IndexedScrollController extends ScrollController {
   /// contiguous-`watch()`-indices contract, not merely "the search hasn't
   /// reached this far yet". Returns `null` if no such hole exists.
   ///
-  /// ISC-31: the sequential search-from-0 loop in [_runAnimateTo] stalls
+  /// The sequential search-from-0 loop in [_runAnimateTo] stalls
   /// identically at a stable physical edge whether the true cause is "the
   /// list has fewer physical rows than [scrollToIndex] requires" (a real
-  /// out-of-bounds target — [RangeError], the pre-existing ISC-05 contract)
+  /// out-of-bounds target — [RangeError])
   /// or "the caller's `watch()` indices skip a logical index entirely" (a
-  /// [StateError] naming the missing index, the ISC-03 contiguous-index
+  /// [StateError] naming the missing index, the contiguous-index
   /// contract). Both look the same from progress-tracking alone: the
   /// scrollable stops moving and no new size appears. This scan
   /// distinguishes them by checking, once the search has genuinely stalled,
@@ -404,12 +386,12 @@ class IndexedScrollController extends ScrollController {
   /// disagreed with the `watch(index:)` value it was given (see
   /// [_watchIndexMismatches]).
   ///
-  /// ISC-28: called immediately before [scrollTo]/[_runAnimateTo] treat the
+  /// Called immediately before [scrollTo]/[_runAnimateTo] treat the
   /// `0..targetItemIndex` prefix as trustworthy and sum it into an offset —
   /// after the prefix is known to be *complete* (see [_hasCompletePrefix]),
   /// but before that completeness is mistaken for *correctness*. A
   /// contiguous, fully-populated prefix built from `watch()` indices that do
-  /// not track physical slot order is exactly the case ISC-26 demonstrated:
+  /// not track physical slot order can result in:
   /// every required key is present, so [_hasCompletePrefix] and
   /// [_sizeOrThrow] both pass, yet the sum does not equal the true on-screen
   /// offset. This check closes that gap by refusing to complete
@@ -487,7 +469,7 @@ class IndexedScrollController extends ScrollController {
   /// `IndexedScrollController` never cancels a search the caller didn't ask
   /// it to.
   ///
-  /// ISC-25: bumping the operation id alone only makes the in-flight search
+  /// Bumping the operation id alone only makes the in-flight search
   /// notice the cancellation the next time it checks in via
   /// [_checkOperationLive] — after its current step's
   /// `await position.animateTo(...)` resolves. Left alone, that means a
@@ -552,7 +534,7 @@ class IndexedScrollController extends ScrollController {
   ///
   /// 1. If a [scrollTo] call is currently searching or animating, the
   ///    position's current activity is stopped immediately (see
-  ///    [_stopCoasting], the same ISC-25 mechanism [cancelScroll] uses) so a
+  ///    [_stopCoasting], the same mechanism [cancelScroll] uses) so a
   ///    coasting `animateTo` step does not keep visibly moving the position
   ///    toward a target based on now-stale measurements, and its [Future]
   ///    completes with a [ScrollCancelledException] carrying
@@ -567,21 +549,13 @@ class IndexedScrollController extends ScrollController {
   ///    measurement generation ([measurementGeneration], exposed for
   ///    testing) is incremented so the reset is independently observable.
   ///
-  /// ISC-31: this deliberately does **not** eagerly re-populate [_sizes] from
-  /// [_liveOwners]'s current `RenderBox.size` the way an earlier revision
-  /// did. That earlier approach read whichever geometry a live row happened
-  /// to already have at the moment of invalidation — which, immediately
-  /// after a mutation, may still be the *old* layout: `performLayout()` for
-  /// a row whose content changed has not necessarily run again yet just
-  /// because [invalidateMeasurements] was called, so `owner.size` could be
-  /// pre-mutation geometry being copied straight back into a cache that was
-  /// just cleared specifically to get rid of it. A [scrollTo] call made
-  /// immediately afterward must instead only trust sizes obtained from a
-  /// real, post-invalidation layout pass — see the "Recovery after
-  /// invalidation" section of [scrollTo]'s Dartdoc for how it re-derives a
-  /// full prefix by reusing the same sequential search-and-measure mechanism
-  /// (ISC-05) it already uses for a never-measured index, internally
-  /// returning to offset 0 first when the prefix has a hole.
+  /// This deliberately does **not** eagerly re-populate [_sizes] from
+  /// [_liveOwners]'s current `RenderBox.size`. Immediately after a mutation,
+  /// a live row may still have its old layout because [performLayout] has not
+  /// run again. Copying that size into the cleared cache would make it appear
+  /// current. A [scrollTo] call made immediately afterward instead trusts only
+  /// sizes obtained from a real, post-invalidation layout pass — see the
+  /// "Recovery after invalidation" section of [scrollTo]'s DartDoc.
   ///
   /// [_liveOwners] itself is deliberately *not* cleared: it records which
   /// render object currently owns the live registration for each index, a
@@ -595,7 +569,7 @@ class IndexedScrollController extends ScrollController {
   /// [_RenderIndexedScrollItem.invalidateMeasurement] to run
   /// [RenderBox.performLayout] again on the next frame, so a row whose
   /// content changed but has not relaid out yet (no intervening frame
-  /// between the data mutation and this call — ISC-29's variant A/A2) is
+  /// between the data mutation and this call) is
   /// guaranteed to re-register a fresh size instead of never doing so simply
   /// because its old size happened to still satisfy Flutter's "does this
   /// need a new layout" check under the old constraints.
@@ -608,7 +582,7 @@ class IndexedScrollController extends ScrollController {
     }
 
     _sizes.clear();
-    // ISC-28: a mismatch recorded against the previous generation's layout
+    // A mismatch recorded against the previous generation's layout
     // must not outlive it — invalidateMeasurement() below forces every live
     // row through performLayout() again, which re-derives (or clears) each
     // entry here from a fresh comparison. Without this clear, a row that
@@ -664,7 +638,7 @@ class IndexedScrollController extends ScrollController {
     var animateSign = minVisibleIndex > scrollToIndex ? -1 : 1;
     final itemIndex = scrollToIndex.truncate();
     var step = viewportSize * animateSign;
-    // ISC-31: search until the FULL prefix 0..itemIndex is known, not merely
+    // Search until the FULL prefix 0..itemIndex is known, not merely
     // until itemIndex itself has an entry. A target index can already be
     // present in _sizes (e.g. it is a currently-live row whose layout ran
     // again right after invalidateMeasurements() cleared the cache) while
@@ -676,7 +650,7 @@ class IndexedScrollController extends ScrollController {
     if (!_hasCompletePrefix(itemIndex)) {
       var offset = scrollPosition;
       if (awaitInitialFrame) {
-        // ISC-41: scrollTo() jumped back to offset 0 (or was already there)
+        // scrollTo() jumped back to offset 0 (or was already there)
         // because the 0..itemIndex prefix was incomplete, but a bare jumpTo
         // only moves the scroll offset -- it does not by itself force row 0
         // (and the rest of the initial viewport) through a layout pass. The
@@ -733,7 +707,7 @@ class IndexedScrollController extends ScrollController {
         // new item was measured by this step, so continuing would repeat
         // the same step forever.
         //
-        // ISC-41: raw position.pixels != positionBefore is not a reliable
+        // Raw position.pixels != positionBefore is not a reliable
         // progress signal on its own. jumpTo() (the zero-duration fast path
         // above) writes position.pixels directly and is NOT clamped to
         // maxScrollExtent/minScrollExtent the way a ballistic/user-driven
@@ -757,14 +731,14 @@ class IndexedScrollController extends ScrollController {
         } else {
           stalledSteps++;
           if (stalledSteps >= 2) {
-            // ISC-31: a stable edge with the prefix still incomplete has two
+            // A stable edge with the prefix still incomplete has two
             // different honest causes that look identical from progress
             // tracking alone. If some index ABOVE the first missing one is
             // already measured, the physical list did not simply end early
             // — a logical index was skipped entirely by watch(), which is a
-            // configuration error (ISC-03's contiguous-index contract), not
+            // configuration error (the contiguous-index contract), not
             // an out-of-bounds target. Report that case with StateError
-            // naming the missing index, matching the pre-ISC-31 behavior for
+            // naming the missing index, matching the behavior for
             // this exact scenario (see the non-contiguous-watch() contract
             // test); an ordinary "list ended before the target" still gets
             // RangeError.
@@ -788,7 +762,7 @@ class IndexedScrollController extends ScrollController {
       scrollPosition = position.pixels;
     }
 
-    // ISC-28: the prefix is complete (checked above), but completeness does
+    // The prefix is complete (checked above), but completeness does
     // not imply correctness — see _checkNoWatchIndexMismatch.
     _checkNoWatchIndexMismatch(itemIndex);
 
@@ -853,8 +827,7 @@ class IndexedScrollController extends ScrollController {
   /// (e.g. `ListView.builder(padding: ...)`). A list with top padding will
   /// undershoot the visually-aligned target by `padding.top` pixels. This is
   /// a documented limitation of the current offset formula, not a clamping
-  /// bug — see the "ListView padding" scenario in
-  /// `test/scroll_to_edge_cases_test.dart`.
+  /// bug.
   ///
   /// ### Error contract
   ///
@@ -913,7 +886,7 @@ class IndexedScrollController extends ScrollController {
   ///
   /// A full, contiguous `0..scrollToIndex` set of `watch()` indices is
   /// necessary but not sufficient: each `index` must also equal its row's
-  /// actual physical position in the sliver (ISC-27's contract, see `watch`'s
+  /// actual physical position in the sliver (see `watch`'s
   /// Dartdoc "Index identity contract"). This is checked once the prefix is
   /// otherwise trustworthy — complete and about to be summed — whether that
   /// prefix came from the already-measured fast path or from the internal
@@ -942,7 +915,7 @@ class IndexedScrollController extends ScrollController {
   /// returns to offset 0 (via `jumpTo`, without asking the caller to do so
   /// or to raise `cacheExtent`) and reuses the same sequential
   /// search-and-measure pass already used for a target that was never
-  /// measured at all (ISC-05): it steps forward one viewport at a time,
+  /// measured at all: it steps forward one viewport at a time,
   /// waiting for a real frame — and therefore a real layout — after each
   /// step, until the whole prefix through the target is known from
   /// post-invalidation measurements. Only then does it compute the target
@@ -973,7 +946,7 @@ class IndexedScrollController extends ScrollController {
   /// Each check happens after the next `await` inside the search, not
   /// synchronously when the superseding event occurs, so a cancelled call's
   /// [Future] may still take a few more scheduler ticks to settle. However
-  /// (ISC-25), [cancelScroll] and [invalidateMeasurements] both stop the
+  /// [cancelScroll] and [invalidateMeasurements] both stop the
   /// position's current activity immediately, synchronously, before that
   /// happens — so `position.pixels` itself freezes at (or very near) its
   /// value at the moment of cancellation rather than continuing to coast
@@ -1027,7 +1000,7 @@ class IndexedScrollController extends ScrollController {
       );
     }
 
-    // ISC-33: a ScrollPosition is added to `positions` by
+    // A ScrollPosition is added to `positions` by
     // ScrollController.attach() itself, synchronously from inside
     // ScrollController.onAttach — well before RenderViewport.performLayout
     // ever runs. So the `hasClients`/`positions.length != 1` guards above can
@@ -1037,7 +1010,7 @@ class IndexedScrollController extends ScrollController {
     // `ScrollPosition.pixels => _pixels!`) with no default, guarded by
     // `hasViewportDimension`/`hasPixels`. Reading either before the first
     // layout pass throws Flutter SDK's raw `_TypeError` instead of one of
-    // this package's documented error types (see ISC-32, which characterizes
+    // this package's documented error types (see the behavior described for
     // this exact scenario from `onAttach`). Checking readiness here, before
     // either getter is touched, turns that into a documented `StateError`.
     //
@@ -1068,7 +1041,7 @@ class IndexedScrollController extends ScrollController {
 
     final targetItemIndex = scrollToIndex.truncate();
 
-    // ISC-31: a target already present in _sizes does not by itself mean the
+    // A target already present in _sizes does not by itself mean the
     // *prefix* 0..targetItemIndex is complete — invalidateMeasurements() may
     // have cleared _sizes and a still-live row at or near the target could
     // already be back in the cache (from its own next layout) while rows
@@ -1078,7 +1051,7 @@ class IndexedScrollController extends ScrollController {
     // or, worse, silently use a stale/partial prefix. When the prefix has a
     // hole, skip both the minVisibleIndex prefix-walk below and the
     // already-at-target fast path entirely, and fall back to the same
-    // sequential search-and-measure pass (ISC-05) already used for a
+    // sequential search-and-measure pass already used for a
     // never-measured index — internally returning to offset 0 first, since
     // the search below only measures forward from wherever it starts and a
     // hole below the current position would otherwise never get filled.
@@ -1090,7 +1063,7 @@ class IndexedScrollController extends ScrollController {
         scrollPosition = position.pixels;
       }
     } else {
-      // ISC-28: the prefix is complete (checked above), but completeness
+      // The prefix is complete (checked above), but completeness
       // does not imply correctness — see _checkNoWatchIndexMismatch. Must
       // run before this fast path's already-at-target early return below,
       // or a mismatched watch(index:) that happens to already sum to a
@@ -1137,7 +1110,7 @@ class IndexedScrollController extends ScrollController {
       curve ?? this.curve,
       alignment,
       myOperationId,
-      // ISC-41: only the recovery path -- prefix incomplete, so this call is
+      // Only the recovery path -- prefix incomplete, so this call is
       // either searching a never-measured index or recovering from
       // invalidateMeasurements() -- needs to wait for a real frame before
       // _runAnimateTo's search loop starts stepping. The already-measured

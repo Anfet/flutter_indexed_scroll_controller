@@ -40,8 +40,8 @@ class _RenderIndexedScrollItem extends RenderProxyBox {
   /// Forces this row's next frame to run [performLayout] again, so
   /// [IndexedScrollController._registerSize] re-registers a fresh size
   /// instead of leaving whatever stale entry [invalidateMeasurements]
-  /// cleared. Called by [IndexedScrollController.invalidateMeasurements]
-  /// (ISC-31) on every currently-live row: a row's `RenderBox.size` is only
+  /// cleared. Called by [IndexedScrollController.invalidateMeasurements] on
+  /// every currently-live row: a row's `RenderBox.size` is only
   /// ever current as of its last completed layout, and a data mutation
   /// followed immediately by invalidation (no intervening frame) does not by
   /// itself guarantee a relayout already happened.
@@ -49,17 +49,17 @@ class _RenderIndexedScrollItem extends RenderProxyBox {
 
   int get index => _index;
 
-  /// ISC-35: reassigning `index` on an already-attached row (via
+  /// Reassigning `index` on an already-attached row (via
   /// [IndexedScrollItem.updateRenderObject]) must not leave the OLD index's
   /// live-registration entry pointing at this object inside the CURRENT
   /// [_controller]. [detach] only ever unregisters this object from
   /// whichever controller/index it holds AT DETACH TIME -- if the index
   /// changes here first, [detach] can never again reach the old index's
   /// entry under this same controller, so it would otherwise leak for as
-  /// long as the controller lives (mirrors the ISC-34 leak, but within one
+  /// long as the controller lives (including within one
   /// controller instead of across two). Unregistering here, before `_index`
   /// is updated, still has the old index available and reuses the same
-  /// identity-checked removal [detach] uses (ISC-11) -- only removing the
+  /// identity-checked removal [detach] uses -- only removing the
   /// entry if this object is still the one currently registered there,
   /// never blindly deleting whatever another row may have since claimed.
   set index(int value) {
@@ -73,13 +73,13 @@ class _RenderIndexedScrollItem extends RenderProxyBox {
 
   IndexedScrollController get controller => _controller;
 
-  /// ISC-35: same reasoning as the [index] setter, but for a controller
-  /// switch. [detach] would otherwise only ever notify whichever controller
+  /// The same reasoning applies when changing the controller. [detach] would
+  /// otherwise only ever notify whichever controller
   /// this object is CURRENTLY assigned to -- once reassigned to a new
   /// controller, the OLD controller is never consulted again, so its
   /// `_liveOwners[oldIndex]` entry for this object would leak for the OLD
-  /// controller's entire remaining lifetime (the exact gap ISC-34's test
-  /// demonstrated). Unregistering from the OLD controller here, before
+  /// controller's entire remaining lifetime. Unregistering from the OLD
+  /// controller here, before
   /// `_controller` is updated, closes that gap at the point of reassignment
   /// instead of relying on a detach that will never reach it again.
   set controller(IndexedScrollController value) {
@@ -96,7 +96,7 @@ class _RenderIndexedScrollItem extends RenderProxyBox {
   /// the render tree root carries a `SliverMultiBoxAdaptorParentData` (for
   /// example, not yet attached, or used outside a supported list).
   ///
-  /// ISC-28/ISC-27: `watch(index:)` is documented to equal the physical
+  /// `watch(index:)` is documented to equal the physical
   /// position the sliver passes to `itemBuilder`. That position is not
   /// something this widget receives as a constructor argument -- it is
   /// assigned by the parent sliver onto its immediate child's [parentData]
