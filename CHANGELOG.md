@@ -1,3 +1,26 @@
+## 0.1.0
+
+### Added
+
+- **Horizontal list support**: `ListView.builder(scrollDirection: Axis.horizontal)` is now supported. The controller reads `position.axis` from the attached `ScrollPosition` and measures each item's extent along that axis (`Size.height` for vertical, `Size.width` for horizontal) — in the summed prefix, the target's fractional contribution, and the `alignment` adjustment alike. No new constructor parameter or mode switch: `watch()`/`scrollTo()` are used exactly as with a vertical list. If a single controller/list switches `scrollDirection`, call `invalidateMeasurements()` first — sizes measured under the old axis's constraints are not valid under the new one.
+- **`IndexedScrollGestureDetector`**: Wrap a list in it to give a user's drag priority over an in-flight `scrollTo()`. The scroll yields with the new `ScrollCancelReason.userGesture`, and a `scrollTo()` issued during a drag is refused the same way instead of interrupting the gesture.
+- **`ScrollCancelReason.userGesture`**: New cancellation reason, distinct from `explicitCancel` so callers can tell "the user took over the list" from "I cancelled this myself" — retrying is wrong in the first case.
+
+### Fixed
+
+- **`scrollTo()` now resolves with an in-bounds `offset`.** The offset formula sums measured extents and subtracts an `alignment` adjustment, so it routinely produces targets outside `[minScrollExtent, maxScrollExtent]` — `scrollTo(0, alignment: 1)` asks for a negative offset, and a target near the end can exceed `maxScrollExtent`. Flutter corrected these on the next layout pass, but that landed a frame *after* the `Future` resolved, so `await scrollTo(...)` followed by reading `offset` returned the raw out-of-range value (e.g. `-500.0` against a `minScrollExtent` of `0.0`). The final target is now clamped directly, making the documented "physical list bounds take priority" contract true at the moment the call completes.
+- **A user drag during an in-flight `scrollTo()` no longer breaks the gesture.** The search loop advances with `jumpTo`/`animateTo`, which replace whatever `ScrollActivity` is installed — including the one holding the user's in-progress drag. The gesture recognizer then kept delivering updates into a detached drag, so the list stopped following the finger (and debug builds logged repeated `activity!.isScrolling` assertion failures from `ScrollPositionWithSingleContext.setPixels`). This affected any draggable list, with or without the previously documented `cancelScroll()` wiring; that manual wiring did not prevent it. Wrap the list in `IndexedScrollGestureDetector` to opt into the fix.
+
+### Changed
+
+- The README's "Handle user gestures" section previously recommended a `NotificationListener` + `cancelScroll()` pattern that did not actually preserve the drag. It now documents `IndexedScrollGestureDetector` instead.
+- Corrected a stale README reference describing only a *vertical* `ListView.builder` as supported.
+
+### Known limitations
+
+- **ListView padding**: The offset calculation does not account for `ListView.builder(padding: ...)` along the scroll axis. A list with leading padding will undershoot the visually aligned target.
+- **Single list only**: Exactly one `ListView.builder` (one attached `ScrollPosition`) is supported, vertical or horizontal. `reverse: true` is not supported on either axis.
+
 ## 0.0.1
 
 ### Initial release
@@ -19,4 +42,4 @@
 ### Known limitations
 
 - **ListView padding**: The offset calculation does not account for `ListView.builder(padding: ...)`. A list with top padding will undershoot the visually aligned target.
-- **Single vertical list only**: The controller supports exactly one vertical `ListView.builder`; multiple scroll views or horizontal/reverse modes are not supported in this release.
+- **Single vertical list only**: This release supported exactly one vertical `ListView.builder`; multiple scroll views and horizontal/reverse modes were not supported. (Horizontal lists are supported as of 0.1.0.)

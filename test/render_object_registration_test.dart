@@ -102,8 +102,7 @@ void main() {
         expect(
           measurements.containsKey(0),
           isTrue,
-          reason:
-              'ISC-11: the earlier measurement at index 0 is retained in _sizes; '
+          reason: 'ISC-11: the earlier measurement at index 0 is retained in _sizes; '
               'updateRenderObject() only changes what the *live* RenderObject '
               'registers going forward, it does not purge prior history.',
         );
@@ -111,8 +110,7 @@ void main() {
         expect(
           measurements.containsKey(5),
           isTrue,
-          reason:
-              'ISC-11 fix: updateRenderObject() updates the reused RenderObject\'s '
+          reason: 'ISC-11 fix: updateRenderObject() updates the reused RenderObject\'s '
               'mutable index field to 5 and calls markNeedsLayout(), so the next '
               'performLayout() registers under the new logical index 5.',
         );
@@ -203,8 +201,7 @@ void main() {
         expect(
           controller2.measurementsSizes.containsKey(0),
           isTrue,
-          reason:
-              'ISC-11 fix: updateRenderObject() updates the reused RenderObject to '
+          reason: 'ISC-11 fix: updateRenderObject() updates the reused RenderObject to '
               'hold controller2 and triggers a relayout, so index 0 is now '
               'registered in controller2.',
         );
@@ -212,8 +209,7 @@ void main() {
         expect(
           controller1.measurementsSizes.containsKey(0),
           isTrue,
-          reason:
-              'ISC-11: controller1 keeps its earlier measurement — switching the '
+          reason: 'ISC-11: controller1 keeps its earlier measurement — switching the '
               'live owner to controller2 does not retroactively erase controller1\'s '
               '_sizes history, only the same RenderObject\'s live-owner entry moves.',
         );
@@ -223,9 +219,8 @@ void main() {
     testWidgets(
       'reordering visible rows with same itemCount registers heights under the correct logical index (ISC-11 fix; visual-order scrollTo is ISC-12/13)',
       (WidgetTester tester) async {
-        // This test reproduces the QA scenario from eng-review.md:
-        // "Перестановка при том же itemCount дала тихую ошибку 30 px и успешный Future"
-        // (Reordering with the same itemCount gave a silent 30px error and successful Future)
+        // Reordering with the same itemCount previously gave a silent 30px
+        // error and a successful Future.
         //
         // Reproducing the actual bug mechanism (same pattern validated by review for
         // test 1 above) requires the *logical* index passed to watch() to move to a
@@ -348,8 +343,7 @@ void main() {
             duration: const Duration(milliseconds: 100),
           ),
           throwsA(isA<StateError>()),
-          reason:
-              'ISC-28: watch(index: 0) was registered by physical slot 2 (a '
+          reason: 'ISC-28: watch(index: 0) was registered by physical slot 2 (a '
               'mismatch), so scrollTo(2) must be rejected before it can sum a '
               'prefix through that mismatched entry, instead of completing at '
               'the logical-order sum of 300.0 px.',
@@ -438,23 +432,21 @@ void main() {
         // index 1 (confirmed by the new entry appearing there), but does not erase
         // _sizes[0] — an ordinary index change on a still-mounted row is not an
         // unmount, so the previously measured height at 0 is retained by design
-        // (todo.md ISC-11: "Обычная выгрузка строки не удаляет измеренную высоту").
+        // An ordinary row removal does not clear its retained measurement.
         // This is not measurement pollution: index 0's value is stale-but-valid
         // history, and index 1 now holds the current live measurement.
 
         expect(
           controller.measurementsSizes.containsKey(0),
           isTrue,
-          reason:
-              'ISC-11: index 0\'s earlier measurement is retained in _sizes; only '
+          reason: 'ISC-11: index 0\'s earlier measurement is retained in _sizes; only '
               'the live-owner tracking moves when the same RenderObject is reused '
               'for a different index, not the measurement history.',
         );
         expect(
           controller.measurementsSizes.containsKey(1),
           isTrue,
-          reason:
-              'ISC-11 fix: updateRenderObject() updates the RenderObject\'s mutable '
+          reason: 'ISC-11 fix: updateRenderObject() updates the RenderObject\'s mutable '
               'index field to 1 and calls markNeedsLayout(), so the next '
               'performLayout() registers a fresh measurement under index 1.',
         );
@@ -482,8 +474,7 @@ void main() {
         expect(
           controller.measurementsSizes.containsKey(2),
           isTrue,
-          reason:
-              'ISC-11 fix: the live registration keeps following the same '
+          reason: 'ISC-11 fix: the live registration keeps following the same '
               'RenderObject as its index keeps changing, landing on index 2 now.',
         );
       },

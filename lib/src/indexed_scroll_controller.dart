@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 part 'indexed_scroll_item.dart';
+part 'indexed_scroll_gesture_detector.dart';
 
 /// Why an in-flight [IndexedScrollController.scrollTo] was cancelled.
 ///
@@ -29,18 +30,20 @@ enum ScrollCancelReason {
 
   /// The controller was disposed while a scroll was in flight.
   disposed,
+
+  /// The user began dragging the list while a scroll was in flight, so the
+  /// scroll yielded control of the position to the gesture.
+  ///
+  /// Unlike every other reason here, this one is raised by the controller
+  /// itself rather than by an explicit caller action: a user's finger always
+  /// outranks a programmatic scroll, and the two cannot share the position
+  /// (see [IndexedScrollGestureDetector]).
+  userGesture,
 }
 
-/// Thrown to complete a [IndexedScrollController.scrollTo] [Future] when the
-/// operation is cancelled rather than reaching its target.
+/// Thrown when [IndexedScrollController.scrollTo] is cancelled.
 ///
-/// This is the single public cancellation type for all cancellation sources
-/// described in [ScrollCancelReason]: supersession by a newer call,
-/// `cancelScroll()`, data invalidation, `detach`, and `dispose`.
-/// Every source completes the cancelled call's `Future` the same way — by
-/// throwing this exception — so callers can catch one type regardless of
-/// why the scroll stopped.
-///
+/// Inspect [reason] to determine why the operation stopped.
 class ScrollCancelledException implements Exception {
   /// Why the scroll was cancelled.
   final ScrollCancelReason reason;
@@ -48,18 +51,27 @@ class ScrollCancelledException implements Exception {
   /// The index that was requested via `scrollTo`, for diagnostics.
   final double requestedIndex;
 
+  /// Creates a cancellation error for [requestedIndex].
   const ScrollCancelledException(this.reason, this.requestedIndex);
 
   @override
-  String toString() =>
-      'ScrollCancelledException(reason: $reason, requestedIndex: $requestedIndex)';
+  String toString() => 'ScrollCancelledException(reason: $reason, requestedIndex: $requestedIndex)';
 }
 
+/// Scrolls a single non-reversed [ListView.builder] to an item by its
+/// physical index.
+///
+/// Wrap every item with [watch]. Item sizes are measured as they are laid out,
+/// allowing [scrollTo] to reach measured and unmeasured indices. The supported
+/// list may be vertical or horizontal and must have one attached position.
 class IndexedScrollController extends ScrollController {
+  /// Default duration used by [scrollTo] when its `duration` is omitted.
   final Duration scrollDuration;
+
+  /// Default curve used by [scrollTo] when its `curve` is omitted.
   final Curve curve;
 
-  /// Measured heights by logical index, summed linearly by [scrollTo] to
+  /// Measured sizes by logical index, summed linearly by [scrollTo] to
   /// locate a target offset.
   ///
   /// The map is intentionally summed linearly. The sequential measurement
@@ -67,17 +79,20 @@ class IndexedScrollController extends ScrollController {
   /// so a more complex prefix-sum structure would not improve that path.
   final Map<int, Size> _sizes = {};
 
-  /// Read-only, live view of measured item sizes by index. For testing only.
-  ///
-  /// Backed by [_sizes] through [UnmodifiableMapView], so reads always
-  /// reflect the controller's current measurement state without needing to
-  /// re-fetch this getter after every measurement. Any write attempt (e.g.
-  /// `measurementsSizes[i] = ...`) throws [UnsupportedError] instead of
-  /// corrupting the controller's measurements.
+  /// Live, unmodifiable view of the measured item sizes, for testing only.
   @visibleForTesting
   Map<int, Size> get measurementsSizes => UnmodifiableMapView(_sizes);
 
   static const double _alreadyAtTargetTolerancePixels = 1.0;
+
+  /// Returns [size]'s extent along the attached position's scroll axis:
+  /// [Size.height] for [Axis.vertical], [Size.width] for [Axis.horizontal].
+  ///
+  /// Every place that used to read `size.height` directly must instead call
+  /// this, so a horizontal `ListView.builder` (items of equal height but
+  /// varying width) sums the axis that actually determines `position.pixels`
+  /// instead of a dimension that is constant and therefore wrong.
+  double _extentOf(Size size) => position.axis == Axis.horizontal ? size.width : size.height;
 
   /// Monotonically increasing id of the current owner of the position.
   ///
@@ -130,6 +145,14 @@ class IndexedScrollController extends ScrollController {
   /// would be wrong (the caller itself asked to stop).
   int? _invalidatedOperationId;
 
+  /// Set by [_notifyUserGestureStart] to the operation id it just cancelled,
+  /// mirroring [_explicitlyCancelledOperationId] but for
+  /// [ScrollCancelReason.userGesture]. Kept separate for the same reason
+  /// those two are: a caller that retries on supersession must not also
+  /// retry when the user themselves took over the list, which would yank
+  /// the position back out from under the finger that just moved it.
+  int? _userGestureCancelledOperationId;
+
   /// Monotonically increasing generation of [_sizes].
   ///
   /// Bumped by [invalidateMeasurements] alongside clearing [_sizes]. Nothing
@@ -144,11 +167,15 @@ class IndexedScrollController extends ScrollController {
   /// and coincidentally empty").
   int _measurementGeneration = 0;
 
-  /// Generation of [_sizes], bumped every time [invalidateMeasurements] runs.
+  /// Number of times [invalidateMeasurements] has reset the cache.
+  ///
   /// For testing only.
   @visibleForTesting
   int get measurementGeneration => _measurementGeneration;
 
+  /// Creates a controller for indexed scrolling.
+  ///
+  /// The remaining arguments have the same meaning as [ScrollController].
   IndexedScrollController({
     super.initialScrollOffset,
     super.keepScrollOffset,
@@ -159,57 +186,12 @@ class IndexedScrollController extends ScrollController {
     this.curve = Curves.linear,
   });
 
-  /// Wraps [child] with an [IndexedScrollItem] to register its size by [index].
+  /// Wraps a list item and records its laid-out size under [index].
   ///
-  /// Use this method to wrap each item in your `ListView.builder` itemBuilder:
-  ///
-  /// ```dart
-  /// ListView.builder(
-  ///   controller: scrollController,
-  ///   itemCount: items.length,
-  ///   itemBuilder: (context, index) {
-  ///     return scrollController.watch(
-  ///       index: index,
-  ///       child: MyItemWidget(item: items[index]),
-  ///     );
-  ///   },
-  /// )
-  /// ```
-  ///
-  /// The controller tracks the height of each item by [index] as it is built and
-  /// laid out. These measurements enable [scrollTo] to calculate offsets for both
-  /// measured and unmeasured items.
-  ///
-  /// **Index continuity contract:** All logical indices passed to `watch()` must
-  /// form a contiguous run starting from 0 (for the range covered by the list).
-  /// If you register indices `0, 1, 2, 50, 51, 52`, a call to `scrollTo(50)` will
-  /// throw `StateError` naming the missing indices 3–49, instead of the confusing
-  /// `_TypeError` that would result from a broken internal lookup.
-  ///
-  /// **Index identity contract:** `index` must equal the
-  /// *physical position* the enclosing `ListView.builder` passes to its
-  /// `itemBuilder` — the same value as the `index` argument of that builder
-  /// callback — not a stable record id from your data model. `scrollTo(k)`
-  /// addresses "the row currently in physical position `k`", not "the row
-  /// whose data has id `k`". Passing a full, contiguous `0..n-1` set of
-  /// indices in the wrong order (e.g. keyed by record id after a reorder,
-  /// rather than by current slot) is not caught by the continuity check
-  /// above — every index is present, just attached to the wrong row — so the
-  /// controller instead compares each `index` against the row's actual
-  /// physical position in the sliver (`SliverMultiBoxAdaptorParentData.index`)
-  /// as it is laid out. A mismatch makes the *next* `scrollTo` call that
-  /// would depend on that index throw `StateError` before completing,
-  /// instead of silently landing at a numerically wrong offset. If the
-  /// underlying data was reordered, pass each row's *new* physical position
-  /// to `watch(index:)` and call `invalidateMeasurements()`; the
-  /// invalidation clears cached sizes, but it does not by itself make a
-  /// mismatched `watch(index:)` correct — the caller must still pass the
-  /// right positions.
-  ///
-  /// **Data changes:** After the underlying data changes (reordering, inserting,
-  /// deleting, or resizing items), you must call `invalidateMeasurements()`. The
-  /// controller cannot detect mutations by itself because it only sees indices
-  /// and cached sizes, never the data values.
+  /// [index] must equal the physical index passed to `itemBuilder`. Indices must
+  /// form a contiguous range starting at zero. After inserting, deleting,
+  /// reordering, resizing items, or changing the scroll direction, call
+  /// [invalidateMeasurements].
   Widget watch({required int index, required Widget child}) {
     return IndexedScrollItem(controller: this, index: index, child: child);
   }
@@ -413,11 +395,95 @@ class IndexedScrollController extends ScrollController {
     }
   }
 
+  /// Clamps [pixels] to what the scrollable can actually reach.
+  ///
+  /// The offset formula sums measured extents and then subtracts an
+  /// [alignment] adjustment, so it routinely produces targets outside
+  /// `[minScrollExtent, maxScrollExtent]` — `scrollTo(0, alignment: 1)`
+  /// asks for the first row's *bottom* at the viewport bottom, which is a
+  /// negative offset, and aligning a row near the end can ask for more than
+  /// `maxScrollExtent`. Flutter's own `ScrollPosition` absorbs these: the
+  /// next layout pass corrects the position back to the bound. But that
+  /// correction lands a frame *after* `scrollTo`'s Future resolves, so a
+  /// caller doing `await scrollTo(...)` and then reading `offset` observed
+  /// the raw out-of-range value (e.g. `-500.0` against a `minScrollExtent`
+  /// of `0.0`) even though the list was already visually correct.
+  ///
+  /// Clamping here makes the documented "physical list bounds take priority
+  /// over the requested alignment" contract true at the moment the Future
+  /// settles, not merely one frame later.
+  ///
+  /// Content dimensions are only available once layout has run; before that
+  /// there is no bound to clamp against, so [pixels] passes through
+  /// unchanged.
+  ///
+  /// Only ever applied to a *final* target, never to an intermediate search
+  /// or "jump closer" step. [ScrollPosition.maxScrollExtent] describes the
+  /// content laid out so far, not the whole list: mid-search — and on the
+  /// already-measured fast path for a target below the current viewport —
+  /// rows beyond the current extent have not been built, so the bound is
+  /// smaller than the finished list's. Clamping a step against it would
+  /// stop the search at the edge of what is already known and never
+  /// discover the rest, which is how index 5 of a 10-row list (target
+  /// 500px, extent-so-far 400px) ends up stranded at 400.
+  double _clampToBounds(double pixels) {
+    if (!position.hasContentDimensions) {
+      return pixels;
+    }
+    return pixels.clamp(position.minScrollExtent, position.maxScrollExtent);
+  }
+
+  /// Whether a user drag is currently driving the attached position.
+  ///
+  /// Maintained by [_notifyUserGestureStart]/[_notifyUserGestureEnd], which
+  /// the package's `IndexedScrollGestureDetector` wrapper feeds from
+  /// `ScrollStartNotification`/`ScrollEndNotification`. `ScrollPosition`
+  /// exposes no *public* "is a finger down right now" flag — `activity` is
+  /// `@protected`, and `userScrollDirection` is also set by ballistic
+  /// settling, so neither can answer this question from outside the SDK.
+  ///
+  /// This matters because a drag and this controller's search loop cannot
+  /// share the position. The search advances by calling `jumpTo`/`animateTo`,
+  /// and both *replace* whatever activity is currently installed — including
+  /// the `DragScrollActivity` holding the user's in-progress gesture. Once
+  /// that happens the gesture recognizer keeps delivering updates into a
+  /// drag whose activity is gone, and every one of them trips
+  /// `ScrollPositionWithSingleContext.setPixels`'s `activity!.isScrolling`
+  /// assertion. In a debug build that surfaces as a stream of framework
+  /// assertion errors; in profile/release the assertion is compiled out but
+  /// the drag is still dead, so the user's finger moves and the list does
+  /// not follow it.
+  bool _userDragging = false;
+
+  /// Records that a user drag has begun, so an in-flight [scrollTo] yields
+  /// the position to the gesture at its next check-in with
+  /// [ScrollCancelReason.userGesture].
+  ///
+  /// Only a real drag counts: `scrollTo`'s own `animateTo` steps also emit
+  /// `ScrollStartNotification`, and treating those as gestures would make
+  /// every programmatic scroll cancel itself. Callers must therefore gate
+  /// this on `notification.dragDetails != null`, which
+  /// [IndexedScrollGestureDetector] does.
+  void _notifyUserGestureStart() {
+    _userDragging = true;
+    final operationId = _activeOperationId;
+    if (operationId != null) {
+      _userGestureCancelledOperationId = operationId;
+      _currentOperationId++;
+    }
+  }
+
+  /// Records that the user's drag has ended, re-allowing programmatic
+  /// scrolls. This deliberately does not resume the cancelled [scrollTo] —
+  /// the user has moved the list somewhere of their own choosing, so
+  /// silently continuing to the old target would fight them.
+  void _notifyUserGestureEnd() => _userDragging = false;
+
   /// Throws [ScrollCancelledException] if [myOperationId] has been
-  /// superseded (by a newer [scrollTo] call or by [dispose]) or if the
-  /// controller no longer has an attached position (`detach`). Called after
-  /// every `await` in [_animateTo] so a stale in-flight call notices before
-  /// it touches the position again.
+  /// superseded (by a newer [scrollTo] call or by [dispose]), if the user
+  /// started dragging, or if the controller no longer has an attached
+  /// position (`detach`). Called after every `await` in [_animateTo] so a
+  /// stale in-flight call notices before it touches the position again.
   void _checkOperationLive(int myOperationId, double scrollToIndex) {
     if (_currentOperationId != myOperationId) {
       if (_disposed) {
@@ -429,10 +495,20 @@ class IndexedScrollController extends ScrollController {
       if (_explicitlyCancelledOperationId == myOperationId) {
         throw ScrollCancelledException(ScrollCancelReason.explicitCancel, scrollToIndex);
       }
+      if (_userGestureCancelledOperationId == myOperationId) {
+        throw ScrollCancelledException(ScrollCancelReason.userGesture, scrollToIndex);
+      }
       throw ScrollCancelledException(ScrollCancelReason.superseded, scrollToIndex);
     }
     if (!hasClients || positions.isEmpty) {
       throw ScrollCancelledException(ScrollCancelReason.detached, scrollToIndex);
+    }
+    // A drag that began *between* two check-ins must stop the search before
+    // its next jumpTo/animateTo, not merely at the id bump in
+    // _notifyUserGestureStart: the very next step would otherwise replace the
+    // live DragScrollActivity and kill the gesture.
+    if (_userDragging) {
+      throw ScrollCancelledException(ScrollCancelReason.userGesture, scrollToIndex);
     }
   }
 
@@ -448,45 +524,11 @@ class IndexedScrollController extends ScrollController {
     }
   }
 
-  /// Cancels the in-flight [scrollTo] call, if any.
+  /// Cancels the active [scrollTo], if any.
   ///
-  /// If a [scrollTo] call is currently searching for or animating to its
-  /// target, its [Future] completes with a [ScrollCancelledException]
-  /// carrying [ScrollCancelReason.explicitCancel] the next time it checks in
-  /// (after its next `await`), the same way a superseding [scrollTo] call or
-  /// `dispose` would interrupt it — see the "Cancellation" section of
-  /// [scrollTo]'s Dartdoc.
-  ///
-  /// If no [scrollTo] call is currently in flight, this is a no-op: it does
-  /// not throw and has no effect. In particular, calling it repeatedly, or
-  /// calling it when nothing was ever scrolling, is always safe.
-  ///
-  /// This method is purely imperative — it does not itself listen for user
-  /// gestures or scroll notifications. Callers that want a drag to interrupt
-  /// an in-flight `scrollTo` must call this explicitly from their own
-  /// `NotificationListener` (see the package example); the controller
-  /// deliberately does not wire this up itself, so that a bare
-  /// `IndexedScrollController` never cancels a search the caller didn't ask
-  /// it to.
-  ///
-  /// Bumping the operation id alone only makes the in-flight search
-  /// notice the cancellation the next time it checks in via
-  /// [_checkOperationLive] — after its current step's
-  /// `await position.animateTo(...)` resolves. Left alone, that means a
-  /// cancellation landing mid-step does not stop the position from visibly
-  /// coasting toward that step's own (now-abandoned) intermediate target for
-  /// up to a full step's `duration` worth of extra frames, because
-  /// `animateTo`'s underlying `DrivenScrollActivity` has no per-frame
-  /// liveness check of its own. To make the stop feel immediate,
-  /// `jumpTo(pixels)` is called here, synchronously, before the id bump:
-  /// `ScrollPositionWithSingleContext.jumpTo` replaces whatever
-  /// `ScrollActivity` is currently driving the position (including a
-  /// `DrivenScrollActivity` from `animateTo`) with an idle one, so the
-  /// coasting stops on this call stack instead of several frames later. The
-  /// in-flight search's own pending `animateTo` Future still only settles
-  /// (letting `_checkOperationLive` run and the cancellation exception
-  /// throw) on its normal schedule, but it no longer matters visually
-  /// because the position itself has already stopped moving.
+  /// The position stops immediately and the operation completes with
+  /// [ScrollCancelReason.explicitCancel]. Calling this with no active operation
+  /// is safe. Use [IndexedScrollGestureDetector] to give user drags priority.
   void cancelScroll() {
     final operationId = _activeOperationId;
     if (operationId == null) {
@@ -516,13 +558,16 @@ class IndexedScrollController extends ScrollController {
     position.jumpTo(position.pixels);
   }
 
-  /// Discards every measured height and re-measures the currently built
+  /// Discards every measured size and re-measures the currently built
   /// (live) rows, without waiting for a fresh [scrollTo] search pass.
   ///
   /// Call this after the underlying list data changes in a way that makes
   /// old measurements unsafe to reuse — reordering, inserting, deleting, or
-  /// changing the height of a row identified by `watch(index: ...)`. As
-  /// documented on [scrollTo] and in the package's contract notes, the
+  /// resizing a row identified by `watch(index: ...)` — or after switching
+  /// the list's `scrollDirection` on the same controller instance, since
+  /// sizes measured under the old axis's layout constraints are not valid
+  /// under the new one. As documented on [scrollTo] and in the package's
+  /// contract notes, the
   /// controller cannot detect these mutations itself (it only ever sees
   /// logical indices and measured sizes, never the data driving them), so
   /// calling this explicitly after mutating the list is part of the public
@@ -721,11 +766,8 @@ class IndexedScrollController extends ScrollController {
         // progress; a pixel change that is still on the far side of that
         // bound is just the unclamped jump continuing to walk off the end.
         final atOrPastPhysicalBound = position.hasContentDimensions &&
-            (animateSign > 0
-                ? position.pixels >= position.maxScrollExtent
-                : position.pixels <= position.minScrollExtent);
-        final madeProgress = _sizes.length != measuredCountBefore ||
-            (position.pixels != positionBefore && !atOrPastPhysicalBound);
+            (animateSign > 0 ? position.pixels >= position.maxScrollExtent : position.pixels <= position.minScrollExtent);
+        final madeProgress = _sizes.length != measuredCountBefore || (position.pixels != positionBefore && !atOrPastPhysicalBound);
         if (madeProgress) {
           stalledSteps = 0;
         } else {
@@ -768,13 +810,13 @@ class IndexedScrollController extends ScrollController {
 
     var priorItems = 0.0;
     for (int i = 0; i < itemIndex; i++) {
-      priorItems += _sizeOrThrow(i).height;
+      priorItems += _extentOf(_sizeOrThrow(i));
     }
 
     var fraction = scrollToIndex - scrollToIndex.truncate();
-    var height = _sizeOrThrow(itemIndex).height;
-    var alignmentAdjust = -(viewportSize - height) * alignment;
-    var targetPixels = priorItems + height * fraction + alignmentAdjust;
+    var extent = _extentOf(_sizeOrThrow(itemIndex));
+    var alignmentAdjust = -(viewportSize - extent) * alignment;
+    var targetPixels = _clampToBounds(priorItems + extent * fraction + alignmentAdjust);
     var remaining = (targetPixels - scrollPosition).abs();
     var scrollLimit = viewportSize;
     if ((remaining - scrollLimit) > 0) {
@@ -808,150 +850,24 @@ class IndexedScrollController extends ScrollController {
     }
   }
 
-  /// Scrolls so that logical item [scrollToIndex] is positioned according to
-  /// [alignment].
+  /// Scrolls to [scrollToIndex] and positions it according to [alignment].
   ///
-  /// [scrollToIndex] may be fractional: the integer part selects the item
-  /// and the fractional part offsets by that fraction of the item's
-  /// measured height, added after the whole item has been aligned per
-  /// [alignment]. Physical list bounds take priority over the requested
-  /// alignment or fraction — the final position is always clamped to what
-  /// the scrollable can reach.
+  /// The integer part selects the item; a fractional part selects an offset
+  /// within it. The final offset is clamped to the scrollable's bounds.
   ///
-  /// Reaching [scrollToIndex] may require a multi-frame sequential
-  /// measurement pass when the item has not been laid out yet; the returned
-  /// [Future] completes once the final position has been applied.
+  /// Supports vertical and horizontal non-reversed [ListView.builder]s. The
+  /// list must use [watch] for every item, have exactly one attached
+  /// [ScrollPosition], and have completed its first layout. Padding along the
+  /// scroll axis is not included in the calculated offset.
   ///
-  /// The target offset is computed purely from summed measured item
-  /// heights; it does not account for the scrollable's `EdgeInsets` padding
-  /// (e.g. `ListView.builder(padding: ...)`). A list with top padding will
-  /// undershoot the visually-aligned target by `padding.top` pixels. This is
-  /// a documented limitation of the current offset formula, not a clamping
-  /// bug.
+  /// Items not yet measured are discovered in a sequential, multi-frame pass.
+  /// After changing list data or scroll direction, call [invalidateMeasurements]
+  /// before calling this method.
   ///
-  /// ### Error contract
-  ///
-  /// Parameters are validated synchronously, before the controller's
-  /// [ScrollPosition] is touched, so a bad call fails the same way whether
-  /// or not the controller is attached:
-  ///
-  /// * Throws [RangeError] if `scrollToIndex < 0`.
-  /// * Throws [ArgumentError] if `scrollToIndex` is `NaN` or infinite.
-  /// * Throws [ArgumentError] if [duration] is negative.
-  /// * Throws [ArgumentError] if [alignment] is `NaN`, or outside `[0, 1]`.
-  ///
-  /// An index past the end of the list is a distinct failure mode: it
-  /// cannot be detected here because the controller does not know
-  /// `itemCount`. Instead it is detected while searching, by the same
-  /// finite-progress rule as the physical list bound below:
-  ///
-  /// * Throws [RangeError] if `scrollToIndex` cannot be reached because the
-  ///   list ends before the target index is measured, or the list is
-  ///   empty. This is reported once the search has stepped twice in a row
-  ///   without either the scroll position or the set of measured items
-  ///   changing — i.e. the scrollable has settled at a stable physical
-  ///   edge and the target still has not been found.
-  ///
-  /// Once attached, exactly one [ScrollPosition] must be present:
-  ///
-  /// * Throws [StateError] if `hasClients` is false (no attached
-  ///   position) or [positions] contains more than one entry — this
-  ///   controller supports a single vertical `ListView.builder` only.
-  ///
-  /// A [ScrollPosition] is added to [positions] by `ScrollController.attach`
-  /// itself, which can run before that position's first layout pass (for
-  /// example from a `ScrollController.onAttach` callback) — at that point
-  /// `hasClients`/`positions.length == 1` are already satisfied, but the
-  /// position's viewport metrics are not:
-  ///
-  /// * Throws [StateError] if the attached [ScrollPosition] has not yet
-  ///   completed its first layout (`hasViewportDimension`/`hasPixels` are
-  ///   `false`), instead of the unqualified `_TypeError` that reading
-  ///   [ScrollPosition.viewportDimension] or [ScrollPosition.pixels] would
-  ///   otherwise produce. Call [scrollTo] after the initial frame, not from
-  ///   `onAttach`.
-  ///
-  /// `watch()` requires the logical indices passed by the list to form a
-  /// contiguous run starting at 0 for every index up to the current scroll
-  /// target. If a gap is found while summing measured heights (for example
-  /// `watch()` was used with indices `0,1,2,50,51,52`):
-  ///
-  /// * Throws [StateError] naming the first missing index, instead of the
-  ///   unqualified `_TypeError` that a null-asserted map lookup used to
-  ///   produce. This is only thrown once the internal search below (see
-  ///   "Recovery after invalidation") has walked the physical list from the
-  ///   start and confirmed the gap is real — not merely a target the search
-  ///   has not reached yet, which instead keeps searching or eventually
-  ///   reports [RangeError] as above.
-  ///
-  /// A full, contiguous `0..scrollToIndex` set of `watch()` indices is
-  /// necessary but not sufficient: each `index` must also equal its row's
-  /// actual physical position in the sliver (see `watch`'s
-  /// Dartdoc "Index identity contract"). This is checked once the prefix is
-  /// otherwise trustworthy — complete and about to be summed — whether that
-  /// prefix came from the already-measured fast path or from the internal
-  /// search pass below:
-  ///
-  /// * Throws [StateError] if any index in `0..scrollToIndex` was last
-  ///   registered by a row whose physical sliver position disagreed with the
-  ///   `watch(index:)` value it was given, before this call sums that
-  ///   prefix into an offset and completes. This is deliberately not fixed
-  ///   by [invalidateMeasurements]: a data reorder invalidates cached sizes,
-  ///   but it does not retroactively correct which physical positions the
-  ///   caller's `itemBuilder` passes to `watch()` — the caller must do that.
-  ///
-  /// ### Recovery after invalidation
-  ///
-  /// [invalidateMeasurements] clears every measured size without copying
-  /// any row's current (possibly stale, pre-relayout) geometry back in — see
-  /// its Dartdoc. As a result, the first [scrollTo] call after invalidation
-  /// almost never finds a complete `0..scrollToIndex` prefix already in
-  /// [_sizes], even if [scrollToIndex] itself happens to already be
-  /// measured (e.g. it is a row that is still on screen and relaid out
-  /// quickly). Rather than trusting a partial prefix — which could sum
-  /// through a hole, or worse, silently use it if the hole happened to be
-  /// filled by unrelated history — [scrollTo] checks the *entire* prefix
-  /// before doing anything else. If it is incomplete, this call internally
-  /// returns to offset 0 (via `jumpTo`, without asking the caller to do so
-  /// or to raise `cacheExtent`) and reuses the same sequential
-  /// search-and-measure pass already used for a target that was never
-  /// measured at all: it steps forward one viewport at a time,
-  /// waiting for a real frame — and therefore a real layout — after each
-  /// step, until the whole prefix through the target is known from
-  /// post-invalidation measurements. Only then does it compute the target
-  /// offset. This makes the first `scrollTo` call after
-  /// [invalidateMeasurements] safe to issue immediately, with no
-  /// intervening `pump`/frame required from the caller, even though it may
-  /// take several frames to actually resolve.
-  ///
-  /// ### Cancellation
-  ///
-  /// A [scrollTo] call in flight is cancelled by completing its [Future]
-  /// with a [ScrollCancelledException] carrying the matching
-  /// [ScrollCancelReason] when:
-  ///
-  /// * A newer [scrollTo] call supersedes this one
-  ///   ([ScrollCancelReason.superseded]).
-  /// * [cancelScroll] is called explicitly while this call is still
-  ///   searching ([ScrollCancelReason.explicitCancel]).
-  /// * [invalidateMeasurements] is called while this call is still searching
-  ///   ([ScrollCancelReason.dataInvalidated]) — the target index may no
-  ///   longer refer to the same logical row once measurements reset, so this
-  ///   call is never silently resumed or retried.
-  /// * The controller detaches from its [ScrollPosition] while this call is
-  ///   still searching ([ScrollCancelReason.detached]).
-  /// * The controller is disposed while this call is still searching
-  ///   ([ScrollCancelReason.disposed]).
-  ///
-  /// Each check happens after the next `await` inside the search, not
-  /// synchronously when the superseding event occurs, so a cancelled call's
-  /// [Future] may still take a few more scheduler ticks to settle. However
-  /// [cancelScroll] and [invalidateMeasurements] both stop the
-  /// position's current activity immediately, synchronously, before that
-  /// happens — so `position.pixels` itself freezes at (or very near) its
-  /// value at the moment of cancellation rather than continuing to coast
-  /// toward the search's in-flight step target while the `Future` catches
-  /// up. It never applies a stale position after that point.
+  /// Parameter validation happens before the position is touched. Because this
+  /// method is `async`, errors are reported through its returned [Future]. It
+  /// completes with [RangeError], [ArgumentError], [StateError], or
+  /// [ScrollCancelledException] as applicable.
   Future<void> scrollTo(
     double scrollToIndex, {
     Duration? duration,
@@ -996,7 +912,7 @@ class IndexedScrollController extends ScrollController {
       throw StateError(
         'scrollTo requires exactly one attached ScrollPosition, but found '
         '${positions.length}. IndexedScrollController supports a single '
-        'vertical ListView.builder only.',
+        'ListView.builder only, vertical or horizontal.',
       );
     }
 
@@ -1025,6 +941,14 @@ class IndexedScrollController extends ScrollController {
         'not yet available; call it after the initial frame, not from '
         'onAttach.',
       );
+    }
+
+    // Starting a scroll mid-drag would replace the DragScrollActivity that
+    // holds the user's in-progress gesture, killing it (see
+    // [_userDragging]). The user's finger wins, so this call refuses
+    // outright rather than fighting it.
+    if (_userDragging) {
+      throw ScrollCancelledException(ScrollCancelReason.userGesture, scrollToIndex);
     }
 
     // Claiming a new operation id supersedes whatever call was previously
@@ -1070,31 +994,31 @@ class IndexedScrollController extends ScrollController {
       // numerically-close-enough offset would complete successfully anyway.
       _checkNoWatchIndexMismatch(targetItemIndex);
 
-      var scrolledWidgetHeights = 0.0;
+      var scrolledExtent = 0.0;
       var minFraction = 0.0;
       var isMinFound = false;
       while (index < _sizes.length) {
-        var size = _sizeOrThrow(index.toInt());
-        if (scrolledWidgetHeights + size.height > scrollPosition && !isMinFound) {
+        var extent = _extentOf(_sizeOrThrow(index.toInt()));
+        if (scrolledExtent + extent > scrollPosition && !isMinFound) {
           minVisibleIndex = index;
-          minFraction = (scrollPosition - scrolledWidgetHeights) / size.height;
+          minFraction = (scrollPosition - scrolledExtent) / extent;
           minVisibleIndex += minFraction;
           isMinFound = true;
           break;
         }
 
-        scrolledWidgetHeights += size.height;
+        scrolledExtent += extent;
         index += 1.0;
       }
 
       var priorItems = 0.0;
       for (int i = 0; i < targetItemIndex; i++) {
-        priorItems += _sizeOrThrow(i).height;
+        priorItems += _extentOf(_sizeOrThrow(i));
       }
       var fraction = scrollToIndex - targetItemIndex;
-      var height = _sizeOrThrow(targetItemIndex).height;
-      var alignmentAdjust = -(viewportSize - height) * alignment;
-      var targetPixels = priorItems + height * fraction + alignmentAdjust;
+      var extent = _extentOf(_sizeOrThrow(targetItemIndex));
+      var alignmentAdjust = -(viewportSize - extent) * alignment;
+      var targetPixels = priorItems + extent * fraction + alignmentAdjust;
       if ((targetPixels - scrollPosition).abs() <= _alreadyAtTargetTolerancePixels) {
         _clearActiveOperation(myOperationId);
         return Future.value();
@@ -1141,4 +1065,3 @@ class IndexedScrollController extends ScrollController {
     super.dispose();
   }
 }
-

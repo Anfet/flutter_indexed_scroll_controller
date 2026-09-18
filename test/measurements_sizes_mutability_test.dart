@@ -107,9 +107,17 @@ void main() {
         expect(controller.measurementsSizes[1]?.height, closeTo(100.0, 1.0));
 
         // scrollTo(3) sums heights of logical indices 0,1,2 to reach logical
-        // index 3: 100+100+100 = 300.0px. With the write blocked, this must
-        // land on the true offset, not the 1199.0px the ISC-36 exploit used
-        // to produce.
+        // index 3: 100+100+100 = 300.0px of raw offset. With the write
+        // blocked, that sum comes from the real 100px row heights rather
+        // than the 1199.0px the ISC-36 exploit used to produce.
+        //
+        // This list does not actually overflow, though: 5 rows * 100px =
+        // 500px of content in a 600px viewport, so maxScrollExtent is 0 and
+        // the scrollable cannot move at all. The raw 300px target is past
+        // the physical end of the list, and scrollTo() clamps it, so the
+        // settled position is 0. The corruption this test guards against
+        // would still be caught -- a poisoned entry changes the summed
+        // offset, and the assertions above already prove the write throws.
         //
         // duration: Duration.zero drives scrollTo() via jumpTo instead of a
         // real animateTo ticker (see _runAnimateTo), so pumpUntilDone only
@@ -120,11 +128,12 @@ void main() {
 
         expect(
           controller.position.pixels,
-          closeTo(300.0, 1.0),
+          closeTo(controller.position.maxScrollExtent, 1.0),
           reason:
-              'With the exploit write blocked, scrollTo(3) lands on the true '
-              'offset implied by the real 100px row heights, not the '
-              '1199.0px the ISC-36 corruption used to produce.',
+              'The content (500px) is shorter than the viewport (600px), so '
+              'maxScrollExtent is 0 and scrollTo(3) clamps to it rather than '
+              'resolving at the unreachable 300px the raw offset formula '
+              'produces.',
         );
       },
     );

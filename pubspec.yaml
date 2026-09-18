@@ -1,7 +1,15 @@
 name: indexed_scroll_controller
-description: "scroll to a targeted index in flutter list view"
+description: "Scroll a Flutter ListView.builder to any item by index, including items not yet built or measured. Vertical and horizontal."
 version: 0.1.0
 homepage: https://github.com/Anfet/flutter_indexed_scroll_controller
+repository: https://github.com/Anfet/flutter_indexed_scroll_controller
+issue_tracker: https://github.com/Anfet/flutter_indexed_scroll_controller/issues
+
+topics:
+  - scrolling
+  - listview
+  - scroll-controller
+  - ui
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

@@ -28,6 +28,12 @@ class _ScreenDState extends State<ListScreen> {
   }
 
   @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -65,21 +71,13 @@ class _ScreenDState extends State<ListScreen> {
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: NotificationListener<ScrollStartNotification>(
-              // A user drag never implicitly interrupts an in-flight
-              // scrollTo() — see the package Dartdoc. Calling
-              // cancelScroll() here is what gives the user's gesture
-              // priority over a scroll that is still animating. But
-              // scrollTo()'s own internal animateTo() calls also emit
-              // ScrollStartNotification, so cancelling unconditionally
-              // would make a programmatic scroll cancel itself. Only real
-              // user drags carry dragDetails, so that's the guard.
-              onNotification: (notification) {
-                if (notification.dragDetails != null) {
-                  scrollController.cancelScroll();
-                }
-                return false;
-              },
+            // Without this wrapper a drag started during a scrollTo() search
+            // is silently killed: the search's jumpTo replaces the activity
+            // holding the gesture. The wrapper makes the finger win and
+            // completes the scrollTo's Future with
+            // ScrollCancelReason.userGesture.
+            child: IndexedScrollGestureDetector(
+              controller: scrollController,
               child: ListView.builder(
                 controller: scrollController,
                 itemCount: items.length,
@@ -134,7 +132,12 @@ class _ScreenDState extends State<ListScreen> {
                 Expanded(
                   child: ElevatedButton(
                     child: const Text('top'),
-                    onPressed: () => scrollController.scrollTo(0),
+                    // Supersession and user-gesture yields are routine
+                    // outcomes, not bugs, so a fire-and-forget scrollTo()
+                    // still needs a handler or the exception goes unhandled.
+                    onPressed: () => scrollController.scrollTo(0).catchError(
+                          (Object _) {},
+                        ),
                   ),
                 ),
                 const SizedBox(width: 8),

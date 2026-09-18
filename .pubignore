@@ -19,7 +19,3 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
-
-# Internal engineering process notes, not relevant to package consumers.
-todo.md
-eng-review.md

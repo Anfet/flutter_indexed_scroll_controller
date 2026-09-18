@@ -65,10 +65,8 @@ void main() {
       // SliverMultiBoxAdaptorParentData.index compared against the registered
       // watch(index:) value) and makes scrollTo() throw StateError before completing,
       // instead of silently summing a logical-order prefix through the mismatched
-      // entries -- see eng-review.md rule 5 ("Контроллер не может обнаружить
-      // перестановку при прежнем itemCount сам") for why invalidateMeasurements()
-      // alone was never expected to fix a reorder; ISC-28 is what makes that failure
-      // loud rather than silent.
+      // entries. invalidateMeasurements() alone cannot detect a reorder with the
+      // same itemCount; ISC-28 makes that failure explicit rather than silent.
 
       testWidgets(
         'A: reordering rows with unchanged itemCount is rejected by ISC-28 as a '
@@ -213,8 +211,7 @@ void main() {
           expect(
             scrollError,
             isA<StateError>(),
-            reason:
-                'ISC-28: reordering via watch(index: logicalIndex) instead of '
+            reason: 'ISC-28: reordering via watch(index: logicalIndex) instead of '
                 'watch(index: slotPosition) is a watch(index:) mismatch, which '
                 'invalidateMeasurements() does not and cannot fix by itself -- '
                 'the caller\'s itemBuilder must pass the corrected physical '
@@ -333,8 +330,7 @@ void main() {
           expect(
             measurements[insertAt]?.height,
             closeTo(defaultHeight, 1.0),
-            reason:
-                'Directly observed: _sizes[$insertAt] still holds the stale '
+            reason: 'Directly observed: _sizes[$insertAt] still holds the stale '
                 'pre-insertion height $defaultHeight after the off-screen '
                 'insertion, because that slot was not rebuilt (outside the '
                 'viewport) so no new measurement occurred for the new content '
@@ -344,7 +340,7 @@ void main() {
           );
 
           // Step 3: call invalidateMeasurements() -- exactly what the contract
-          // (eng-review.md rule 5, ISC-13 task description) asks callers to do
+          // requires callers to do
           // after this kind of data mutation. It clears _sizes and immediately
           // re-registers only currently LIVE rows; since the viewport is
           // currently scrolled well past index `insertAt`, indices near 0
@@ -383,8 +379,7 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason:
-                'FIXED (ISC-13): after inserting content \'INSERTED\' at logical '
+            reason: 'FIXED (ISC-13): after inserting content \'INSERTED\' at logical '
                 'index $insertAt and calling invalidateMeasurements(), '
                 'scrollTo(${insertAt + 1}) completes at the correct post-insertion '
                 'visual offset $correctOffset px (100+100+$insertedHeight), not '
@@ -418,8 +413,8 @@ void main() {
             (i) => i == deleteAt
                 ? 'del'
                 : i == deleteAt + 1
-                ? 'SURV'
-                : 'orig$i',
+                    ? 'SURV'
+                    : 'orig$i',
           );
           late StateSetter setContentIds;
 
@@ -493,8 +488,7 @@ void main() {
           expect(
             measurements[deleteAt]?.height,
             closeTo(defaultHeight, 1.0),
-            reason:
-                'Directly observed: _sizes[$deleteAt] still holds the stale '
+            reason: 'Directly observed: _sizes[$deleteAt] still holds the stale '
                 'pre-deletion height $defaultHeight (deleted content \'del\') '
                 'after the off-screen deletion, because that slot was not '
                 'rebuilt (outside the viewport) so no new measurement occurred '
@@ -531,8 +525,7 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason:
-                'FIXED (ISC-13): after deleting content \'del\' at logical index '
+            reason: 'FIXED (ISC-13): after deleting content \'del\' at logical index '
                 '$deleteAt and calling invalidateMeasurements(), '
                 'scrollTo(${deleteAt + 1}) completes at the correct post-deletion '
                 'visual offset $correctOffset px (100+100+$survivorHeight), not '
@@ -633,8 +626,7 @@ void main() {
           expect(
             measurements[mutatedIndex]?.height,
             closeTo(oldHeight, 1.0),
-            reason:
-                'Directly observed: _sizes[$mutatedIndex] still holds the stale '
+            reason: 'Directly observed: _sizes[$mutatedIndex] still holds the stale '
                 'height $oldHeight after the off-screen height mutation, because '
                 'the row was not rebuilt (it is outside the viewport) so no new '
                 'measurement occurred. This confirms the staleness '
@@ -674,8 +666,7 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason:
-                'FIXED (ISC-13): after mutating the off-screen height of index '
+            reason: 'FIXED (ISC-13): after mutating the off-screen height of index '
                 '$mutatedIndex from $oldHeight to $newHeight and calling '
                 'invalidateMeasurements(), scrollTo(${mutatedIndex + 1}) completes at '
                 'the visually correct $correctOffset px (using the real new height '
@@ -768,8 +759,7 @@ void main() {
         expect(
           aCompleted,
           isTrue,
-          reason:
-              'By this point A should already have noticed it was superseded by B '
+          reason: 'By this point A should already have noticed it was superseded by B '
               'and completed with a cancellation, independent of '
               'invalidateMeasurements() which has not been called yet.',
         );
@@ -803,8 +793,7 @@ void main() {
             'reason',
             ScrollCancelReason.dataInvalidated,
           ),
-          reason:
-              'B was the genuinely active operation when invalidateMeasurements() ran, '
+          reason: 'B was the genuinely active operation when invalidateMeasurements() ran, '
               'so it must be the one cancelled with dataInvalidated -- proving '
               "invalidateMeasurements() cancels whichever call currently owns "
               '_activeOperationId, not a stale id left over from A even though A was '
@@ -819,9 +808,8 @@ void main() {
       'a non-contiguous watch() index set still gives StateError, not _TypeError, after '
       'invalidateMeasurements() forces a fresh internal search-from-0 pass',
       (WidgetTester tester) async {
-        // eng-review.md rule 3 / ISC-13 task: "до суммирования проверить полный
-        // актуальный префикс; невозможный при заявленном контракте пробел завершать
-        // StateError, а не _TypeError" -- and this must keep holding through
+        // A gap in the current measured prefix must complete with StateError,
+        // rather than _TypeError, and this must keep holding through
         // invalidateMeasurements(), not just the pre-existing _sizeOrThrow() path
         // exercised by scroll_to_contract_test.dart's non-contiguous watch() test.
         //
@@ -879,8 +867,7 @@ void main() {
         expect(
           measurements.keys.toSet(),
           isEmpty,
-          reason:
-              'ISC-31: invalidateMeasurements() no longer eagerly re-populates _sizes '
+          reason: 'ISC-31: invalidateMeasurements() no longer eagerly re-populates _sizes '
               'from live RenderBox.size; the cache starts genuinely empty until a real '
               'post-invalidation layout pass re-registers each row.',
         );
@@ -899,8 +886,7 @@ void main() {
             'message',
             contains('3'),
           ),
-          reason:
-              'scrollTo(52) must internally search from 0, discover the genuine gap '
+          reason: 'scrollTo(52) must internally search from 0, discover the genuine gap '
               'at logical index 3 (never watched, neither before nor after '
               'invalidateMeasurements()), and fail with a StateError naming the '
               'missing index -- not a raw _TypeError, and not a silently wrong '

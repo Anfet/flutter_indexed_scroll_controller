@@ -2,6 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
+/// Awaits [future] while pumping frames, bounded by [maxPumps], so a
+/// `scrollTo()` call under test is proven to actually complete within the
+/// harness's guard budget instead of merely leaving plausible-looking
+/// `pixels` behind after a fixed, unconditional pump loop.
+Future<void> pumpUntilComplete(
+  WidgetTester tester,
+  Future<void> future, {
+  int maxPumps = 300,
+}) async {
+  var settled = false;
+  // Both branches (not just the success one) must flip `settled`, or a
+  // scrollTo() that fails with an error is indistinguishable from one that
+  // never completes: the pump loop below would run for the full maxPumps
+  // budget and this helper would report a spurious "did not complete"
+  // instead of letting the awaited `future` below surface the real error.
+  future.then((_) => settled = true, onError: (_) => settled = true);
+
+  for (var i = 0; i < maxPumps && !settled; i++) {
+    await tester.pump(const Duration(milliseconds: 16));
+  }
+
+  expect(settled, isTrue, reason: 'scrollTo() did not complete within $maxPumps pumps');
+  await future;
+}
+
 /// A snapshot of scroll state at a particular frame.
 class ScrollFrameSnapshot {
   final int frameNumber;
@@ -35,8 +60,7 @@ class ScrollObservationResult {
   final List<ScrollFrameSnapshot> snapshots;
 
   /// Error message if the loop hit guard limit, null otherwise.
-  String? get guardLimitExceededMessage =>
-      completed ? null : 'Guard limit of $frameCount frames exceeded';
+  String? get guardLimitExceededMessage => completed ? null : 'Guard limit of $frameCount frames exceeded';
 
   ScrollObservationResult({
     required this.completed,
@@ -56,15 +80,28 @@ typedef ItemHeightBuilder = double Function(int index);
 
 /// Test harness for observing ListView with varied item heights.
 ///
-/// Creates a vertical ListView.builder with configurable item count and heights,
-/// using the real IndexedScrollController.watch() API. Provides frame-by-frame
-/// observation loop with progress tracking and guard limit to prevent hangs.
+/// Creates a `ListView.builder` (vertical by default, or horizontal when
+/// [scrollDirection] is [Axis.horizontal] and [itemWidthBuilder] is
+/// supplied) with configurable item count and extents, using the real
+/// IndexedScrollController.watch() API. Provides frame-by-frame observation
+/// loop with progress tracking and guard limit to prevent hangs.
 class ScrollHarness extends StatefulWidget {
   /// Number of items in the list.
   final int itemCount;
 
   /// Function to compute item height by index.
   final ItemHeightBuilder itemHeightBuilder;
+
+  /// Function to compute item width by index. Only used when
+  /// [scrollDirection] is [Axis.horizontal]; defaults to a fixed width when
+  /// omitted.
+  final ItemHeightBuilder? itemWidthBuilder;
+
+  /// Scroll axis for the underlying `ListView.builder`.
+  final Axis scrollDirection;
+
+  /// Text direction wrapping the `ListView.builder`, for RTL scenarios.
+  final TextDirection textDirection;
 
   /// Guard limit for pump frames before failing the observation.
   ///
@@ -79,6 +116,9 @@ class ScrollHarness extends StatefulWidget {
     super.key,
     required this.itemCount,
     required this.itemHeightBuilder,
+    this.itemWidthBuilder,
+    this.scrollDirection = Axis.vertical,
+    this.textDirection = TextDirection.ltr,
     this.guardLimit = 500,
     this.onSnapshot,
   });
@@ -167,28 +207,35 @@ class ScrollHarnessState extends State<ScrollHarness> {
 
   @override
   Widget build(BuildContext context) {
+    final isHorizontal = widget.scrollDirection == Axis.horizontal;
     return MaterialApp(
-      home: Scaffold(
-        body: ListView.builder(
-          controller: _controller,
-          itemCount: widget.itemCount,
-          itemBuilder: (context, index) {
-            final height = widget.itemHeightBuilder(index);
-            return _controller.watch(
-              index: index,
-              child: Container(
-                height: height,
-                color: Colors.primaries[index % Colors.primaries.length],
-                child: Center(
-                  child: Text(
-                    'Item $index\n${height.toStringAsFixed(0)} px',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white),
+      home: Directionality(
+        textDirection: widget.textDirection,
+        child: Scaffold(
+          body: ListView.builder(
+            controller: _controller,
+            scrollDirection: widget.scrollDirection,
+            itemCount: widget.itemCount,
+            itemBuilder: (context, index) {
+              final height = widget.itemHeightBuilder(index);
+              final width = widget.itemWidthBuilder?.call(index) ?? 100.0;
+              return _controller.watch(
+                index: index,
+                child: Container(
+                  height: isHorizontal ? null : height,
+                  width: isHorizontal ? width : null,
+                  color: Colors.primaries[index % Colors.primaries.length],
+                  child: Center(
+                    child: Text(
+                      'Item $index',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

@@ -7,7 +7,7 @@ void main() {
     // Configuration: rows 100px, viewport 600px (6 items visible)
     // Scenario: starting at offset 0, indices 0-5 are visible (6 rows = 600px)
     // Previously, scrollTo(6) incorrectly returned Future.value() at offset 0 instead of 600.
-    // Fixed by ISC-02B: see eng-review.md section "Подтверждённый дефект поверх этих решений"
+    // The early-exit check compares target pixels instead of visible indices.
 
     testWidgets(
       'scrollTo(5) reaches offset 500 - regression control',
@@ -91,8 +91,8 @@ void main() {
         // flawed logic), scrollTo(6) returned Future.value() at offset 0 instead of scrolling
         // to offset 600. The early exit now compares the computed target offset in pixels to
         // the current position, so this scenario correctly moves the list.
-        // See eng-review.md: "если строка k уже частично видна (входит в диапазон видимых индексов),
-        // код может решить, что цель достигнута, и завершить Future без реального скролла"
+        // A partially visible row must not complete scrollTo before reaching its
+        // computed target offset.
 
         const rowHeight = 100.0;
         const itemCount = 20;
@@ -132,11 +132,10 @@ void main() {
         expect(
           finalOffset,
           closeTo(600.0, 1.0),
-          reason:
-              'scrollTo(6) should reach offset 600 (6 rows * 100px). Before ISC-02B, '
+          reason: 'scrollTo(6) should reach offset 600 (6 rows * 100px). Before ISC-02B, '
               'index 6 was considered "visible" by the flawed maxVisibleIndex check, so '
-              'Future completed without actual scroll. This is the confirmed defect from '
-              'eng-review.md, fixed by comparing target pixels instead of indices.',
+              'Future completed without actual scroll. The fix compares target pixels '
+              'instead of indices.',
         );
       },
     );
@@ -149,9 +148,8 @@ void main() {
         // condition (scrolledWidgetHeights + size.height > heightWidthViewport was never true
         // for this config). Therefore maxVisibleIndex stayed at its initialization value 0.0,
         // which falsely matched scrollToIndex=0 under the old index-equality early exit,
-        // causing early exit without actual scroll. This was the second path of the same bug
-        // confirmed in eng-review.md. The early exit now compares the computed target offset
-        // in pixels to the current position instead of relying on maxVisibleIndex.
+        // causing early exit without actual scroll. The early exit now compares the
+        // computed target offset in pixels to the current position.
 
         const rowHeight = 100.0;
         const itemCount = 20;
@@ -207,13 +205,12 @@ void main() {
         expect(
           finalOffset,
           closeTo(0.0, 1.0),
-          reason:
-              'scrollTo(0) after scrollTo(15) should return to offset 0. Before ISC-02B, '
+          reason: 'scrollTo(0) after scrollTo(15) should return to offset 0. Before ISC-02B, '
               'when the entire list was already measured, the visible-range scan loop never '
               'reached break, so maxVisibleIndex stayed at default 0.0, which falsely matched '
               'scrollToIndex=0, causing Future.value() completion without actual scroll. This '
-              'was the second path of the confirmed defect from eng-review.md, fixed by '
-              'comparing target pixels instead of indices.',
+              'was the second path of the defect, fixed by comparing target pixels '
+              'instead of indices.',
         );
       },
     );

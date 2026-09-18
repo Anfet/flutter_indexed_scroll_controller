@@ -13,22 +13,17 @@ import 'support/scroll_harness.dart';
 /// 2. Forward and backward scrollTo operations reach exact offsets.
 /// 3. Non-contiguous watch() indices (0,1,2,50,51,52) raise StateError,
 ///    not _TypeError (this is covered by ISC-03 test, included here for
-///    regression tracking of the specific bug mentioned in eng-review.md).
+///    regression tracking of the original gap-handling failure).
 ///
-/// eng-review.md section 5 (ISC-12A): "Закрепить для проверяемого вертикального
-/// ListView.builder, что после jumpTo/initialScrollOffset измеряется сплошной
-/// префикс и прямой/обратный scrollTo даёт точный offset."
+/// These tests also verify that a vertical [ListView.builder] produces a
+/// continuous measured prefix after `jumpTo` or `initialScrollOffset`.
 void main() {
   group('ISC-12A: watch() index continuity and offset accuracy', () {
     testWidgets(
       'jumpTo to 12000px ensures continuous prefix is measured, then forward/back scrollTo reach exact offsets',
       (WidgetTester tester) async {
-        // Reproduces the QA scenario from eng-review.md:
-        // "Дополнительный QA-стенд проследил регистрацию в проверенной
-        // конфигурации ListView.builder: после jumpTo(12000) были измерены
-        // индексы 0..99 без пробела; такой же префикс получился при
-        // initialScrollOffset: 12000. После прыжка scrollTo(105) и обратный
-        // scrollTo(2) дали ожидаемые 13650 и 110 px."
+        // After jumpTo(12000), the ListView.builder configuration must measure
+        // a continuous prefix. Forward and backward calls then reach exact offsets.
         //
         // Using 120 items x 100px each (total 12000px), so jumpTo(12000)
         // lands at the end. Verify that measurement fills from 0.
@@ -58,8 +53,7 @@ void main() {
         expect(
           postJumpSizes.isNotEmpty,
           isTrue,
-          reason:
-              'After jumpTo, the controller should have measured at least one item.',
+          reason: 'After jumpTo, the controller should have measured at least one item.',
         );
 
         // If there are measured items, check that they form a continuous prefix
@@ -72,8 +66,7 @@ void main() {
             expect(
               postJumpSizes.containsKey(i),
               isTrue,
-              reason:
-                  'After jumpTo, indices should form a continuous prefix from 0; '
+              reason: 'After jumpTo, indices should form a continuous prefix from 0; '
                   'index $i is missing between 0 and $maxMeasuredIndex.',
             );
           }
@@ -122,8 +115,7 @@ void main() {
         expect(
           offsetAfterScrollToForward,
           closeTo(expectedOffsetForIndex50, 2.0),
-          reason:
-              'After scrollTo(50.0), offset should be approximately ${expectedOffsetForIndex50}px '
+          reason: 'After scrollTo(50.0), offset should be approximately ${expectedOffsetForIndex50}px '
               '(sum of heights 0..49 with item height $itemHeight each), '
               'but got $offsetAfterScrollToForward.',
         );
@@ -171,8 +163,7 @@ void main() {
         expect(
           offsetAfterScrollToBack,
           closeTo(expectedOffsetForIndex2, 2.0),
-          reason:
-              'After scrollTo(2.0), offset should be approximately ${expectedOffsetForIndex2}px '
+          reason: 'After scrollTo(2.0), offset should be approximately ${expectedOffsetForIndex2}px '
               '(sum of heights 0..1 with item height $itemHeight each), '
               'but got $offsetAfterScrollToBack.',
         );
@@ -182,8 +173,7 @@ void main() {
         expect(
           finalSizes.containsKey(0) && finalSizes.containsKey(1) && finalSizes.containsKey(2),
           isTrue,
-          reason:
-              'After both scrollTo operations, indices 0, 1, and 2 should be measured.',
+          reason: 'After both scrollTo operations, indices 0, 1, and 2 should be measured.',
         );
       },
     );
@@ -191,8 +181,7 @@ void main() {
     testWidgets(
       'initialScrollOffset creates continuous prefix, scrollTo(2) returns exact offset',
       (WidgetTester tester) async {
-        // Reproduces the scenario from eng-review.md:
-        // "такой же префикс получился при initialScrollOffset: 12000"
+        // The same continuous prefix is expected after initialScrollOffset.
         //
         // Using initialScrollOffset instead of jumpTo. With 120 items x 100px,
         // initialScrollOffset: 12000 lands at the very end.
@@ -226,8 +215,7 @@ void main() {
         expect(
           measuredSizes.isNotEmpty,
           isTrue,
-          reason:
-              'After initialScrollOffset, the controller should have measured at least one item.',
+          reason: 'After initialScrollOffset, the controller should have measured at least one item.',
         );
 
         // Check continuity of measured indices from 0
@@ -238,8 +226,7 @@ void main() {
             expect(
               measuredSizes.containsKey(i),
               isTrue,
-              reason:
-                  'After initialScrollOffset, indices should form a continuous prefix from 0; '
+              reason: 'After initialScrollOffset, indices should form a continuous prefix from 0; '
                   'index $i is missing between 0 and $maxMeasuredIndex.',
             );
           }
@@ -283,8 +270,7 @@ void main() {
         expect(
           offsetAfterScroll,
           closeTo(expectedOffset, 2.0),
-          reason:
-              'After scrollTo(2.0) from initialScrollOffset, offset should be '
+          reason: 'After scrollTo(2.0) from initialScrollOffset, offset should be '
               '$expectedOffset px, but got $offsetAfterScroll.',
         );
       },
@@ -295,10 +281,8 @@ void main() {
       (WidgetTester tester) async {
         // This case is covered by ISC-03's "non-contiguous watch() indices give
         // StateError naming the missing index" test. Including it here as a
-        // regression anchor for ISC-12A: confirms that the _TypeError bug from
-        // eng-review.md ("Искусственно несплошные логические индексы watch()
-        // (0,1,2,50,51,52) вызвали _TypeError") has been resolved by ISC-03's
-        // implementation of _sizeOrThrow().
+        // regression anchor for ISC-12A: confirms that sparse logical indices
+        // surface StateError through _sizeOrThrow().
         //
         // If this test fails, it indicates a regression in error handling of
         // discontinuous watch() index registration.
@@ -364,8 +348,7 @@ void main() {
             'message',
             contains('3'),
           ),
-          reason:
-              'Non-contiguous watch() indices must raise StateError naming the '
+          reason: 'Non-contiguous watch() indices must raise StateError naming the '
               'first missing index (3 in this case), not _TypeError.',
         );
       },

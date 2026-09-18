@@ -125,17 +125,29 @@ void main() {
         // items 0-8 during the initial pumpAndSettle above (10 items * 100px
         // = 1000px of content only partly fits), so index 5 is already known
         // before scrollTo runs and Duration.zero's jumpTo path does not need
-        // a multi-frame search pass to reach it. That makes the exact target
-        // offset (5 * 100 = 500, alignment 0) reachable and worth asserting
-        // precisely instead of just "moved forward".
+        // a multi-frame search pass to reach it.
+        //
+        // The raw offset formula puts index 5 at 5 * 100 = 500, but 1000px of
+        // content in a 600px viewport caps maxScrollExtent at 400 -- 500 is
+        // past the physical end of the list and no amount of scrolling can
+        // show it. This assertion previously read 500.0 because it sampled
+        // position.pixels inside the one-frame window before Flutter's own
+        // layout correction pulled the position back to the bound; the
+        // scrollable always settled at 400. scrollTo() now clamps the final
+        // target itself, so the documented "physical list bounds take
+        // priority over the requested alignment" contract holds at the
+        // moment the Future resolves rather than a frame later.
         final future =
             controller.scrollTo(5.0, duration: Duration.zero);
         await tester.pump(); // One frame to process jumpTo
         await future;
 
-        expect(controller.position.pixels, 500.0,
+        expect(controller.position.pixels, 400.0,
             reason: 'scrollTo(5.0, duration: Duration.zero) should jump '
-                'straight to the exact measured offset for index 5');
+                'straight to the clamped target for index 5: the raw offset '
+                '(500) is beyond maxScrollExtent (400), and the position '
+                'must already be in bounds when the Future resolves');
+        expect(controller.position.pixels, controller.position.maxScrollExtent);
       },
     );
 

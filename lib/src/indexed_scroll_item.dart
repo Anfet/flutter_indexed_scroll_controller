@@ -1,9 +1,17 @@
 part of 'indexed_scroll_controller.dart';
 
+/// A list-item wrapper that reports its size to an [IndexedScrollController].
+///
+/// Prefer [IndexedScrollController.watch] so the controller and index are kept
+/// beside the `itemBuilder` index.
 class IndexedScrollItem extends SingleChildRenderObjectWidget {
+  /// Controller that receives this item's measurement.
   final IndexedScrollController controller;
+
+  /// Physical position of this item in the enclosing list.
   final int index;
 
+  /// Creates an item wrapper registered under [index].
   const IndexedScrollItem({
     super.key,
     required this.controller,

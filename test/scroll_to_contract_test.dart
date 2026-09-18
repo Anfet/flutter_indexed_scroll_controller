@@ -6,6 +6,7 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 import 'support/scroll_harness.dart';
 
 void main() {
+  _errorDeliveryContract();
   group('ISC-03: scrollTo error contract', () {
     testWidgets('scrollTo(-1) throws RangeError', (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -112,8 +113,7 @@ void main() {
       );
     });
 
-    testWidgets('scrollTo with no attached ScrollPosition throws StateError',
-        (WidgetTester tester) async {
+    testWidgets('scrollTo with no attached ScrollPosition throws StateError', (WidgetTester tester) async {
       // Controller never attached to any Scrollable: hasClients is false.
       final controller = IndexedScrollController(
         scrollDuration: const Duration(milliseconds: 100),
@@ -124,9 +124,8 @@ void main() {
       expect(
         () => controller.scrollTo(5.0),
         throwsA(isA<StateError>()),
-        reason:
-            'scrollTo with zero attached positions must be rejected with StateError, '
-            'distinguishing "no clients" from "more than one position" (eng-review.md item 8).',
+        reason: 'scrollTo with zero attached positions must be rejected with StateError, '
+            'distinguishing "no clients" from "more than one position".',
       );
     });
 
@@ -145,17 +144,14 @@ void main() {
         expect(
           () => controller.scrollTo(-1.0),
           throwsA(isA<RangeError>()),
-          reason:
-              'Parameter validation (RangeError for negative index) must run '
+          reason: 'Parameter validation (RangeError for negative index) must run '
               'before any attachment/position check, per the ISC-03 contract order.',
         );
       },
     );
 
-    testWidgets('non-contiguous watch() indices give StateError naming the missing index',
-        (WidgetTester tester) async {
-      // Reproduces eng-review.md's watch() 0,1,2,50,51,52 scenario: registering
-      // logical indices with a gap must surface a StateError with a useful
+    testWidgets('non-contiguous watch() indices give StateError naming the missing index', (WidgetTester tester) async {
+      // Registering logical indices 0,1,2,50,51,52 must surface a StateError with a useful
       // message instead of an unqualified _TypeError from `_sizes[i]!`.
       final controller = IndexedScrollController(
         scrollDuration: const Duration(milliseconds: 100),
@@ -217,9 +213,100 @@ void main() {
           'message',
           contains('3'),
         ),
-        reason:
-            'Summing the prefix 0..51 hits the first missing index (3), which must '
+        reason: 'Summing the prefix 0..51 hits the first missing index (3), which must '
             'be named in a StateError rather than throwing _TypeError.',
+      );
+    });
+  });
+}
+
+void _errorDeliveryContract() {
+  group('validation errors are delivered through the returned Future', () {
+    Widget buildList(IndexedScrollController controller) {
+      return MaterialApp(
+        home: Scaffold(
+          body: ListView.builder(
+            controller: controller,
+            itemCount: 20,
+            itemBuilder: (context, index) => controller.watch(
+              index: index,
+              child: SizedBox(height: 100.0, child: Text('Item $index')),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets(
+      'a try/catch around a non-awaited scrollTo does NOT catch them',
+      (tester) async {
+        final controller = IndexedScrollController(scrollDuration: Duration.zero);
+        addTearDown(controller.dispose);
+        await tester.pumpWidget(buildList(controller));
+        await tester.pumpAndSettle();
+
+        // scrollTo is `async`, so even though validation runs before the
+        // first await, the error surfaces on the returned Future rather than
+        // being thrown out of the call itself. This pins the behavior the
+        // "Error contract" Dartdoc describes, so the two cannot drift.
+        var caughtSynchronously = false;
+        Future<void>? escaped;
+        try {
+          escaped = controller.scrollTo(-1);
+        } catch (_) {
+          caughtSynchronously = true;
+        }
+
+        expect(
+          caughtSynchronously,
+          isFalse,
+          reason: 'A bare try/catch without await must not be expected to '
+              'catch a validation error from an async method.',
+        );
+        await expectLater(escaped, throwsA(isA<RangeError>()));
+      },
+    );
+
+    testWidgets('awaiting the call does catch them', (tester) async {
+      final controller = IndexedScrollController(scrollDuration: Duration.zero);
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(buildList(controller));
+      await tester.pumpAndSettle();
+
+      var caught = false;
+      try {
+        await controller.scrollTo(double.nan);
+      } on ArgumentError catch (_) {
+        caught = true;
+      }
+      expect(caught, isTrue);
+    });
+
+    testWidgets('a rejected call does not move the list', (tester) async {
+      final controller = IndexedScrollController(scrollDuration: Duration.zero);
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(buildList(controller));
+      await tester.pumpAndSettle();
+
+      // scrollTo's search awaits real frames, so it can only complete while
+      // something is pumping them -- a bare `await` here would deadlock.
+      var settled = false;
+      final moved = controller.scrollTo(5).then((_) => settled = true);
+      for (var i = 0; i < 300 && !settled; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await moved;
+      final before = controller.offset;
+
+      await expectLater(
+        controller.scrollTo(3, alignment: 2.0),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        controller.offset,
+        before,
+        reason: 'Validation runs before the ScrollPosition is touched, so a '
+            'rejected call must leave the position exactly where it was.',
       );
     });
   });

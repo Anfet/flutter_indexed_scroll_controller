@@ -8,9 +8,9 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// `invalidateMeasurements()`, with an incomplete prefix and no widened
 /// `cacheExtent`.
 ///
-/// eng-review.md's architectural note (ISC-41 section) traced this to
-/// `scrollTo()`'s internal recovery `jumpTo(0)` not waiting for a frame
-/// before `_runAnimateTo`'s search loop starts stepping. With
+/// The regression occurred when `scrollTo()`'s internal recovery `jumpTo(0)`
+/// did not wait for a frame
+/// before `_runAnimateTo`'s search loop started stepping. With
 /// `duration: Duration.zero`, that loop's very first step also takes a
 /// `jumpTo` (its own zero-duration fast path), so both jumps used to fire
 /// back-to-back before row 0 was ever built/laid out: index 0 never
@@ -92,7 +92,7 @@ void main() {
         // scrollTo(10, duration: Duration.zero). Before the fix this call's
         // Future never completed within any reasonable frame budget and
         // position.pixels drifted far past the physical end of the list
-        // (eng-review.md recorded 40400px against a 30-row list). The fix
+        // (it reached 40400px against a 30-row list). The fix
         // must make this settle in a bounded number of frames at the exact
         // target: rows 0-8 at 100px (900) + row 9 at its new 350px = 1250px.
         const expectedOffset = mutatedIndex * defaultHeight + newHeight; // 1250.0
@@ -136,8 +136,7 @@ void main() {
               '$maxFrames frames after invalidateMeasurements(), not hang.',
         );
         expect(error, isNull, reason: 'scrollTo must complete successfully, not error. Got: $error');
-        expect(controller.measurementsSizes.containsKey(0), isTrue,
-            reason: 'Index 0 must have been measured during recovery.');
+        expect(controller.measurementsSizes.containsKey(0), isTrue, reason: 'Index 0 must have been measured during recovery.');
         expect(
           controller.position.pixels,
           closeTo(expectedOffset, 1.0),
@@ -234,8 +233,7 @@ void main() {
       'unreachable index reports RangeError instead of drifting past the '
       'physical end of the list',
       (WidgetTester tester) async {
-        // eng-review.md's "Повторное архитектурное ревью: GO отозван" note:
-        // a 20-row x 100px list, invalidateMeasurements(), then
+        // A 20-row x 100px list, invalidateMeasurements(), then
         // scrollTo(30, duration: Duration.zero) used to never settle --
         // position.pixels reached 32000px instead of the documented
         // RangeError, because the search loop's zero-duration jumpTo steps
