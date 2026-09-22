@@ -8,9 +8,11 @@ All notable changes to this package are documented here. This project follows [S
 
 - None.
 
+## 0.3.2
+
 ### Fixed
 
-- Fixed `ScrollAlignmentTarget.row` not including the trailing separator's extent, causing it to land at the same offset as `ScrollAlignmentTarget.item` whenever `alignment != 0`.
+- Documentation-only release: the `ScrollAlignmentTarget.row` fix (not including the trailing separator's extent, causing it to land at the same offset as `ScrollAlignmentTarget.item` whenever `alignment != 0`) shipped in 0.3.1's code but was missing from that entry; recorded here for the record.
 
 ## 0.3.1
 
