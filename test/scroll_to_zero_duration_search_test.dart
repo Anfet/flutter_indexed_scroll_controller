@@ -37,12 +37,10 @@ void main() {
         // initial pumpAndSettle, so index 80 is far outside what is measured
         // and reaching it must drive the sequential search/measuring loop in
         // _runAnimateTo, not just the final single-step jump.
-        expect(controller.measurementsSizes.containsKey(80), isFalse,
-            reason: 'Index 80 must start unmeasured so the search loop runs');
+        expect(controller.measurementsSizes.containsKey(80), isFalse, reason: 'Index 80 must start unmeasured so the search loop runs');
 
         var settled = false;
-        final future = controller.scrollTo(80.0, duration: Duration.zero)
-          ..then((_) => settled = true);
+        final future = controller.scrollTo(80.0, duration: Duration.zero)..then((_) => settled = true);
 
         // If any search-loop step regresses back to animateTo with
         // duration: Duration.zero, Flutter drives a real

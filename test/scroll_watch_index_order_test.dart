@@ -94,8 +94,7 @@ void main() {
         expect(
           measurements.keys.toSet(),
           equals({0, 1, 2, 3, 4}),
-          reason:
-              'Every logical index 0..4 is present exactly once: the '
+          reason: 'Every logical index 0..4 is present exactly once: the '
               'permutation registers each key under its own logical index '
               '(ISC-11 fix), so the map is indistinguishable, by key set '
               'alone, from the non-permuted identity mapping.',
@@ -152,8 +151,7 @@ void main() {
         expect(
           controller.position.pixels,
           equals(initialOffset),
-          reason:
-              'The rejected call must not move the position at all -- the '
+          reason: 'The rejected call must not move the position at all -- the '
               'mismatch is caught before any offset is applied, on the '
               'already-measured fast path.',
         );
@@ -208,8 +206,8 @@ void main() {
                   final logicalIndex = slotPosition == 5
                       ? 6
                       : slotPosition == 6
-                      ? 5
-                      : slotPosition;
+                          ? 5
+                          : slotPosition;
                   return controller.watch(
                     index: logicalIndex,
                     child: SizedBox(
@@ -266,8 +264,7 @@ void main() {
         expect(
           scrollError,
           isA<StateError>(),
-          reason:
-              'A transposition strictly before the target index would have '
+          reason: 'A transposition strictly before the target index would have '
               'changed which _sizes entries get summed but not their total '
               '(the pre-ISC-28 code coincidentally landed on the correct '
               '1400.0px here) -- but ISC-28 rejects the call outright once '
@@ -298,8 +295,7 @@ void main() {
               contains('watch(index: 5)'),
             ),
           ),
-          reason:
-              'Index $targetLogicalIndex was already measured by the earlier '
+          reason: 'Index $targetLogicalIndex was already measured by the earlier '
               'search pass, so this call takes the already-measured fast '
               'path -- and it must still reject rather than complete at the '
               'buggy 800.0px (which would have included the tall 300px row '
@@ -374,8 +370,7 @@ void main() {
               contains('watch(index: 0)'),
             ),
           ),
-          reason:
-              'invalidateMeasurements() does NOT fix the permutation: the '
+          reason: 'invalidateMeasurements() does NOT fix the permutation: the '
               'same watch(index: 0) mismatch (physical slot 1) is '
               're-registered from the same, still-wrong itemBuilder, so '
               'scrollTo(2) is rejected the same way as before invalidation. '

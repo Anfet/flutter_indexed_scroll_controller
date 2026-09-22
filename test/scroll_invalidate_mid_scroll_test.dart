@@ -139,8 +139,7 @@ void main() {
           expect(
             measurements.containsKey(mutatedIndex),
             isFalse,
-            reason:
-                'invalidateMeasurements() clears _sizes and does not re-populate it '
+            reason: 'invalidateMeasurements() clears _sizes and does not re-populate it '
                 'from RenderBox.size, so index $mutatedIndex has no entry at all '
                 'immediately after the call -- it is filled back in only once '
                 "scrollTo()'s internal search pass drives a real layout.",
@@ -169,8 +168,7 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason:
-                'FIXED (ISC-31): scrollTo(${mutatedIndex + 1}) completes at the '
+            reason: 'FIXED (ISC-31): scrollTo(${mutatedIndex + 1}) completes at the '
                 'correct $correctOffset px (9*100 + $newHeight) even with no pump '
                 'between the mutation and invalidateMeasurements(), because '
                 "scrollTo()'s internal search-from-0 pass only trusts sizes from a "
@@ -260,8 +258,7 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason:
-                'Variant B confirmed correct: scrollTo(${mutatedIndex + 1}) '
+            reason: 'Variant B confirmed correct: scrollTo(${mutatedIndex + 1}) '
                 'completes at the visually correct $correctOffset px '
                 '($mutatedIndex*$defaultHeight + $newHeight).',
           );
@@ -354,8 +351,7 @@ void main() {
           expect(
             measurements.containsKey(insertAt),
             isFalse,
-            reason:
-                'ISC-31: invalidateMeasurements() no longer re-populates _sizes from '
+            reason: 'ISC-31: invalidateMeasurements() no longer re-populates _sizes from '
                 'RenderBox.size, so slot $insertAt has no entry at all immediately '
                 'after the call.',
           );
@@ -377,8 +373,7 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason:
-                'FIXED (ISC-31): scrollTo(${insertAt + 1}) after inserting a row at '
+            reason: 'FIXED (ISC-31): scrollTo(${insertAt + 1}) after inserting a row at '
                 '$insertAt and calling invalidateMeasurements() with no intervening '
                 'pump completes at the correct $correctOffset px (9*100 + '
                 '$insertedHeight), because the search pass only trusts a real '
@@ -473,8 +468,7 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason:
-                'Variant B2 confirmed correct: scrollTo(${insertAt + 1}) '
+            reason: 'Variant B2 confirmed correct: scrollTo(${insertAt + 1}) '
                 'completes at the visually correct $correctOffset px '
                 '($insertAt*$defaultHeight + $insertedHeight).',
           );
@@ -580,8 +574,7 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason:
-                'scrollTo(${mutatedIndex + 1}) must recover the missing 0-prefix on '
+            reason: 'scrollTo(${mutatedIndex + 1}) must recover the missing 0-prefix on '
                 'its own (internally returning to offset 0 and re-measuring forward, '
                 'ISC-05\'s search mechanism) and complete at the correct '
                 '$correctOffset px (29*100 + $newHeight), without the caller ever '
@@ -669,8 +662,7 @@ void main() {
               'reason',
               ScrollCancelReason.dataInvalidated,
             ),
-            reason:
-                'A second invalidateMeasurements() call while the first scrollTo() '
+            reason: 'A second invalidateMeasurements() call while the first scrollTo() '
                 'is still in its internal recovery search must cancel it with '
                 'dataInvalidated, the same typed reason as any other invalidation '
                 'during an in-flight scrollTo() (ISC-13).',

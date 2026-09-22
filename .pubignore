@@ -19,3 +19,8 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
+
+# Internal development artifacts, not part of the published package.
+/todo.md
+/doc/fingerprint_sketch.dart
+/INVESTIGATION.md

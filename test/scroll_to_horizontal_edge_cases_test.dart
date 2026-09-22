@@ -212,8 +212,34 @@ void main() {
     );
 
     testWidgets(
-      'RTL horizontal list without reverse: alignment=0 measures from the start of the axis',
+      'RTL horizontal list without reverse: priorItems still sums from the start of the axis',
       (WidgetTester tester) async {
+        // ISC-67 follow-up: this test originally asserted finalOffset ==
+        // expectedSum (the bare priorItems sum, with no alignmentAdjust
+        // term at all) at the default alignment=0. That happened to hold
+        // before ISC-67 only because alignmentAdjust was always exactly 0
+        // at alignment=0 regardless of direction -- it could not have
+        // distinguished "alignment is applied as given" from "alignment is
+        // never inverted here", since both produce the same zero adjustment
+        // at alignment=0.
+        //
+        // getAxisDirectionFromAxisReverseAndDirectionality (Flutter SDK,
+        // widgets/basic.dart) resolves a horizontal RTL Scrollable with
+        // reverse:false to AxisDirection.left -- textDirectionToAxisDirection
+        // maps RTL to `left` outright, and `reverse` only flips that
+        // afterward. So RTL-without-reverse and LTR-with-reverse:true both
+        // resolve to the exact same AxisDirection.left, and ScrollPosition
+        // exposes no way to tell them apart. Empirically, item 0 in a plain
+        // RTL horizontal ListView.builder renders at the RIGHT edge of the
+        // viewport (verified directly: item 0's left edge sits at x=700 in
+        // an 800-wide viewport with a 100-wide item) -- the same "start of
+        // the list is at the far edge from LTR's default" visual as a true
+        // reverse:true list, just produced by the writing direction instead
+        // of the reverse flag. _isReversed (ISC-66) is therefore correct to
+        // treat this case identically to reverse:true for alignment's
+        // visual-anchoring purpose (ISC-65's variant B): "alignment: 0
+        // means the visual start of the list" must hold here too, so
+        // effectiveAlignment must invert here too.
         await tester.pumpWidget(
           ScrollHarness(
             itemCount: 30,
@@ -227,6 +253,7 @@ void main() {
 
         final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
+        final viewportWidth = state.controller.position.viewportDimension;
 
         const targetIndex = 10;
         await pumpUntilComplete(
@@ -234,21 +261,25 @@ void main() {
           state.controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)),
         );
 
-        double expectedSum = 0;
+        double priorItemsSum = 0;
         for (int i = 0; i < targetIndex; i++) {
-          expectedSum += widthOf(i);
+          priorItemsSum += widthOf(i);
         }
+        final targetExtent = widthOf(targetIndex);
+        // effectiveAlignment = 1.0 - alignment = 1.0 - 0.0 = 1.0, since this
+        // RTL-without-reverse case resolves _isReversed to true (see above).
+        final expectedOffset = priorItemsSum - (viewportWidth - targetExtent) * 1.0;
 
         final finalOffset = state.controller.position.pixels;
-        // RTL without `reverse: true` does not flip position.pixels direction
-        // (ListView's own `reverse` flag controls that, unchanged by this
-        // package); position.pixels still measures growth from the scroll
-        // start of the axis, so the same width-sum formula applies.
         expect(
           finalOffset,
-          closeTo(expectedSum, 1.0),
-          reason: 'RTL Directionality alone (no reverse:true) must not '
-              'change how scrollTo computes pixels from summed widths',
+          closeTo(expectedOffset, 1.0),
+          reason: 'priorItems still sums plain widths from the start of the '
+              'axis regardless of direction (unchanged by this package), '
+              'but alignment=0 must be inverted to effectiveAlignment=1.0 '
+              'here, since RTL-without-reverse is indistinguishable from '
+              'reverse:true via AxisDirection and is visually the same '
+              '"list start at the far edge" case.',
         );
       },
     );

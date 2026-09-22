@@ -26,7 +26,8 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// `ScrollStartNotification` — and includes a regression test mirroring the
 /// example's fixed wiring.
 void main() {
-  group('ISC-22: ScrollStartNotification.dragDetails distinguishes '
+  group(
+      'ISC-22: ScrollStartNotification.dragDetails distinguishes '
       'programmatic scrollTo() from real user drags', () {
     testWidgets(
       'a scrollTo()-driven ScrollStartNotification has dragDetails == null, '
@@ -195,8 +196,7 @@ void main() {
         // ScrollStartNotification.
         await tester.drag(find.byType(ListView), const Offset(0, -150));
 
-        final dragNotifications =
-            receivedNotifications.skip(notificationsBeforeDrag).toList();
+        final dragNotifications = receivedNotifications.skip(notificationsBeforeDrag).toList();
         expect(
           dragNotifications.any((n) => n.dragDetails != null),
           isTrue,

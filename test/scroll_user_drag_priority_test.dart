@@ -20,9 +20,19 @@ Future<double> _dragDistance(
   );
   addTearDown(controller.dispose);
 
+  // ISC-82a made the search loop advance by unconditional jumpTo instead of
+  // an animated step per iteration, so a nearby target (item 50 on a
+  // 200-item list, as this used to be) now resolves within the single pump
+  // below -- scrollTo() would already be finished before the drag ever
+  // starts, and this harness would stop exercising the race it exists to
+  // test. A far target on a much longer list keeps the search genuinely
+  // spanning multiple frames (confirmed: item 15000 of 20000 is still
+  // mid-search after one 16ms pump), so the drag still contends with an
+  // in-flight scrollTo the way the original defect did.
+  const targetIndex = 15000.0;
   final list = ListView.builder(
     controller: controller,
-    itemCount: 200,
+    itemCount: 20000,
     itemBuilder: (context, index) => controller.watch(
       index: index,
       child: SizedBox(height: 100.0, child: Text('Item $index')),
@@ -39,7 +49,7 @@ Future<double> _dragDistance(
   await tester.pumpAndSettle();
 
   if (programmaticScroll) {
-    unawaited(controller.scrollTo(50).catchError((Object e) => onScrollError?.call(e)));
+    unawaited(controller.scrollTo(targetIndex).catchError((Object e) => onScrollError?.call(e)));
     await tester.pump(const Duration(milliseconds: 16));
   }
 
@@ -107,6 +117,17 @@ void main() {
       // limit of not wrapping, so that if a future change ever makes the
       // bare case work, this failing test prompts updating the docs that
       // currently tell users the wrapper is required.
+      //
+      // ISC-82a changed WHAT the position lands on here, not WHETHER the
+      // drag loses. Before, the search's per-step animateTo was still deep
+      // in its own tween 80ms into the race, so the drag's actual -200px
+      // motion happened not to have landed either -- pixels stayed near
+      // 0.0 by coincidence of animation timing, not because the drag won.
+      // Now the search's jumpTo lands its full step immediately every
+      // pump, so pixels visibly races ahead by multiples of the viewport
+      // instead. Asserting "not the drag's own distance" is the actual
+      // contract; asserting a specific pixel value here would just pin
+      // today's search-step size (see ISC-82c, which may change it).
       final moved = await _dragDistance(
         tester,
         wrapped: false,
@@ -115,10 +136,11 @@ void main() {
       );
       expect(
         moved,
-        closeTo(0.0, 1.0),
-        reason: 'Without IndexedScrollGestureDetector the drag is still lost '
-            'during a scrollTo -- this is why the wrapper exists and why the '
-            'README documents it as required for gesture priority.',
+        isNot(closeTo(200.0, 1.0)),
+        reason: 'Without IndexedScrollGestureDetector the drag\'s own -200px motion never lands '
+            '-- the search\'s jumpTo keeps overwriting position.pixels every frame, so the '
+            'gesture never gets to move the list on its own. This is why the wrapper exists and '
+            'why the README documents it as required for gesture priority.',
       );
     });
 

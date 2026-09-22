@@ -86,8 +86,7 @@ class FrameProgress {
   });
 
   @override
-  String toString() =>
-      'Frame $frameNumber: offset=$offset, measured=$measuredCount';
+  String toString() => 'Frame $frameNumber: offset=$offset, measured=$measuredCount';
 }
 
 void main() {
@@ -149,8 +148,7 @@ void main() {
         expect(
           scrollCompleted,
           isTrue,
-          reason:
-              'scrollTo(999) on 20-item list should fail in a finite number of '
+          reason: 'scrollTo(999) on 20-item list should fail in a finite number of '
               'steps once the search reaches a stable edge, not hang.',
         );
 
@@ -166,8 +164,7 @@ void main() {
         expect(
           state.controller.measurementsSizes.length,
           equals(itemCount),
-          reason:
-              'All $itemCount items should be measured before the search gives '
+          reason: 'All $itemCount items should be measured before the search gives '
               'up at the stable edge.',
         );
       },
@@ -201,10 +198,12 @@ void main() {
         Object? scrollError;
 
         unawaited(
-          state.controller.scrollTo(
+          state.controller
+              .scrollTo(
             targetIndex,
             duration: const Duration(milliseconds: 100),
-          ).then(
+          )
+              .then(
             (_) {
               scrollCompleted = true;
             },
@@ -235,8 +234,7 @@ void main() {
         expect(
           scrollCompleted,
           isTrue,
-          reason:
-              'scrollTo(250) on 300-item list is reachable and should complete. '
+          reason: 'scrollTo(250) on 300-item list is reachable and should complete. '
               'Error: $scrollError',
         );
 
@@ -251,8 +249,7 @@ void main() {
         expect(
           tracker.hasStalled(),
           isFalse,
-          reason:
-              'Progress tracker should NOT report stall for a valid slow pass. '
+          reason: 'Progress tracker should NOT report stall for a valid slow pass. '
               'Measurements grew to ${state.controller.measurementsSizes.length}; '
               'final offset: ${state.controller.position.pixels}. '
               'If this fails, the stall detector is too aggressive.',
@@ -262,8 +259,7 @@ void main() {
         expect(
           state.controller.measurementsSizes.length,
           greaterThan(240),
-          reason:
-              'Reaching index 250 should measure items up to at least index 250. '
+          reason: 'Reaching index 250 should measure items up to at least index 250. '
               'Actual: ${state.controller.measurementsSizes.length}',
         );
       },
@@ -355,10 +351,12 @@ void main() {
 
         bool validScrollCompleted = false;
         unawaited(
-          state.controller.scrollTo(
+          state.controller
+              .scrollTo(
             100.0,
             duration: const Duration(milliseconds: 100),
-          ).then((_) {
+          )
+              .then((_) {
             validScrollCompleted = true;
           }),
         );
@@ -388,8 +386,7 @@ void main() {
         expect(
           validTracker.hasStalled(),
           isFalse,
-          reason:
-              'Valid scroll should show continuous progress (no stall). '
+          reason: 'Valid scroll should show continuous progress (no stall). '
               'History: ${validTracker.history.take(10)}..${validTracker.history.skip(validTracker.history.length - 5)}',
         );
 
@@ -399,8 +396,7 @@ void main() {
         expect(
           state.controller.measurementsSizes.length,
           greaterThan(90),
-          reason:
-              'Valid scroll to index 100 should measure items sequentially up to 100+. '
+          reason: 'Valid scroll to index 100 should measure items sequentially up to 100+. '
               'Actual: ${state.controller.measurementsSizes.length}',
         );
       },

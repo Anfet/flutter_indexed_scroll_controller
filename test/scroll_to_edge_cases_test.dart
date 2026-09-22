@@ -43,8 +43,7 @@ void main() {
         await tester.pumpAndSettle();
         await future;
 
-        expect(controller.position.pixels, 0.0,
-            reason: 'scrollTo(0.5, alignment: 1) should clamp to offset 0');
+        expect(controller.position.pixels, 0.0, reason: 'scrollTo(0.5, alignment: 1) should clamp to offset 0');
       },
     );
 
@@ -83,8 +82,7 @@ void main() {
         await future;
 
         final offset = controller.position.pixels;
-        expect(offset, lessThanOrEqualTo(controller.position.maxScrollExtent),
-            reason: 'scrollTo(9.5) should clamp to maxScrollExtent');
+        expect(offset, lessThanOrEqualTo(controller.position.maxScrollExtent), reason: 'scrollTo(9.5) should clamp to maxScrollExtent');
         expect(offset, greaterThanOrEqualTo(0.0));
       },
     );
@@ -137,8 +135,7 @@ void main() {
         // target itself, so the documented "physical list bounds take
         // priority over the requested alignment" contract holds at the
         // moment the Future resolves rather than a frame later.
-        final future =
-            controller.scrollTo(5.0, duration: Duration.zero);
+        final future = controller.scrollTo(5.0, duration: Duration.zero);
         await tester.pump(); // One frame to process jumpTo
         await future;
 
@@ -182,8 +179,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          () => controller.scrollTo(5.0,
-              duration: const Duration(milliseconds: -50)),
+          () => controller.scrollTo(5.0, duration: const Duration(milliseconds: -50)),
           throwsA(isA<ArgumentError>()),
           reason: 'Negative duration must throw ArgumentError',
         );
@@ -393,8 +389,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(controller.positions.length, 2,
-            reason: 'Controller should have 2 positions');
+        expect(controller.positions.length, 2, reason: 'Controller should have 2 positions');
 
         expect(
           () => controller.scrollTo(5.0),
@@ -467,8 +462,7 @@ void main() {
           viewportHeight = 600;
         });
         await tester.pumpAndSettle();
-        expect(controller.position.viewportDimension, 600.0,
-            reason: 'Resize must be reflected before the next scrollTo call');
+        expect(controller.position.viewportDimension, 600.0, reason: 'Resize must be reflected before the next scrollTo call');
 
         // alignment: 1 puts the item's bottom at the viewport's bottom, so
         // its target offset is priorItems - (viewportSize - height)
@@ -554,15 +548,16 @@ void main() {
 
     // Scenario 11: ListView padding.
     //
-    // The offset formula in _runAnimateTo/scrollTo sums measured item
-    // heights (priorItems) and applies alignmentAdjust based on
-    // viewportSize; it never reads the ListView's EdgeInsets padding. This
-    // test locks in the currently observed behavior - padding is not added
-    // to the computed target offset - as a documented limitation rather
-    // than silently letting it drift. It is not "fixed" here per the task
-    // scope (tests only, no lib/ changes).
+    // ISC-63: the offset formula in _runAnimateTo/scrollTo now adds
+    // _leadingAxisPadding (the resolved leading-side EdgeInsets read off the
+    // ListView's SliverPadding, see indexed_scroll_item.dart) to the summed
+    // item extents, closing the gap between position.pixels (viewport-
+    // relative) and the prior priorItems-only sum (content-relative). This
+    // test now locks in the FIXED behavior: a symmetric padding.top/bottom
+    // shifts the target by exactly padding.top, and padding.bottom (a
+    // trailing/"after" inset) must not affect it at all.
     testWidgets(
-      'scrollTo ignores ListView padding when computing the target offset',
+      'scrollTo accounts for ListView padding when computing the target offset',
       (WidgetTester tester) async {
         final controllerNoPadding = IndexedScrollController(
           scrollDuration: const Duration(milliseconds: 100),
@@ -590,8 +585,7 @@ void main() {
         final noPaddingScroll = controllerNoPadding.scrollTo(5.0, alignment: 0.0);
         await tester.pumpAndSettle();
         await noPaddingScroll;
-        expect(controllerNoPadding.position.pixels, 500.0,
-            reason: 'Baseline without padding: offset is exactly 5 * 100');
+        expect(controllerNoPadding.position.pixels, 500.0, reason: 'Baseline without padding: offset is exactly 5 * 100');
 
         final controllerWithPadding = IndexedScrollController(
           scrollDuration: const Duration(milliseconds: 100),
@@ -621,18 +615,15 @@ void main() {
         await tester.pumpAndSettle();
         await paddedScroll;
 
-        // A padding-aware implementation would land at 500 + 50 (padding.top)
-        // = 550, since the 50px top pad shifts every item's actual position
-        // in the scrollable's coordinate space down by 50px. The controller
-        // instead reaches the same 500.0 as the unpadded case above: it
-        // computes the offset purely from summed item heights and ignores
-        // the ListView's padding entirely. Locking this in as the observed
-        // contract rather than a silently-drifting assumption.
-        expect(controllerWithPadding.position.pixels, 500.0,
-            reason: 'scrollTo currently ignores ListView padding: it lands '
-                'on the same 500.0 offset as the unpadded list instead of '
-                '550.0 (500 + padding.top), so a padded list undershoots the '
-                'intended visual target by padding.top pixels');
+        // The 50px top pad shifts every item's actual position in the
+        // scrollable's coordinate space down by 50px, so the correct target
+        // is 500 + 50 (padding.top) = 550. padding.bottom (a trailing
+        // inset) must not contribute -- only the leading side does.
+        expect(controllerWithPadding.position.pixels, 550.0,
+            reason: 'scrollTo must account for the ListView\'s leading '
+                'padding (padding.top = 50): the target is 500 + 50 = 550, '
+                'not the unpadded 500.0. The trailing padding.bottom (also '
+                '50) must not affect the offset at all.');
       },
     );
   });

@@ -1,6 +1,6 @@
 name: indexed_scroll_controller
 description: "Scroll a Flutter ListView.builder to any item by index, including items not yet built or measured. Vertical and horizontal."
-version: 0.1.0
+version: 0.3.1
 homepage: https://github.com/Anfet/flutter_indexed_scroll_controller
 repository: https://github.com/Anfet/flutter_indexed_scroll_controller
 issue_tracker: https://github.com/Anfet/flutter_indexed_scroll_controller/issues
@@ -13,7 +13,7 @@ topics:
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
-  flutter: ">=1.17.0"
+  flutter: ">=3.19.0"
 
 dependencies:
   flutter:

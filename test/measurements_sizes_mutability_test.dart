@@ -95,8 +95,7 @@ void main() {
         expect(
           () => measurements[1] = const Size(0, 999.0),
           throwsUnsupportedError,
-          reason:
-              'measurementsSizes is an UnmodifiableMapView -- attempting to '
+          reason: 'measurementsSizes is an UnmodifiableMapView -- attempting to '
               'write through it must throw UnsupportedError, not silently '
               'mutate the live _sizes map (ISC-36 showed this write used to '
               'succeed and corrupt a later scrollTo() offset).',
@@ -129,8 +128,7 @@ void main() {
         expect(
           controller.position.pixels,
           closeTo(controller.position.maxScrollExtent, 1.0),
-          reason:
-              'The content (500px) is shorter than the viewport (600px), so '
+          reason: 'The content (500px) is shorter than the viewport (600px), so '
               'maxScrollExtent is 0 and scrollTo(3) clamps to it rather than '
               'resolving at the unreachable 300px the raw offset formula '
               'produces.',
@@ -184,8 +182,7 @@ void main() {
         expect(
           () => controller.measurementsSizes[3] = const Size(0, 50.0),
           throwsUnsupportedError,
-          reason:
-              'measurementsSizes is an UnmodifiableMapView -- fabricating a '
+          reason: 'measurementsSizes is an UnmodifiableMapView -- fabricating a '
               'key through it must throw, not silently let a never-laid-out '
               'index masquerade as measured (ISC-36 showed this write used '
               'to succeed and let scrollTo(3) skip the search-and-measure '

@@ -175,16 +175,14 @@ void main() {
           expect(
             scrollError,
             isNull,
-            reason:
-                'ISC-27\'s contract: watch(index: slotPosition) always equals the row\'s '
+            reason: 'ISC-27\'s contract: watch(index: slotPosition) always equals the row\'s '
                 'physical position, reorder or not, so ISC-28\'s mismatch check must stay '
                 'a no-op here -- this scrollTo() must NOT throw StateError.',
           );
           expect(
             controller.position.pixels,
             closeTo(expectedOffset, 1.0),
-            reason:
-                'scrollTo(4) after the reorder must land on the offset implied by the '
+            reason: 'scrollTo(4) after the reorder must land on the offset implied by the '
                 'NEW post-reorder height order (240+150+100+260 = 750.0 px), computed '
                 'purely from the correctly-updated positional watch(index:) values.',
           );

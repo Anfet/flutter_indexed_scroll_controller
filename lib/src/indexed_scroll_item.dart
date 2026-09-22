@@ -1,75 +1,75 @@
 part of 'indexed_scroll_controller.dart';
 
-/// A list-item wrapper that reports its size to an [IndexedScrollController].
+/// A row wrapper that reports its laid-out size to an [IndexedScrollController].
 ///
-/// Prefer [IndexedScrollController.watch] so the controller and index are kept
-/// beside the `itemBuilder` index.
+/// Prefer [IndexedScrollController.watch] for normal use.
 class IndexedScrollItem extends SingleChildRenderObjectWidget {
-  /// Controller that receives this item's measurement.
+  /// The receiving controller.
   final IndexedScrollController controller;
 
-  /// Physical position of this item in the enclosing list.
+  /// The row's logical list index.
   final int index;
 
-  /// Creates an item wrapper registered under [index].
+  final bool hasFingerprintSnapshot;
+
+  final Object? fingerprintSnapshot;
+
+  /// Creates an item wrapper.
   const IndexedScrollItem({
     super.key,
     required this.controller,
     required this.index,
+    this.hasFingerprintSnapshot = false,
+    this.fingerprintSnapshot,
     required super.child,
   });
 
   @override
-  RenderObject createRenderObject(BuildContext context) => _RenderIndexedScrollItem(
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderIndexedScrollItem(
         index: index,
         controller: controller,
+        hasFingerprintSnapshot: hasFingerprintSnapshot,
+        fingerprintSnapshot: fingerprintSnapshot,
       );
 
   @override
-  void updateRenderObject(BuildContext context, covariant RenderObject renderObject) {
+  void updateRenderObject(
+      BuildContext context, covariant RenderObject renderObject) {
     (renderObject as _RenderIndexedScrollItem)
       ..index = index
-      ..controller = controller;
+      ..controller = controller
+      .._setFingerprintSnapshot(hasFingerprintSnapshot, fingerprintSnapshot);
   }
 }
 
 class _RenderIndexedScrollItem extends RenderProxyBox {
   int _index;
   IndexedScrollController _controller;
+  bool _hasFingerprintSnapshot;
+  Object? _fingerprintSnapshot;
 
   _RenderIndexedScrollItem({
     RenderBox? child,
     required int index,
     required IndexedScrollController controller,
+    bool hasFingerprintSnapshot = false,
+    Object? fingerprintSnapshot,
   })  : _index = index,
         _controller = controller,
+        _hasFingerprintSnapshot = hasFingerprintSnapshot,
+        _fingerprintSnapshot = fingerprintSnapshot,
         super(child);
 
-  /// Forces this row's next frame to run [performLayout] again, so
-  /// [IndexedScrollController._registerSize] re-registers a fresh size
-  /// instead of leaving whatever stale entry [invalidateMeasurements]
-  /// cleared. Called by [IndexedScrollController.invalidateMeasurements] on
-  /// every currently-live row: a row's `RenderBox.size` is only
-  /// ever current as of its last completed layout, and a data mutation
-  /// followed immediately by invalidation (no intervening frame) does not by
-  /// itself guarantee a relayout already happened.
+  void _setFingerprintSnapshot(bool hasSnapshot, Object? snapshot) {
+    _hasFingerprintSnapshot = hasSnapshot;
+    _fingerprintSnapshot = snapshot;
+  }
+
   void invalidateMeasurement() => markNeedsLayout();
 
   int get index => _index;
 
-  /// Reassigning `index` on an already-attached row (via
-  /// [IndexedScrollItem.updateRenderObject]) must not leave the OLD index's
-  /// live-registration entry pointing at this object inside the CURRENT
-  /// [_controller]. [detach] only ever unregisters this object from
-  /// whichever controller/index it holds AT DETACH TIME -- if the index
-  /// changes here first, [detach] can never again reach the old index's
-  /// entry under this same controller, so it would otherwise leak for as
-  /// long as the controller lives (including within one
-  /// controller instead of across two). Unregistering here, before `_index`
-  /// is updated, still has the old index available and reuses the same
-  /// identity-checked removal [detach] uses -- only removing the
-  /// entry if this object is still the one currently registered there,
-  /// never blindly deleting whatever another row may have since claimed.
   set index(int value) {
     if (_index == value) return;
     if (attached) {
@@ -81,15 +81,6 @@ class _RenderIndexedScrollItem extends RenderProxyBox {
 
   IndexedScrollController get controller => _controller;
 
-  /// The same reasoning applies when changing the controller. [detach] would
-  /// otherwise only ever notify whichever controller
-  /// this object is CURRENTLY assigned to -- once reassigned to a new
-  /// controller, the OLD controller is never consulted again, so its
-  /// `_liveOwners[oldIndex]` entry for this object would leak for the OLD
-  /// controller's entire remaining lifetime. Unregistering from the OLD
-  /// controller here, before
-  /// `_controller` is updated, closes that gap at the point of reassignment
-  /// instead of relying on a detach that will never reach it again.
   set controller(IndexedScrollController value) {
     if (_controller == value) return;
     if (attached) {
@@ -99,30 +90,6 @@ class _RenderIndexedScrollItem extends RenderProxyBox {
     markNeedsLayout();
   }
 
-  /// The physical position of this row as assigned by its enclosing sliver
-  /// (e.g. `SliverList`/`ListView.builder`), or `null` if no ancestor up to
-  /// the render tree root carries a `SliverMultiBoxAdaptorParentData` (for
-  /// example, not yet attached, or used outside a supported list).
-  ///
-  /// `watch(index:)` is documented to equal the physical
-  /// position the sliver passes to `itemBuilder`. That position is not
-  /// something this widget receives as a constructor argument -- it is
-  /// assigned by the parent sliver onto its immediate child's [parentData]
-  /// as a [SliverMultiBoxAdaptorParentData.index], confirmed against the
-  /// Flutter SDK source (`sliver_multi_box_adaptor.dart`, e.g.
-  /// `RenderSliverMultiBoxAdaptor.indexOf`), which reads exactly this field
-  /// the same way. Critically, "immediate child" here means the sliver's
-  /// direct child in the render tree, not necessarily *this* render object:
-  /// `ListView.builder`'s default `SliverChildBuilderDelegate` wraps every
-  /// item in `RepaintBoundary` and `AutomaticKeepAlive` (on by default via
-  /// `addRepaintBoundaries`/`addAutomaticKeepAlives`), so the sliver's actual
-  /// child is one of those wrappers, and `this.parentData` is theirs, not the
-  /// sliver's -- confirmed empirically: a direct `parentData` read here
-  /// always observed `null` in a real `ListView.builder`, not a
-  /// `SliverMultiBoxAdaptorParentData`. This walks up through those wrapper
-  /// render objects (there are at most a couple, and the walk stops the
-  /// moment a `SliverMultiBoxAdaptorParentData` is found) until it finds the
-  /// one immediately parented by the sliver itself, or runs out of parents.
   int? get _physicalSliverIndex {
     RenderObject? node = this;
     while (node != null) {
@@ -135,15 +102,159 @@ class _RenderIndexedScrollItem extends RenderProxyBox {
     return null;
   }
 
+  double get _leadingAxisPadding {
+    var total = 0.0;
+    RenderObject? node = this;
+    while (node != null) {
+      if (node is RenderSliverEdgeInsetsPadding) {
+        total += node.beforePadding;
+      }
+      node = node.parent;
+    }
+    return total;
+  }
+
+  double get _precedingScrollExtent {
+    RenderObject? node = this;
+    while (node != null) {
+      if (node is RenderSliver) {
+        return node.constraints.precedingScrollExtent;
+      }
+      node = node.parent;
+    }
+    return 0.0;
+  }
+
   @override
   void performLayout() {
-    size = child != null ? ChildLayoutHelper.layoutChild(child!, constraints) : constraints.smallest;
-    controller._registerSize(index, size, this, _physicalSliverIndex);
+    size = child != null
+        ? ChildLayoutHelper.layoutChild(child!, constraints)
+        : constraints.smallest;
+    controller._registerSize(
+      index,
+      size,
+      this,
+      _physicalSliverIndex,
+      _leadingAxisPadding,
+      _precedingScrollExtent,
+      _hasFingerprintSnapshot,
+      _fingerprintSnapshot,
+    );
   }
 
   @override
   void detach() {
     controller._unregisterLiveOwner(this, index: index);
+    super.detach();
+  }
+}
+
+/// A separator wrapper that reports its size independently from a list row.
+///
+/// Prefer [IndexedScrollController.separator] for normal use.
+class IndexedScrollSeparator extends SingleChildRenderObjectWidget {
+  /// The receiving controller.
+  final IndexedScrollController controller;
+
+  /// The logical index of the preceding item.
+  final int index;
+
+  /// Creates a separator wrapper.
+  const IndexedScrollSeparator({
+    super.key,
+    required this.controller,
+    required this.index,
+    required super.child,
+  });
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderIndexedScrollSeparator(
+        index: index,
+        controller: controller,
+      );
+
+  @override
+  void updateRenderObject(
+      BuildContext context, covariant RenderObject renderObject) {
+    (renderObject as _RenderIndexedScrollSeparator)
+      ..index = index
+      ..controller = controller;
+  }
+}
+
+class _RenderIndexedScrollSeparator extends RenderProxyBox {
+  int _index;
+  IndexedScrollController _controller;
+
+  _RenderIndexedScrollSeparator({
+    RenderBox? child,
+    required int index,
+    required IndexedScrollController controller,
+  })  : _index = index,
+        _controller = controller,
+        super(child);
+
+  int get index => _index;
+
+  set index(int value) {
+    if (_index == value) return;
+    if (attached) {
+      _controller._unregisterLiveSeparatorOwner(this, index: _index);
+    }
+    _index = value;
+    markNeedsLayout();
+  }
+
+  IndexedScrollController get controller => _controller;
+
+  set controller(IndexedScrollController value) {
+    if (_controller == value) return;
+    if (attached) {
+      _controller._unregisterLiveSeparatorOwner(this, index: _index);
+    }
+    _controller = value;
+    markNeedsLayout();
+  }
+
+  void invalidateMeasurement() => markNeedsLayout();
+
+  bool get _isNestedInsideOwnRow {
+    RenderObject? node = parent;
+    while (node != null) {
+      if (node is _RenderIndexedScrollItem) {
+        return node.index == index;
+      }
+      node = node.parent;
+    }
+    return false;
+  }
+
+  @override
+  void performLayout() {
+    size = child != null
+        ? ChildLayoutHelper.layoutChild(child!, constraints)
+        : constraints.smallest;
+    if (_isNestedInsideOwnRow) {
+      throw StateError(
+        'separator(index: $index) is nested inside watch(index: $index)\'s '
+        'own subtree. separator() is for the ListView.separated form, where '
+        'the item and its separator are SIBLING slots in the sliver -- '
+        'nesting separator() inside the row it follows double-counts the '
+        'separator, since that row\'s watch() already measures the '
+        'separator as part of its own extent. If the separator lives inside '
+        'the same Column/Row as the item (the form ListView.builder + one '
+        'watch() per row documents), leave it as an ordinary child; do not '
+        'wrap it with separator() at all -- alignmentTarget: item is not '
+        'available in that form.',
+      );
+    }
+    controller._registerSeparatorSize(index, size, this);
+  }
+
+  @override
+  void detach() {
+    controller._unregisterLiveSeparatorOwner(this, index: index);
     super.detach();
   }
 }

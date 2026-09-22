@@ -112,8 +112,7 @@ void main() {
         expect(
           viewportDimensionAvailableAtAttach,
           isFalse,
-          reason:
-              'Confirms the premise: at onAttach time, viewportDimension '
+          reason: 'Confirms the premise: at onAttach time, viewportDimension '
               'has genuinely never been set by a layout pass yet.',
         );
 
@@ -125,8 +124,7 @@ void main() {
         expect(
           capturedSyncThrow,
           isNull,
-          reason:
-              'scrollTo() is declared async: even though it fails the '
+          reason: 'scrollTo() is declared async: even though it fails the '
               'viewport-readiness guard before any await, Dart captures '
               "that failure into the method's returned Future rather than "
               'throwing it synchronously to the onAttach callback.',
@@ -143,8 +141,7 @@ void main() {
         expect(
           futureCompleted,
           isTrue,
-          reason:
-              'The Future must settle (as an error) promptly, not hang.',
+          reason: 'The Future must settle (as an error) promptly, not hang.',
         );
 
         // This is the ISC-33 fix, verified: the Future completes with this
@@ -154,8 +151,7 @@ void main() {
         expect(
           futureError,
           isA<StateError>(),
-          reason:
-              'scrollTo() invoked from onAttach (pre-layout) completes its '
+          reason: 'scrollTo() invoked from onAttach (pre-layout) completes its '
               "Future with this package's documented StateError from the "
               'ISC-33 viewport-readiness guard, not a raw Flutter SDK '
               'null-check _TypeError. Got: $futureError',
@@ -163,8 +159,7 @@ void main() {
         expect(
           futureError.toString(),
           contains('before the first layout'),
-          reason:
-              'Pins the exact message of the ISC-33 guard in '
+          reason: 'Pins the exact message of the ISC-33 guard in '
               'lib/src/indexed_scroll_controller.dart, so a future change to '
               'the wording is caught as an intentional behavior change '
               'rather than silently passing.',
@@ -262,8 +257,7 @@ void main() {
         expect(
           futureError,
           isA<StateError>(),
-          reason:
-              'Same guard failure for a distant, unmeasured target: it '
+          reason: 'Same guard failure for a distant, unmeasured target: it '
               'happens before the search loop ever starts, at the '
               'viewport-readiness check on the first line of '
               "scrollTo()'s body after the attachment checks — independent "
@@ -347,8 +341,7 @@ void main() {
         await expectLater(
           future,
           completes,
-          reason:
-              'A real scrollTo() after the onAttach failure and an '
+          reason: 'A real scrollTo() after the onAttach failure and an '
               'intervening cancelScroll() call must complete normally: if '
               'cancelScroll() had wrongly found a leaked active id and '
               'cancelled THIS call by mistake, this scrollTo() would '
@@ -357,8 +350,7 @@ void main() {
         expect(
           controller.position.pixels,
           closeTo(1000.0, 1.0),
-          reason:
-              'Confirms the real scrollTo() actually reached its target '
+          reason: 'Confirms the real scrollTo() actually reached its target '
               'offset, not just that its Future settled without throwing.',
         );
       },

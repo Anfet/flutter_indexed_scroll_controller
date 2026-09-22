@@ -103,6 +103,10 @@ class ScrollHarness extends StatefulWidget {
   /// Text direction wrapping the `ListView.builder`, for RTL scenarios.
   final TextDirection textDirection;
 
+  /// Padding applied to the underlying `ListView.builder` along its scroll
+  /// axis (and cross-axis, if any), for padding-related scenarios.
+  final EdgeInsets? padding;
+
   /// Guard limit for pump frames before failing the observation.
   ///
   /// Defaults to 500. Should be high enough to allow lengthy sequential
@@ -119,6 +123,7 @@ class ScrollHarness extends StatefulWidget {
     this.itemWidthBuilder,
     this.scrollDirection = Axis.vertical,
     this.textDirection = TextDirection.ltr,
+    this.padding,
     this.guardLimit = 500,
     this.onSnapshot,
   });
@@ -215,6 +220,7 @@ class ScrollHarnessState extends State<ScrollHarness> {
           body: ListView.builder(
             controller: _controller,
             scrollDirection: widget.scrollDirection,
+            padding: widget.padding,
             itemCount: widget.itemCount,
             itemBuilder: (context, index) {
               final height = widget.itemHeightBuilder(index);

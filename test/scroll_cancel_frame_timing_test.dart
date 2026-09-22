@@ -168,9 +168,7 @@ void main() {
         // with an idle one immediately. So position.pixels should now stay
         // at the value recorded immediately after cancelScroll() for every
         // subsequently pumped frame, instead of continuing to advance.
-        final positionChangedAfterCancelBeforeSettle = recordedPixels
-            .skip(1)
-            .any((p) => p != pixelsImmediatelyAfterCancel);
+        final positionChangedAfterCancelBeforeSettle = recordedPixels.skip(1).any((p) => p != pixelsImmediatelyAfterCancel);
         expect(
           positionChangedAfterCancelBeforeSettle,
           isFalse,
