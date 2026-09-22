@@ -107,7 +107,7 @@ jobs:
       - run: flutter pub publish --dry-run
 
   minimum-sdk-smoke:
-    name: Minimum-SDK consumer smoke (${{ env.FLUTTER_MIN_VERSION }})
+    name: Minimum-SDK consumer smoke (3.44.0)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
