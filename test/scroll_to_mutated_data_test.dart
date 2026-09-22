@@ -120,7 +120,8 @@ void main() {
           await tester.pumpWidget(buildList());
           await tester.pumpAndSettle();
 
-          unawaited(controller.scrollTo(4.0, duration: const Duration(milliseconds: 100)));
+          unawaited(controller.scrollTo(4.0,
+              duration: const Duration(milliseconds: 100)));
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
           }
@@ -129,7 +130,8 @@ void main() {
           expect(
             measurements.length,
             equals(itemCount),
-            reason: 'All 5 logical indices must be measured before the reorder.',
+            reason:
+                'All 5 logical indices must be measured before the reorder.',
           );
           expect(measurements[0]?.height, closeTo(100.0, 1.0));
           expect(measurements[1]?.height, closeTo(260.0, 1.0));
@@ -190,7 +192,9 @@ void main() {
           Object? scrollError;
           bool scrollCompleted = false;
           unawaited(
-            controller.scrollTo(2.0, duration: const Duration(milliseconds: 100)).then(
+            controller
+                .scrollTo(2.0, duration: const Duration(milliseconds: 100))
+                .then(
               (_) => scrollCompleted = true,
               onError: (Object e) {
                 scrollError = e;
@@ -206,12 +210,14 @@ void main() {
           expect(
             scrollCompleted,
             isTrue,
-            reason: 'scrollTo() must settle (success or error) within the frame budget.',
+            reason:
+                'scrollTo() must settle (success or error) within the frame budget.',
           );
           expect(
             scrollError,
             isA<StateError>(),
-            reason: 'ISC-28: reordering via watch(index: logicalIndex) instead of '
+            reason:
+                'ISC-28: reordering via watch(index: logicalIndex) instead of '
                 'watch(index: slotPosition) is a watch(index:) mismatch, which '
                 'invalidateMeasurements() does not and cannot fix by itself -- '
                 'the caller\'s itemBuilder must pass the corrected physical '
@@ -247,7 +253,8 @@ void main() {
             scrollDuration: const Duration(milliseconds: 100),
           );
 
-          List<String> logicalContentIds = List<String>.generate(itemCount, (i) => 'orig$i');
+          List<String> logicalContentIds =
+              List<String>.generate(itemCount, (i) => 'orig$i');
           late StateSetter setContentIds;
 
           Widget buildList() {
@@ -263,13 +270,17 @@ void main() {
                         itemCount: logicalContentIds.length,
                         itemBuilder: (context, index) {
                           final contentId = logicalContentIds[index];
-                          final height = contentId == 'INSERTED' ? insertedHeight : defaultHeight;
+                          final height = contentId == 'INSERTED'
+                              ? insertedHeight
+                              : defaultHeight;
                           return controller.watch(
                             index: index,
                             child: Container(
                               height: height,
                               color: Colors.green,
-                              child: Center(child: Text('index=$index content=$contentId')),
+                              child: Center(
+                                  child:
+                                      Text('index=$index content=$contentId')),
                             ),
                           );
                         },
@@ -288,7 +299,8 @@ void main() {
           // measure a target beyond it) that indices 0..5 are all measured at
           // their original height, then scroll far away so index `insertAt`
           // becomes off-screen and unbuilt.
-          unawaited(controller.scrollTo(5.0, duration: const Duration(milliseconds: 100)));
+          unawaited(controller.scrollTo(5.0,
+              duration: const Duration(milliseconds: 100)));
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
           }
@@ -298,18 +310,21 @@ void main() {
             expect(
               measurements[i]?.height,
               closeTo(defaultHeight, 1.0),
-              reason: 'Index $i must be measured at its original height before insertion.',
+              reason:
+                  'Index $i must be measured at its original height before insertion.',
             );
           }
 
-          unawaited(controller.scrollTo(25.0, duration: const Duration(milliseconds: 100)));
+          unawaited(controller.scrollTo(25.0,
+              duration: const Duration(milliseconds: 100)));
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
           }
           expect(
             controller.position.pixels,
             greaterThan(viewportHeight),
-            reason: 'Must have scrolled far enough that index $insertAt is off-screen.',
+            reason:
+                'Must have scrolled far enough that index $insertAt is off-screen.',
           );
 
           // Step 2: insert a new row 'INSERTED' (h=400) at logical index
@@ -330,7 +345,8 @@ void main() {
           expect(
             measurements[insertAt]?.height,
             closeTo(defaultHeight, 1.0),
-            reason: 'Directly observed: _sizes[$insertAt] still holds the stale '
+            reason:
+                'Directly observed: _sizes[$insertAt] still holds the stale '
                 'pre-insertion height $defaultHeight after the off-screen '
                 'insertion, because that slot was not rebuilt (outside the '
                 'viewport) so no new measurement occurred for the new content '
@@ -368,7 +384,8 @@ void main() {
           const correctOffset = insertAt * defaultHeight + insertedHeight;
 
           unawaited(
-            controller.scrollTo((insertAt + 1).toDouble(), duration: const Duration(milliseconds: 100)),
+            controller.scrollTo((insertAt + 1).toDouble(),
+                duration: const Duration(milliseconds: 100)),
           );
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
@@ -379,7 +396,8 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason: 'FIXED (ISC-13): after inserting content \'INSERTED\' at logical '
+            reason:
+                'FIXED (ISC-13): after inserting content \'INSERTED\' at logical '
                 'index $insertAt and calling invalidateMeasurements(), '
                 'scrollTo(${insertAt + 1}) completes at the correct post-insertion '
                 'visual offset $correctOffset px (100+100+$insertedHeight), not '
@@ -431,13 +449,17 @@ void main() {
                         itemCount: logicalContentIds.length,
                         itemBuilder: (context, index) {
                           final contentId = logicalContentIds[index];
-                          final height = contentId == 'SURV' ? survivorHeight : defaultHeight;
+                          final height = contentId == 'SURV'
+                              ? survivorHeight
+                              : defaultHeight;
                           return controller.watch(
                             index: index,
                             child: Container(
                               height: height,
                               color: Colors.orange,
-                              child: Center(child: Text('index=$index content=$contentId')),
+                              child: Center(
+                                  child:
+                                      Text('index=$index content=$contentId')),
                             ),
                           );
                         },
@@ -454,23 +476,27 @@ void main() {
 
           // Step 1: measure indices 0..5 (covering deleteAt and its neighbor),
           // then scroll far away so index `deleteAt` becomes off-screen/unbuilt.
-          unawaited(controller.scrollTo(5.0, duration: const Duration(milliseconds: 100)));
+          unawaited(controller.scrollTo(5.0,
+              duration: const Duration(milliseconds: 100)));
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
           }
 
           var measurements = controller.measurementsSizes;
           expect(measurements[deleteAt]?.height, closeTo(defaultHeight, 1.0));
-          expect(measurements[deleteAt + 1]?.height, closeTo(survivorHeight, 1.0));
+          expect(
+              measurements[deleteAt + 1]?.height, closeTo(survivorHeight, 1.0));
 
-          unawaited(controller.scrollTo(25.0, duration: const Duration(milliseconds: 100)));
+          unawaited(controller.scrollTo(25.0,
+              duration: const Duration(milliseconds: 100)));
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
           }
           expect(
             controller.position.pixels,
             greaterThan(viewportHeight),
-            reason: 'Must have scrolled far enough that index $deleteAt is off-screen.',
+            reason:
+                'Must have scrolled far enough that index $deleteAt is off-screen.',
           );
 
           // Step 2: delete the row at logical index `deleteAt` while off-screen.
@@ -488,7 +514,8 @@ void main() {
           expect(
             measurements[deleteAt]?.height,
             closeTo(defaultHeight, 1.0),
-            reason: 'Directly observed: _sizes[$deleteAt] still holds the stale '
+            reason:
+                'Directly observed: _sizes[$deleteAt] still holds the stale '
                 'pre-deletion height $defaultHeight (deleted content \'del\') '
                 'after the off-screen deletion, because that slot was not '
                 'rebuilt (outside the viewport) so no new measurement occurred '
@@ -514,7 +541,8 @@ void main() {
           const correctOffset = deleteAt * defaultHeight + survivorHeight;
 
           unawaited(
-            controller.scrollTo((deleteAt + 1).toDouble(), duration: const Duration(milliseconds: 100)),
+            controller.scrollTo((deleteAt + 1).toDouble(),
+                duration: const Duration(milliseconds: 100)),
           );
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
@@ -525,7 +553,8 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason: 'FIXED (ISC-13): after deleting content \'del\' at logical index '
+            reason:
+                'FIXED (ISC-13): after deleting content \'del\' at logical index '
                 '$deleteAt and calling invalidateMeasurements(), '
                 'scrollTo(${deleteAt + 1}) completes at the correct post-deletion '
                 'visual offset $correctOffset px (100+100+$survivorHeight), not '
@@ -553,7 +582,8 @@ void main() {
             scrollDuration: const Duration(milliseconds: 100),
           );
 
-          double heightForIndex(int index) => index == mutatedIndex ? _mutatedHeight.value : defaultHeight;
+          double heightForIndex(int index) =>
+              index == mutatedIndex ? _mutatedHeight.value : defaultHeight;
 
           await tester.pumpWidget(
             MaterialApp(
@@ -589,7 +619,8 @@ void main() {
           // Step 1: scroll to index `mutatedIndex` to measure it at its original
           // height (100.0), establishing _sizes[mutatedIndex] = 100.0.
           unawaited(
-            controller.scrollTo(mutatedIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+            controller.scrollTo(mutatedIndex.toDouble(),
+                duration: const Duration(milliseconds: 100)),
           );
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
@@ -599,13 +630,15 @@ void main() {
           expect(
             measurements[mutatedIndex]?.height,
             closeTo(oldHeight, 1.0),
-            reason: 'Item $mutatedIndex must be measured at its original height before mutation.',
+            reason:
+                'Item $mutatedIndex must be measured at its original height before mutation.',
           );
 
           // Step 2: scroll far away so index `mutatedIndex` is well outside the
           // viewport and gets unmounted by ListView.builder's lazy building.
           unawaited(
-            controller.scrollTo(25.0, duration: const Duration(milliseconds: 100)),
+            controller.scrollTo(25.0,
+                duration: const Duration(milliseconds: 100)),
           );
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
@@ -613,7 +646,8 @@ void main() {
           expect(
             controller.position.pixels,
             greaterThan(viewportHeight),
-            reason: 'Must have scrolled far enough that index $mutatedIndex is off-screen.',
+            reason:
+                'Must have scrolled far enough that index $mutatedIndex is off-screen.',
           );
 
           // Step 3: mutate the data source's height for `mutatedIndex` while it is
@@ -626,7 +660,8 @@ void main() {
           expect(
             measurements[mutatedIndex]?.height,
             closeTo(oldHeight, 1.0),
-            reason: 'Directly observed: _sizes[$mutatedIndex] still holds the stale '
+            reason:
+                'Directly observed: _sizes[$mutatedIndex] still holds the stale '
                 'height $oldHeight after the off-screen height mutation, because '
                 'the row was not rebuilt (it is outside the viewport) so no new '
                 'measurement occurred. This confirms the staleness '
@@ -655,7 +690,8 @@ void main() {
           const correctOffset = mutatedIndex * defaultHeight + newHeight;
 
           unawaited(
-            controller.scrollTo((mutatedIndex + 1).toDouble(), duration: const Duration(milliseconds: 100)),
+            controller.scrollTo((mutatedIndex + 1).toDouble(),
+                duration: const Duration(milliseconds: 100)),
           );
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
@@ -666,7 +702,8 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason: 'FIXED (ISC-13): after mutating the off-screen height of index '
+            reason:
+                'FIXED (ISC-13): after mutating the off-screen height of index '
                 '$mutatedIndex from $oldHeight to $newHeight and calling '
                 'invalidateMeasurements(), scrollTo(${mutatedIndex + 1}) completes at '
                 'the visually correct $correctOffset px (using the real new height '
@@ -679,7 +716,9 @@ void main() {
     },
   );
 
-  group('ISC-13: invalidateMeasurements() cancellation and operation-id interaction', () {
+  group(
+      'ISC-13: invalidateMeasurements() cancellation and operation-id interaction',
+      () {
     testWidgets(
       'A superseded by B, then invalidateMeasurements(): A completes with superseded (not '
       'dataInvalidated), and B is left running without having its state clobbered',
@@ -712,7 +751,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: rowHeight, child: Text('Item $index')),
+                    child:
+                        SizedBox(height: rowHeight, child: Text('Item $index')),
                   );
                 },
               ),
@@ -759,7 +799,8 @@ void main() {
         expect(
           aCompleted,
           isTrue,
-          reason: 'By this point A should already have noticed it was superseded by B '
+          reason:
+              'By this point A should already have noticed it was superseded by B '
               'and completed with a cancellation, independent of '
               'invalidateMeasurements() which has not been called yet.',
         );
@@ -775,7 +816,8 @@ void main() {
         expect(
           bCompleted,
           isFalse,
-          reason: 'B must still be actively running when invalidateMeasurements() is called.',
+          reason:
+              'B must still be actively running when invalidateMeasurements() is called.',
         );
 
         controller.invalidateMeasurements();
@@ -793,7 +835,8 @@ void main() {
             'reason',
             ScrollCancelReason.dataInvalidated,
           ),
-          reason: 'B was the genuinely active operation when invalidateMeasurements() ran, '
+          reason:
+              'B was the genuinely active operation when invalidateMeasurements() ran, '
               'so it must be the one cancelled with dataInvalidated -- proving '
               "invalidateMeasurements() cancels whichever call currently owns "
               '_activeOperationId, not a stale id left over from A even though A was '
@@ -857,7 +900,8 @@ void main() {
         expect(
           measurements.keys.toSet(),
           equals(logicalIndices.toSet()),
-          reason: 'All six non-contiguous logical indices must be live and measured '
+          reason:
+              'All six non-contiguous logical indices must be live and measured '
               'before invalidateMeasurements() is called.',
         );
 
@@ -867,13 +911,15 @@ void main() {
         expect(
           measurements.keys.toSet(),
           isEmpty,
-          reason: 'ISC-31: invalidateMeasurements() no longer eagerly re-populates _sizes '
+          reason:
+              'ISC-31: invalidateMeasurements() no longer eagerly re-populates _sizes '
               'from live RenderBox.size; the cache starts genuinely empty until a real '
               'post-invalidation layout pass re-registers each row.',
         );
 
         Object? caughtError;
-        final future = controller.scrollTo(52.0, duration: const Duration(milliseconds: 100));
+        final future = controller.scrollTo(52.0,
+            duration: const Duration(milliseconds: 100));
         unawaited(future.catchError((Object e) => caughtError = e));
         for (int i = 0; i < 300 && caughtError == null; i++) {
           await tester.pump(const Duration(milliseconds: 16));
@@ -886,7 +932,8 @@ void main() {
             'message',
             contains('3'),
           ),
-          reason: 'scrollTo(52) must internally search from 0, discover the genuine gap '
+          reason:
+              'scrollTo(52) must internally search from 0, discover the genuine gap '
               'at logical index 3 (never watched, neither before nor after '
               'invalidateMeasurements()), and fail with a StateError naming the '
               'missing index -- not a raw _TypeError, and not a silently wrong '

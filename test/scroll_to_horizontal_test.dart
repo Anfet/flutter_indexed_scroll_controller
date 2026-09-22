@@ -22,7 +22,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         // Warm the cache by jumping to index 10's target offset first, then
@@ -45,7 +46,8 @@ void main() {
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(10.0, duration: const Duration(milliseconds: 100)),
+          state.controller
+              .scrollTo(10.0, duration: const Duration(milliseconds: 100)),
         );
 
         double expectedSum = 0;
@@ -76,7 +78,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         const targetIndex = 45;
@@ -89,7 +92,8 @@ void main() {
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+          state.controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100)),
           maxPumps: 300,
         );
 
@@ -105,7 +109,8 @@ void main() {
           reason: 'Sequential search must sum widths, not heights, when '
               'measuring forward to an unmeasured horizontal index',
         );
-        expect(state.controller.measurementsSizes.containsKey(targetIndex), isTrue);
+        expect(state.controller.measurementsSizes.containsKey(targetIndex),
+            isTrue);
       },
     );
 
@@ -122,13 +127,15 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         // Expected: sum(0..11)*100 + 100*0.5 - (viewport-100)*0 = 1250
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(12.5, duration: const Duration(milliseconds: 100), alignment: 0.0),
+          state.controller.scrollTo(12.5,
+              duration: const Duration(milliseconds: 100), alignment: 0.0),
         );
 
         const expected = 12 * 100.0 + 100.0 * 0.5;
@@ -155,7 +162,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         final viewportWidth = state.controller.position.viewportDimension;
@@ -163,10 +171,12 @@ void main() {
         // Expected: sum(0..11)*100 + 100*0.5 - (viewport-100)*0.5
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(12.5, duration: const Duration(milliseconds: 100), alignment: 0.5),
+          state.controller.scrollTo(12.5,
+              duration: const Duration(milliseconds: 100), alignment: 0.5),
         );
 
-        final expected = 12 * 100.0 + 100.0 * 0.5 - (viewportWidth - 100.0) * 0.5;
+        final expected =
+            12 * 100.0 + 100.0 * 0.5 - (viewportWidth - 100.0) * 0.5;
         final finalOffset = state.controller.position.pixels;
         expect(
           finalOffset,
@@ -190,7 +200,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         final viewportWidth = state.controller.position.viewportDimension;
@@ -198,10 +209,12 @@ void main() {
         // Expected: sum(0..11)*100 + 100*0.5 - (viewport-100)*1
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(12.5, duration: const Duration(milliseconds: 100), alignment: 1.0),
+          state.controller.scrollTo(12.5,
+              duration: const Duration(milliseconds: 100), alignment: 1.0),
         );
 
-        final expected = 12 * 100.0 + 100.0 * 0.5 - (viewportWidth - 100.0) * 1.0;
+        final expected =
+            12 * 100.0 + 100.0 * 0.5 - (viewportWidth - 100.0) * 1.0;
         final finalOffset = state.controller.position.pixels;
         expect(
           finalOffset,

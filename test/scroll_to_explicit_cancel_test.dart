@@ -28,7 +28,8 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// rather than a second cancellation mechanism.
 void main() {
   group('ISC-08: Explicit cancel of scrollTo', () {
-    testWidgets('scrollTo completes normally when no drag interrupts it', (WidgetTester tester) async {
+    testWidgets('scrollTo completes normally when no drag interrupts it',
+        (WidgetTester tester) async {
       // Baseline: scrollTo reaches its target without user interaction.
       final controller = IndexedScrollController(
         scrollDuration: const Duration(milliseconds: 10),

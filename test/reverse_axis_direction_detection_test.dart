@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
 void main() {
-  group('ISC-66: private reverse detection via ScrollPosition.axisDirection', () {
+  group('ISC-66: private reverse detection via ScrollPosition.axisDirection',
+      () {
     Future<void> pumpList(
       WidgetTester tester,
       IndexedScrollController controller, {
@@ -21,8 +22,11 @@ void main() {
               itemBuilder: (context, index) => controller.watch(
                 index: index,
                 child: SizedBox(
-                  height: scrollDirection == Axis.vertical ? 50.0 : double.infinity,
-                  width: scrollDirection == Axis.horizontal ? 50.0 : double.infinity,
+                  height:
+                      scrollDirection == Axis.vertical ? 50.0 : double.infinity,
+                  width: scrollDirection == Axis.horizontal
+                      ? 50.0
+                      : double.infinity,
                   child: Text('Item $index'),
                 ),
               ),
@@ -40,7 +44,8 @@ void main() {
           scrollDuration: const Duration(milliseconds: 100),
         );
 
-        await pumpList(tester, controller, scrollDirection: Axis.vertical, reverse: false);
+        await pumpList(tester, controller,
+            scrollDirection: Axis.vertical, reverse: false);
 
         expect(
           controller.position.axisDirection,
@@ -64,7 +69,8 @@ void main() {
           scrollDuration: const Duration(milliseconds: 100),
         );
 
-        await pumpList(tester, controller, scrollDirection: Axis.vertical, reverse: true);
+        await pumpList(tester, controller,
+            scrollDirection: Axis.vertical, reverse: true);
 
         expect(
           controller.position.axisDirection,
@@ -87,7 +93,8 @@ void main() {
           scrollDuration: const Duration(milliseconds: 100),
         );
 
-        await pumpList(tester, controller, scrollDirection: Axis.horizontal, reverse: false);
+        await pumpList(tester, controller,
+            scrollDirection: Axis.horizontal, reverse: false);
 
         expect(
           controller.position.axisDirection,
@@ -111,7 +118,8 @@ void main() {
           scrollDuration: const Duration(milliseconds: 100),
         );
 
-        await pumpList(tester, controller, scrollDirection: Axis.horizontal, reverse: true);
+        await pumpList(tester, controller,
+            scrollDirection: Axis.horizontal, reverse: true);
 
         expect(
           controller.position.axisDirection,

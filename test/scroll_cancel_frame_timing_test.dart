@@ -128,7 +128,9 @@ void main() {
         // still catches a regression that reintroduces coasting or hangs.
         const maxFramesToWaitForSettle = 25;
         var framesPumped = 0;
-        for (; framesPumped < maxFramesToWaitForSettle && !completed; framesPumped++) {
+        for (;
+            framesPumped < maxFramesToWaitForSettle && !completed;
+            framesPumped++) {
           await tester.pump(const Duration(milliseconds: 16));
           recordedPixels.add(controller.position.pixels);
         }
@@ -168,7 +170,9 @@ void main() {
         // with an idle one immediately. So position.pixels should now stay
         // at the value recorded immediately after cancelScroll() for every
         // subsequently pumped frame, instead of continuing to advance.
-        final positionChangedAfterCancelBeforeSettle = recordedPixels.skip(1).any((p) => p != pixelsImmediatelyAfterCancel);
+        final positionChangedAfterCancelBeforeSettle = recordedPixels
+            .skip(1)
+            .any((p) => p != pixelsImmediatelyAfterCancel);
         expect(
           positionChangedAfterCancelBeforeSettle,
           isFalse,

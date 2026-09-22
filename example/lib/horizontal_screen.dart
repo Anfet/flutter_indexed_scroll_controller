@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
 class HorizontalScreen extends StatefulWidget {
-  const HorizontalScreen({super.key});
+  /// Overrides the source of "Scroll to Random Index"'s target. Defaults to
+  /// an unseeded [Random] (genuinely random, as the app shows it); tests
+  /// pass a seeded instance so the picked index is reproducible.
+  const HorizontalScreen({super.key, Random? random}) : _random = random;
+
+  final Random? _random;
 
   @override
   State<HorizontalScreen> createState() => _HorizontalScreenState();
@@ -20,7 +25,7 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
   static const Duration _maxScrollDuration = Duration(seconds: 1);
 
   late IndexedScrollController _scrollController;
-  final _random = Random();
+  late final _random = widget._random ?? Random();
   double _selectedAlignment = 0.0;
   String _scrollStatus = '';
   bool _isReverse = false;
@@ -73,7 +78,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
   Future<void> _scrollToRandomIndex() async {
     final index = _random.nextInt(_itemCount);
     setState(() {
-      _scrollStatus = 'Scrolling to random index $index (${_maxScrollDuration.inMilliseconds} ms)…';
+      _scrollStatus =
+          'Scrolling to random index $index (${_maxScrollDuration.inMilliseconds} ms)…';
     });
 
     try {
@@ -85,7 +91,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
 
       if (mounted) {
         setState(() {
-          _scrollStatus = 'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
+          _scrollStatus =
+              'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
         });
       }
     } on ScrollCancelledException catch (e) {
@@ -106,7 +113,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Horizontal Scrolling with Alignment Control')),
+      appBar: AppBar(
+          title: const Text('Horizontal Scrolling with Alignment Control')),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -121,7 +129,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
                       child: SegmentedButton<double>(
                         segments: const [
                           ButtonSegment(value: 0.0, label: Text('Left (0.0)')),
-                          ButtonSegment(value: 0.5, label: Text('Center (0.5)')),
+                          ButtonSegment(
+                              value: 0.5, label: Text('Center (0.5)')),
                           ButtonSegment(value: 1.0, label: Text('Right (1.0)')),
                         ],
                         selected: <double>{_selectedAlignment},
@@ -135,7 +144,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Options:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Options:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -186,7 +196,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
                 if (!_scrollController.hasClients) {
                   return const Text('Current offset: -');
                 }
-                return Text('Current offset: ${_scrollController.offset.toStringAsFixed(1)} px');
+                return Text(
+                    'Current offset: ${_scrollController.offset.toStringAsFixed(1)} px');
               },
             ),
           ),
@@ -195,9 +206,13 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: _scrollStatus.startsWith('Error') ? const Color(0xFFFFEBEE) : const Color(0xFFFFF8E1),
+                  color: _scrollStatus.startsWith('Error')
+                      ? const Color(0xFFFFEBEE)
+                      : const Color(0xFFFFF8E1),
                   border: Border.all(
-                    color: _scrollStatus.startsWith('Error') ? const Color(0xFFEF5350) : const Color(0xFFFBC02D),
+                    color: _scrollStatus.startsWith('Error')
+                        ? const Color(0xFFEF5350)
+                        : const Color(0xFFFBC02D),
                   ),
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -213,7 +228,9 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
                 key: ValueKey(_listGeneration),
                 scrollDirection: Axis.horizontal,
                 reverse: _isReverse,
-                padding: _hasPadding ? const EdgeInsets.only(left: 40) : EdgeInsets.zero,
+                padding: _hasPadding
+                    ? const EdgeInsets.only(left: 40)
+                    : EdgeInsets.zero,
                 controller: _scrollController,
                 itemCount: _itemCount,
                 itemBuilder: (context, index) {
@@ -223,11 +240,15 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
                     child: SizedBox(
                       width: width,
                       child: ColoredBox(
-                        color: index.isEven ? const Color(0xFFE8F0FE) : const Color(0xFFF4F4F4),
+                        color: index.isEven
+                            ? const Color(0xFFE8F0FE)
+                            : const Color(0xFFF4F4F4),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Center(
-                            child: Text('Card $index\n(${width.toStringAsFixed(0)}px)', textAlign: TextAlign.center),
+                            child: Text(
+                                'Card $index\n(${width.toStringAsFixed(0)}px)',
+                                textAlign: TextAlign.center),
                           ),
                         ),
                       ),

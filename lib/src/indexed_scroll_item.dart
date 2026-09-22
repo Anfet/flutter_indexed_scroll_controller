@@ -2,21 +2,18 @@ part of 'indexed_scroll_controller.dart';
 
 /// A row wrapper that reports its laid-out size to an [IndexedScrollController].
 ///
-/// Prefer [IndexedScrollController.watch] for normal use.
-class IndexedScrollItem extends SingleChildRenderObjectWidget {
-  /// The receiving controller.
+/// Created internally by [IndexedScrollController.watch]; not part of the
+/// public API.
+class _IndexedScrollItem extends SingleChildRenderObjectWidget {
   final IndexedScrollController controller;
 
-  /// The row's logical list index.
   final int index;
 
   final bool hasFingerprintSnapshot;
 
   final Object? fingerprintSnapshot;
 
-  /// Creates an item wrapper.
-  const IndexedScrollItem({
-    super.key,
+  const _IndexedScrollItem({
     required this.controller,
     required this.index,
     this.hasFingerprintSnapshot = false,
@@ -151,17 +148,14 @@ class _RenderIndexedScrollItem extends RenderProxyBox {
 
 /// A separator wrapper that reports its size independently from a list row.
 ///
-/// Prefer [IndexedScrollController.separator] for normal use.
-class IndexedScrollSeparator extends SingleChildRenderObjectWidget {
-  /// The receiving controller.
+/// Created internally by [IndexedScrollController.separator]; not part of
+/// the public API.
+class _IndexedScrollSeparator extends SingleChildRenderObjectWidget {
   final IndexedScrollController controller;
 
-  /// The logical index of the preceding item.
   final int index;
 
-  /// Creates a separator wrapper.
-  const IndexedScrollSeparator({
-    super.key,
+  const _IndexedScrollSeparator({
     required this.controller,
     required this.index,
     required super.child,

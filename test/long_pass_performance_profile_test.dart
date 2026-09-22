@@ -26,7 +26,8 @@ import 'support/scroll_harness.dart';
 double _uniform100px(int index) => 100.0;
 double _varied40to72px(int index) => 40.0 + (index % 10) * 4.0;
 double _random50to150px(int index) {
-  final random = math.Random(42 + index); // Seeded per-index for reproducibility
+  final random =
+      math.Random(42 + index); // Seeded per-index for reproducibility
   return 50.0 + random.nextDouble() * 100.0;
 }
 
@@ -34,7 +35,8 @@ double _varied60to78px(int index) => 60.0 + (index % 15) * 3.0;
 
 void main() {
   group('ISC-18: Long-pass performance profile', () {
-    testWidgets('scrollTo(100) on 150-item list with uniform 100px heights', (WidgetTester tester) async {
+    testWidgets('scrollTo(100) on 150-item list with uniform 100px heights',
+        (WidgetTester tester) async {
       // Baseline: uniform heights allow straightforward calculation and comparison.
       // 150 items × 100px = 15,000px total; scrolling to item 100 (offset ~10,000px)
       // is a substantial jump that requires sequential measurement.
@@ -46,7 +48,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
 
       var scrollCompleted = false;
       var frameCount = 0;
@@ -68,7 +71,8 @@ void main() {
         if (scrollCompleted) break;
       }
 
-      expect(scrollCompleted, isTrue, reason: 'scrollTo(100) on 150 uniform-height items must complete');
+      expect(scrollCompleted, isTrue,
+          reason: 'scrollTo(100) on 150 uniform-height items must complete');
 
       final finalMeasurementCount = state.controller.measurementsSizes.length;
       final finalOffset = state.controller.position.pixels;
@@ -76,9 +80,13 @@ void main() {
       // Expected: sum of heights 0..99 = 100 × 100 = 10,000px
       const expectedOffsetMin = 9900.0;
       const expectedOffsetMax = 10100.0;
-      expect(finalOffset, inInclusiveRange(expectedOffsetMin, expectedOffsetMax), reason: 'Final offset for scrollTo(100) should be ~10,000px');
+      expect(
+          finalOffset, inInclusiveRange(expectedOffsetMin, expectedOffsetMax),
+          reason: 'Final offset for scrollTo(100) should be ~10,000px');
 
-      expect(finalMeasurementCount, greaterThan(95), reason: 'Sequential measurement to index 100 should measure at least 95 items');
+      expect(finalMeasurementCount, greaterThan(95),
+          reason:
+              'Sequential measurement to index 100 should measure at least 95 items');
 
       // Report measured metrics for ISC-18 documentation.
       // ignore: avoid_print
@@ -96,23 +104,27 @@ void main() {
       // frame count (120) ≈ 2 items/frame. At that rate, scrollTo(100)
       // should take roughly 50 frames; actual should be in the ballpark.
       expect(frameCount, lessThan(200),
-          reason: 'scrollTo(100) on 150-item list should not require >200 frames '
+          reason:
+              'scrollTo(100) on 150-item list should not require >200 frames '
               '(would suggest exponential cost, not linear)');
     });
 
-    testWidgets('scrollTo(250) on 300-item list with varied heights (40-72px)', (WidgetTester tester) async {
+    testWidgets('scrollTo(250) on 300-item list with varied heights (40-72px)',
+        (WidgetTester tester) async {
       // Mirror ISC-04's documented scenario: 250 items, varied heights,
       // observable in ~120 frames. This test validates that the measurement
       // is still linear for larger distances.
       await tester.pumpWidget(
         const ScrollHarness(
           itemCount: 300,
-          itemHeightBuilder: _varied40to72px, // 40, 44, 48, 52, 56, 60, 64, 68, 72, 40, ...
+          itemHeightBuilder:
+              _varied40to72px, // 40, 44, 48, 52, 56, 60, 64, 68, 72, 40, ...
           guardLimit: 500,
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
 
       var scrollCompleted = false;
       var frameCount = 0;
@@ -133,7 +145,8 @@ void main() {
         if (scrollCompleted) break;
       }
 
-      expect(scrollCompleted, isTrue, reason: 'scrollTo(250) on 300-item varied-height list must complete');
+      expect(scrollCompleted, isTrue,
+          reason: 'scrollTo(250) on 300-item varied-height list must complete');
 
       final finalMeasurementCount = state.controller.measurementsSizes.length;
 
@@ -141,15 +154,20 @@ void main() {
       // 250 items × 56px average = 14,000px (rough estimate).
       const expectedOffsetMin = 13000.0;
       const expectedOffsetMax = 15000.0;
-      expect(state.controller.position.pixels, inInclusiveRange(expectedOffsetMin, expectedOffsetMax),
-          reason: 'Final offset for scrollTo(250) should be in range ~13-15kpx');
+      expect(state.controller.position.pixels,
+          inInclusiveRange(expectedOffsetMin, expectedOffsetMax),
+          reason:
+              'Final offset for scrollTo(250) should be in range ~13-15kpx');
 
-      expect(finalMeasurementCount, greaterThan(240), reason: 'Sequential measurement to index 250 should measure at least 240 items');
+      expect(finalMeasurementCount, greaterThan(240),
+          reason:
+              'Sequential measurement to index 250 should measure at least 240 items');
 
       // ISC-04 documented ~120 frames for this scenario; actual may vary slightly
       // due to frame-pumping jitter, but should be in the same ballpark (80-200).
       expect(frameCount, lessThan(250),
-          reason: 'scrollTo(250) on 300-item list should complete within ~250 frames '
+          reason:
+              'scrollTo(250) on 300-item list should complete within ~250 frames '
               '(consistent with ISC-04 observation of ~120 frames for similar scenario)');
 
       // ignore: avoid_print
@@ -167,7 +185,8 @@ void main() {
       print('  Frame-per-item ratio: ${framePerItemRatio.toStringAsFixed(3)}');
     });
 
-    testWidgets('scrollTo(500) on 600-item list with random heights (50-150px)', (WidgetTester tester) async {
+    testWidgets('scrollTo(500) on 600-item list with random heights (50-150px)',
+        (WidgetTester tester) async {
       // Large list with wider height variation; tests whether
       // sequential measurement remains linear and memory scales acceptably.
       await tester.pumpWidget(
@@ -178,7 +197,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
 
       var scrollCompleted = false;
       var frameCount = 0;
@@ -199,22 +219,28 @@ void main() {
         if (scrollCompleted) break;
       }
 
-      expect(scrollCompleted, isTrue, reason: 'scrollTo(500) on 600-item random-height list must complete');
+      expect(scrollCompleted, isTrue,
+          reason: 'scrollTo(500) on 600-item random-height list must complete');
 
       final finalMeasurementCount = state.controller.measurementsSizes.length;
 
       // With heights 50-150px, average ~100px. Approximate offset:
       // 500 items × 100px = 50,000px.
-      expect(state.controller.position.pixels, greaterThan(40000.0), reason: 'scrollTo(500) on 600-item list should reach deep offset >40kpx');
+      expect(state.controller.position.pixels, greaterThan(40000.0),
+          reason:
+              'scrollTo(500) on 600-item list should reach deep offset >40kpx');
 
-      expect(finalMeasurementCount, greaterThan(490), reason: 'Sequential measurement to index 500 should measure most of prefix');
+      expect(finalMeasurementCount, greaterThan(490),
+          reason:
+              'Sequential measurement to index 500 should measure most of prefix');
 
       // Frame count scaling: at 500 items with higher average heights (~100px),
       // viewport is still ~600px, so ~50,000px / 600px ≈ 80 viewports.
       // If linear, should be ~2-3 items/frame → ~250-330 frames (rough).
       // Allow wider margin for larger list (more variability and randomness).
       expect(frameCount, lessThan(800),
-          reason: 'scrollTo(500) on large list should remain roughly linear, <800 frames '
+          reason:
+              'scrollTo(500) on large list should remain roughly linear, <800 frames '
               '(non-linear cost would exceed 1200+)');
 
       // ignore: avoid_print
@@ -229,7 +255,8 @@ void main() {
       print('  Frame-per-item ratio: ${framePerItemRatio.toStringAsFixed(3)}');
     });
 
-    test('Memory estimate: _sizes dictionary footprint at various list lengths', () {
+    test('Memory estimate: _sizes dictionary footprint at various list lengths',
+        () {
       // Analytical memory estimation for fully-measured `Map<int, Size>` at
       // different list lengths. This does NOT directly profile the widget
       // test (that would be fragile), but estimates the overhead based on Dart
@@ -255,25 +282,32 @@ void main() {
       // ignore: avoid_print
       print('\nMemory estimate for _sizes dictionary (Map<int, Size>):');
       // ignore: avoid_print
-      print('(Analytical estimate, not direct profiling; assumes ~100 bytes/entry)');
+      print(
+          '(Analytical estimate, not direct profiling; assumes ~100 bytes/entry)');
 
       for (final n in sizes) {
         final estimatedBytes = n * bytesPerEntry;
         final estimatedKB = estimatedBytes / 1024.0;
         final estimatedMB = estimatedKB / 1024.0;
 
-        final memoryStr = estimatedMB >= 1.0 ? '${estimatedMB.toStringAsFixed(2)} MB' : '${estimatedKB.toStringAsFixed(1)} KB';
+        final memoryStr = estimatedMB >= 1.0
+            ? '${estimatedMB.toStringAsFixed(2)} MB'
+            : '${estimatedKB.toStringAsFixed(1)} KB';
 
         // ignore: avoid_print
         print('  N=$n items: ~$memoryStr');
 
         // Sanity check: at reasonable list sizes, memory should remain modest.
         // Even at N=10,000, memory is ~1MB, which is negligible on mobile.
-        expect(estimatedMB, lessThan(5.0), reason: 'Memory per item should remain <500 bytes, keeping total <5MB at N=10,000');
+        expect(estimatedMB, lessThan(5.0),
+            reason:
+                'Memory per item should remain <500 bytes, keeping total <5MB at N=10,000');
       }
     });
 
-    testWidgets('Frame-per-item ratio remains stable across different distances', (WidgetTester tester) async {
+    testWidgets(
+        'Frame-per-item ratio remains stable across different distances',
+        (WidgetTester tester) async {
       // Meta-test: compare frame costs for scrolls of increasing distance,
       // confirming that the ratio frames/distance stays roughly constant
       // (linear scaling). Each scroll starts fresh from offset 0 to maximize
@@ -384,7 +418,8 @@ void main() {
       );
       for (final (distance, frames, ratio) in results) {
         // ignore: avoid_print
-        print('  scrollTo($distance): $frames frames → ratio = ${ratio.toStringAsFixed(3)} frames/item');
+        print(
+            '  scrollTo($distance): $frames frames → ratio = ${ratio.toStringAsFixed(3)} frames/item');
       }
 
       // Ratios should be close (within reasonable tolerance).

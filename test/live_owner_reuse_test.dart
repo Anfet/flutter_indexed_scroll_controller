@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
 void main() {
-  group('ISC-34/ISC-35: _liveOwners across index AND controller reassignment, then unmount', () {
+  group(
+      'ISC-34/ISC-35: _liveOwners across index AND controller reassignment, then unmount',
+      () {
     // Background (read from lib/src/indexed_scroll_controller.dart and
     // lib/src/indexed_scroll_item.dart before writing this test):
     //
@@ -106,7 +108,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // Step 1: registered under controller A, logical index 3.
-        expect(controllerA.measurementsSizes.containsKey(3), isTrue, reason: 'Initial registration should land in controller A at index 3.');
+        expect(controllerA.measurementsSizes.containsKey(3), isTrue,
+            reason:
+                'Initial registration should land in controller A at index 3.');
         // `_liveOwners` is private, so we probe it indirectly via
         // `_unregisterLiveOwner`'s observable effect: invalidateMeasurements()
         // marks every CURRENT `_liveOwners` value for relayout. We confirm
@@ -117,7 +121,8 @@ void main() {
         controllerA.invalidateMeasurements();
         await tester.pumpAndSettle();
         expect(controllerA.measurementsSizes.containsKey(3), isTrue,
-            reason: 'A live-owned row must re-register after invalidateMeasurements() '
+            reason:
+                'A live-owned row must re-register after invalidateMeasurements() '
                 'marks it for relayout.');
 
         // Step 2: reassign the SAME widget slot to a NEW index (7) under a
@@ -132,13 +137,18 @@ void main() {
         // The live registration must now be under B/7, and B must not have
         // inherited anything from A.
         expect(controllerB.measurementsSizes.containsKey(7), isTrue,
-            reason: 'ISC-11 fix: updateRenderObject() moves the live registration to '
+            reason:
+                'ISC-11 fix: updateRenderObject() moves the live registration to '
                 'the new controller/index pair.');
-        expect(controllerB.measurementsSizes.containsKey(3), isFalse, reason: 'Controller B must not inherit stale state keyed by A\'s old index.');
+        expect(controllerB.measurementsSizes.containsKey(3), isFalse,
+            reason:
+                'Controller B must not inherit stale state keyed by A\'s old index.');
         // controller A keeps its OLD _sizes history by design (ISC-11:
         // ordinary reuse does not purge history) -- that part is expected
         // and is not the bug under test.
-        expect(controllerA.measurementsSizes.containsKey(3), isTrue, reason: 'ISC-11: A\'s historical measurement at 3 is retained, not erased.');
+        expect(controllerA.measurementsSizes.containsKey(3), isTrue,
+            reason:
+                'ISC-11: A\'s historical measurement at 3 is retained, not erased.');
 
         // THE CRUX (ISC-35 fixed): is A's _liveOwners[3] entry (pointing at
         // this render object) still considered "live" by A? Pre-fix, calling
@@ -152,8 +162,10 @@ void main() {
         final bSizeBeforeExtraInvalidation = controllerB.measurementsSizes[7];
         controllerA.invalidateMeasurements();
         await tester.pumpAndSettle();
-        expect(controllerB.measurementsSizes[7], equals(bSizeBeforeExtraInvalidation),
-            reason: 'A\'s invalidateMeasurements() must not touch B\'s state for a row that '
+        expect(controllerB.measurementsSizes[7],
+            equals(bSizeBeforeExtraInvalidation),
+            reason:
+                'A\'s invalidateMeasurements() must not touch B\'s state for a row that '
                 'moved away from A -- A no longer has a live-registration entry for it.');
 
         // Step 3: unmount the row entirely.
@@ -173,7 +185,8 @@ void main() {
         controllerB.invalidateMeasurements();
         await tester.pumpAndSettle();
         expect(controllerB.measurementsSizes.containsKey(7), isFalse,
-            reason: 'B correctly unregistered its live owner on detach() -- the entry does '
+            reason:
+                'B correctly unregistered its live owner on detach() -- the entry does '
                 'not resurrect after invalidation because nothing live remains to '
                 'relayout.');
 
@@ -198,7 +211,8 @@ void main() {
         expect(
           controllerA.invalidateMeasurements,
           returnsNormally,
-          reason: 'ISC-35: controller A must have released its live-registration entry for '
+          reason:
+              'ISC-35: controller A must have released its live-registration entry for '
               'the reassigned render object back when it moved to controller B, so '
               'invalidating A after the object is later unmounted (and disposed) must not '
               'touch it at all -- pre-fix this threw FlutterError(\'A disposed RenderObject '
@@ -273,8 +287,12 @@ void main() {
         // controller switch.
         setState(() => activeIndex = 9);
         await tester.pumpAndSettle();
-        expect(controllerA.measurementsSizes.containsKey(9), isTrue, reason: 'Live registration follows the same object to the new index within A.');
-        expect(controllerA.measurementsSizes.containsKey(3), isTrue, reason: 'ISC-11: history at the old index within the same controller is kept.');
+        expect(controllerA.measurementsSizes.containsKey(9), isTrue,
+            reason:
+                'Live registration follows the same object to the new index within A.');
+        expect(controllerA.measurementsSizes.containsKey(3), isTrue,
+            reason:
+                'ISC-11: history at the old index within the same controller is kept.');
 
         // Now switch to controller B at yet another index.
         setState(() {
@@ -283,9 +301,12 @@ void main() {
         });
         await tester.pumpAndSettle();
 
-        expect(controllerB.measurementsSizes.containsKey(2), isTrue, reason: 'Live registration now follows the object into controller B.');
+        expect(controllerB.measurementsSizes.containsKey(2), isTrue,
+            reason:
+                'Live registration now follows the object into controller B.');
         expect(controllerB.measurementsSizes.length, equals(1),
-            reason: 'B must start clean: it should hold nothing beyond the one row just '
+            reason:
+                'B must start clean: it should hold nothing beyond the one row just '
                 'registered under it -- no residue from A\'s history at 3 or 9.');
 
         // invalidateMeasurements() on A now: this is the "old controller,
@@ -293,7 +314,9 @@ void main() {
         // not throw and must not resurrect anything under B.
         controllerA.invalidateMeasurements();
         await tester.pumpAndSettle();
-        expect(controllerB.measurementsSizes.containsKey(2), isTrue, reason: 'A\'s invalidation must not disturb B\'s live state for the same row.');
+        expect(controllerB.measurementsSizes.containsKey(2), isTrue,
+            reason:
+                'A\'s invalidation must not disturb B\'s live state for the same row.');
 
         // invalidateMeasurements() on B, then unmount, then invalidate B
         // again -- confirms B's own bookkeeping is internally consistent
@@ -301,7 +324,8 @@ void main() {
         controllerB.invalidateMeasurements();
         await tester.pumpAndSettle();
         expect(controllerB.measurementsSizes.containsKey(2), isTrue,
-            reason: 'B\'s own live row survives B\'s own invalidateMeasurements() + relayout.');
+            reason:
+                'B\'s own live row survives B\'s own invalidateMeasurements() + relayout.');
 
         setState(() => mounted = false);
         await tester.pumpAndSettle();
@@ -311,7 +335,8 @@ void main() {
         expect(
           controllerB.measurementsSizes.containsKey(2),
           isFalse,
-          reason: 'After unmount, B has no live owner left for index 2, so re-invalidating B '
+          reason:
+              'After unmount, B has no live owner left for index 2, so re-invalidating B '
               'must not resurrect a size for it -- confirms detach() correctly removed B\'s '
               'own _liveOwners[2] entry.',
         );
@@ -322,7 +347,8 @@ void main() {
         // reassignment's) live-registration entries as each reassignment
         // happens, not just the final controller's entry at unmount.
         expect(controllerA.invalidateMeasurements, returnsNormally,
-            reason: 'A released its live-registration entries for this object at each '
+            reason:
+                'A released its live-registration entries for this object at each '
                 'reassignment (3 -> 9 within A, then away to B), so invalidating A after '
                 'the object is unmounted (and disposed) must not touch it.');
 
@@ -338,10 +364,12 @@ void main() {
         // confirmed empirically (a debug run without that call left 3 and 9
         // intact) -- not a symptom of the reassignment/leak under test.
         expect(controllerA.measurementsSizes.containsKey(3), isFalse,
-            reason: 'invalidateMeasurements() clears ALL of A\'s _sizes unconditionally, '
+            reason:
+                'invalidateMeasurements() clears ALL of A\'s _sizes unconditionally, '
                 'independent of the reassignment scenario.');
         expect(controllerA.measurementsSizes.containsKey(9), isFalse,
-            reason: 'Same: wiped by A\'s own invalidateMeasurements() call above, not by '
+            reason:
+                'Same: wiped by A\'s own invalidateMeasurements() call above, not by '
                 'anything related to the controller switch.');
       },
     );

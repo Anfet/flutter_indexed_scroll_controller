@@ -57,7 +57,8 @@ class HomeScreen extends StatelessWidget {
           ),
           ListTile(
             title: const Text('Horizontal'),
-            subtitle: const Text('Horizontal scrolling with variable card widths'),
+            subtitle:
+                const Text('Horizontal scrolling with variable card widths'),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(

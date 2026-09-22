@@ -23,12 +23,16 @@ void main() {
     if (renderObject == null || !renderObject.attached) return null;
     for (RenderObject? node = renderObject; node != null; node = node.parent) {
       final parentData = node.parentData;
-      if (parentData is SliverMultiBoxAdaptorParentData) return parentData.layoutOffset;
+      if (parentData is SliverMultiBoxAdaptorParentData) {
+        return parentData.layoutOffset;
+      }
     }
     return null;
   }
 
-  testWidgets('forward to 90, reshuffle five rows, backward to 50 lands exactly', (tester) async {
+  testWidgets(
+      'forward to 90, reshuffle five rows, backward to 50 lands exactly',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     // ~10 rows per screen: 40/50/60 average 50, so 500 / 50 == 10.
@@ -67,7 +71,9 @@ void main() {
                         key: rowKeyFor(index),
                         height: rowHeights[index],
                         child: ColoredBox(
-                          color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
+                          color: index.isEven
+                              ? const Color(0xFFBBDEFB)
+                              : const Color(0xFFFFE0B2),
                           child: Center(child: Text('Row $index')),
                         ),
                       ),
@@ -82,17 +88,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    double prefixOf(int index) => rowHeights.take(index).fold<double>(0, (a, b) => a + b);
+    double prefixOf(int index) =>
+        rowHeights.take(index).fold<double>(0, (a, b) => a + b);
 
     double? onScreenDelta(int index) {
       final lb = listKey.currentContext!.findRenderObject()! as RenderBox;
-      final rb = rowKeys[index]?.currentContext?.findRenderObject() as RenderBox?;
+      final rb =
+          rowKeys[index]?.currentContext?.findRenderObject() as RenderBox?;
       if (rb == null || !rb.attached) return null;
-      return rb.localToGlobal(Offset.zero).dy - lb.localToGlobal(Offset.zero).dy;
+      return rb.localToGlobal(Offset.zero).dy -
+          lb.localToGlobal(Offset.zero).dy;
     }
 
     // Phase 1: forward 0 -> 90, building measurements on the way.
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: const Duration(seconds: 1), alignment: 0.0));
+    await pumpUntilComplete(
+        tester,
+        controller.scrollTo(90,
+            duration: const Duration(seconds: 1), alignment: 0.0));
 
     // Phase 2: reshuffle five rows spread across the prefix, none of them
     // grown far enough to trigger ISC-94's stale-anchor limit.
@@ -107,25 +119,31 @@ void main() {
     await tester.pump(const Duration(milliseconds: 16));
 
     // Phase 3: backward 90 -> 50, walking back past every reshuffled row.
-    await pumpUntilComplete(tester, controller.scrollTo(50, duration: const Duration(seconds: 1), alignment: 0.0));
+    await pumpUntilComplete(
+        tester,
+        controller.scrollTo(50,
+            duration: const Duration(seconds: 1), alignment: 0.0));
 
     // The arithmetic invariant the controller is actually responsible for
     // post-ISC-98: the computed offset equals the target row's own live
     // layoutOffset, not necessarily the prefix sum -- see the file-level
     // Dartdoc.
     final layoutOffset = sliverLayoutOffsetOf(rowKeys[50]);
-    expect(layoutOffset, isNotNull, reason: 'target row must be materialized once scrollTo completes');
+    expect(layoutOffset, isNotNull,
+        reason: 'target row must be materialized once scrollTo completes');
     expect(
       controller.offset,
       closeTo(layoutOffset!, 0.5),
-      reason: 'the recovered offset must equal row 50\'s own live layoutOffset ($layoutOffset), not '
+      reason:
+          'the recovered offset must equal row 50\'s own live layoutOffset ($layoutOffset), not '
           'necessarily the prefix sum (${prefixOf(50)})',
     );
     for (var i = 0; i <= 50; i++) {
       expect(
         controller.measurementsSizes[i]?.height,
         rowHeights[i],
-        reason: 'cache for row $i must match the current data after the backward walk',
+        reason:
+            'cache for row $i must match the current data after the backward walk',
       );
     }
 

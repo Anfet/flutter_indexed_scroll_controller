@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
 void main() {
-  group('ISC-61: _RenderIndexedScrollItem reads leading axis padding from RenderSliverEdgeInsetsPadding ancestors', () {
+  group(
+      'ISC-61: _RenderIndexedScrollItem reads leading axis padding from RenderSliverEdgeInsetsPadding ancestors',
+      () {
     testWidgets(
       'no SliverPadding ancestor reads as zero',
       (WidgetTester tester) async {
@@ -100,7 +102,8 @@ void main() {
                         delegate: SliverChildBuilderDelegate(
                           (context, index) => controller.watch(
                             index: index,
-                            child: SizedBox(height: 50.0, child: Text('Item $index')),
+                            child: SizedBox(
+                                height: 50.0, child: Text('Item $index')),
                           ),
                           childCount: 20,
                         ),

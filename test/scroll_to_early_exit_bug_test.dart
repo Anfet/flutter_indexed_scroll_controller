@@ -23,7 +23,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         unawaited(
@@ -60,7 +61,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         unawaited(
@@ -105,7 +107,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         // Verify initial state: offset 0, indices 0-5 visible (6 rows = 600px)
@@ -132,7 +135,8 @@ void main() {
         expect(
           finalOffset,
           closeTo(600.0, 1.0),
-          reason: 'scrollTo(6) should reach offset 600 (6 rows * 100px). Before ISC-02B, '
+          reason:
+              'scrollTo(6) should reach offset 600 (6 rows * 100px). Before ISC-02B, '
               'index 6 was considered "visible" by the flawed maxVisibleIndex check, so '
               'Future completed without actual scroll. The fix compares target pixels '
               'instead of indices.',
@@ -162,7 +166,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         // First, scroll to a far index (e.g., index 15) to fully measure the list
@@ -205,7 +210,8 @@ void main() {
         expect(
           finalOffset,
           closeTo(0.0, 1.0),
-          reason: 'scrollTo(0) after scrollTo(15) should return to offset 0. Before ISC-02B, '
+          reason:
+              'scrollTo(0) after scrollTo(15) should return to offset 0. Before ISC-02B, '
               'when the entire list was already measured, the visible-range scan loop never '
               'reached break, so maxVisibleIndex stayed at default 0.0, which falsely matched '
               'scrollToIndex=0, causing Future.value() completion without actual scroll. This '
@@ -229,7 +235,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         // First, scroll to a far index (e.g., index 15)
@@ -287,7 +294,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         unawaited(
@@ -324,7 +332,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         unawaited(

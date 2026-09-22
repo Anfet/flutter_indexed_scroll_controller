@@ -17,14 +17,17 @@ import 'support/scroll_harness.dart';
 /// ISC-96/97/98 probe files, written to pin down one mechanism at a time,
 /// ever combined with each other.
 void main() {
-  testWidgets('forward dirty corridor: scrollTo(80) after scrollTo(10) refreshes changes between 10 and 80', (tester) async {
+  testWidgets(
+      'forward dirty corridor: scrollTo(80) after scrollTo(10) refreshes changes between 10 and 80',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 80;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [20, 35, 55, 70];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -69,8 +72,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(10, duration: Duration.zero));
-    expect(_sliverLayoutOffsetOf(rowKeys[10]), isNotNull, reason: 'the experiment must begin around row 10');
+    await pumpUntilComplete(
+        tester, controller.scrollTo(10, duration: Duration.zero));
+    expect(_sliverLayoutOffsetOf(rowKeys[10]), isNotNull,
+        reason: 'the experiment must begin around row 10');
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -79,33 +84,42 @@ void main() {
       }
     });
 
-    final registrationsBeforeWalk = <int, int>{for (final index in changedIndices) index: controller.registrationCountFor(index)};
+    final registrationsBeforeWalk = <int, int>{
+      for (final index in changedIndices)
+        index: controller.registrationCountFor(index)
+    };
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     for (final index in changedIndices) {
       expect(
         controller.registrationCountFor(index),
         greaterThan(registrationsBeforeWalk[index]!),
-        reason: 'changed row $index must get a fresh layout while the forward walk passes over it',
+        reason:
+            'changed row $index must get a fresh layout while the forward walk passes over it',
       );
       expect(controller.fingerprintFor(index), revisions[index]);
     }
     expect(
       _onScreenDelta(listKey, rowKeys[targetIndex]),
       closeTo(0, 0.5),
-      reason: 'scrollTo must put row $targetIndex at the viewport start after a forward dirty walk',
+      reason:
+          'scrollTo must put row $targetIndex at the viewport start after a forward dirty walk',
     );
   });
 
-  testWidgets('mismatches at both corridor edges: scrollTo(70) after scrollTo(20) with changes at 21 and 69', (tester) async {
+  testWidgets(
+      'mismatches at both corridor edges: scrollTo(70) after scrollTo(20) with changes at 21 and 69',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 70;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [21, 69];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -150,7 +164,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(20, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(20, duration: Duration.zero));
     expect(_sliverLayoutOffsetOf(rowKeys[20]), isNotNull);
 
     setOuterState(() {
@@ -160,25 +175,31 @@ void main() {
       }
     });
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     for (final index in changedIndices) {
-      expect(controller.fingerprintFor(index), revisions[index], reason: 'row $index at a corridor edge must be refreshed');
+      expect(controller.fingerprintFor(index), revisions[index],
+          reason: 'row $index at a corridor edge must be refreshed');
     }
     expect(
       _onScreenDelta(listKey, rowKeys[targetIndex]),
       closeTo(0, 0.5),
-      reason: 'both-edge mismatches must not prevent target materialization at the correct offset',
+      reason:
+          'both-edge mismatches must not prevent target materialization at the correct offset',
     );
   });
 
-  testWidgets('a missing stored fingerprint anywhere in the corridor makes it dirty even with unchanged geometry', (tester) async {
+  testWidgets(
+      'a missing stored fingerprint anywhere in the corridor makes it dirty even with unchanged geometry',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 40;
     const initialHeights = [40.0, 50.0, 60.0];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -217,8 +238,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
-    expect(controller.hasFingerprintFor(30), isTrue, reason: 'row 30 must have been measured on the way to 90');
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
+    expect(controller.hasFingerprintFor(30), isTrue,
+        reason: 'row 30 must have been measured on the way to 90');
 
     // Simulate a lost registration -- e.g. a size cache entry evicted by
     // invalidateMeasurements()'s per-row API used unconventionally -- by
@@ -232,26 +255,32 @@ void main() {
     controller.invalidateMeasurements();
     await tester.pump();
     expect(controller.hasFingerprintFor(30), isFalse,
-        reason: 'invalidateMeasurements must drop stored fingerprints for the missing-fingerprint scenario');
+        reason:
+            'invalidateMeasurements must drop stored fingerprints for the missing-fingerprint scenario');
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     expect(controller.hasFingerprintFor(targetIndex), isTrue);
     expect(
       _onScreenDelta(listKey, rowKeys[targetIndex]),
       closeTo(0, 0.5),
-      reason: 'a corridor with missing fingerprints must still converge on the correct final offset',
+      reason:
+          'a corridor with missing fingerprints must still converge on the correct final offset',
     );
   });
 
-  testWidgets('reverse: dirty corridor walk still lands the target flush with the viewport\'s visual start', (tester) async {
+  testWidgets(
+      'reverse: dirty corridor walk still lands the target flush with the viewport\'s visual start',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 20;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [55, 64, 70, 81];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -297,7 +326,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
     expect(_sliverLayoutOffsetOf(rowKeys[90]), isNotNull);
 
     setOuterState(() {
@@ -307,7 +337,8 @@ void main() {
       }
     });
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     for (final index in changedIndices) {
       expect(controller.fingerprintFor(index), revisions[index]);
@@ -319,17 +350,21 @@ void main() {
     // internal to how position.pixels maps onto layoutOffset, and does not
     // change which local edge alignment: 0 refers to.
     final listBox = listKey.currentContext!.findRenderObject()! as RenderBox;
-    final rowBox = rowKeys[targetIndex]!.currentContext!.findRenderObject()! as RenderBox;
+    final rowBox =
+        rowKeys[targetIndex]!.currentContext!.findRenderObject()! as RenderBox;
     final rowTop = rowBox.localToGlobal(Offset.zero).dy;
     final listTop = listBox.localToGlobal(Offset.zero).dy;
     expect(
       rowTop - listTop,
       closeTo(0, 0.5),
-      reason: 'reverse: true dirty corridor walk must put row $targetIndex at alignment: 0\'s target edge',
+      reason:
+          'reverse: true dirty corridor walk must put row $targetIndex at alignment: 0\'s target edge',
     );
   });
 
-  testWidgets('ListView.separated: dirty corridor walk with alignmentTarget.item lands past the preceding separator', (tester) async {
+  testWidgets(
+      'ListView.separated: dirty corridor walk with alignmentTarget.item lands past the preceding separator',
+      (tester) async {
     const itemCount = 60;
     const viewportHeight = 400.0;
     const targetIndex = 45;
@@ -337,7 +372,8 @@ void main() {
     const separatorHeight = 8.0;
     const changedIndices = [15, 30];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -386,7 +422,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(58, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(58, duration: Duration.zero));
     expect(_sliverLayoutOffsetOf(rowKeys[58]), isNotNull);
 
     setOuterState(() {
@@ -398,7 +435,8 @@ void main() {
 
     await pumpUntilComplete(
       tester,
-      controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero, alignmentTarget: ScrollAlignmentTarget.item),
+      controller.scrollTo(targetIndex.toDouble(),
+          duration: Duration.zero, alignmentTarget: ScrollAlignmentTarget.item),
     );
 
     for (final index in changedIndices) {
@@ -407,11 +445,14 @@ void main() {
     expect(
       _onScreenDelta(listKey, rowKeys[targetIndex]),
       closeTo(0, 0.5),
-      reason: 'separated list dirty corridor walk with alignmentTarget.item must land row $targetIndex flush with the viewport start',
+      reason:
+          'separated list dirty corridor walk with alignmentTarget.item must land row $targetIndex flush with the viewport start',
     );
   });
 
-  testWidgets('axis padding: dirty corridor walk accounts for leading padding in the final live offset', (tester) async {
+  testWidgets(
+      'axis padding: dirty corridor walk accounts for leading padding in the final live offset',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 60;
@@ -419,7 +460,8 @@ void main() {
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [15, 40];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -465,7 +507,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
     expect(_sliverLayoutOffsetOf(rowKeys[90]), isNotNull);
 
     setOuterState(() {
@@ -475,7 +518,8 @@ void main() {
       }
     });
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     for (final index in changedIndices) {
       expect(controller.fingerprintFor(index), revisions[index]);
@@ -483,18 +527,22 @@ void main() {
     expect(
       _onScreenDelta(listKey, rowKeys[targetIndex]),
       closeTo(0, 0.5),
-      reason: 'leading axis padding must still be honored by the final live-offset read after a dirty walk',
+      reason:
+          'leading axis padding must still be honored by the final live-offset read after a dirty walk',
     );
   });
 
-  testWidgets('RTL horizontal: dirty corridor walk lands the target at the correct visual edge', (tester) async {
+  testWidgets(
+      'RTL horizontal: dirty corridor walk lands the target at the correct visual edge',
+      (tester) async {
     const itemCount = 80;
     const viewportWidth = 500.0;
     const targetIndex = 50;
     const initialWidths = [60.0, 80.0, 100.0];
     const changedIndices = [10, 25];
 
-    final rowWidths = List<double>.generate(itemCount, (index) => initialWidths[index % initialWidths.length]);
+    final rowWidths = List<double>.generate(
+        itemCount, (index) => initialWidths[index % initialWidths.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -544,7 +592,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(5, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(5, duration: Duration.zero));
     expect(_sliverLayoutOffsetOf(rowKeys[5]), isNotNull);
 
     setOuterState(() {
@@ -554,7 +603,8 @@ void main() {
       }
     });
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     for (final index in changedIndices) {
       expect(controller.fingerprintFor(index), revisions[index]);
@@ -566,17 +616,21 @@ void main() {
     // still aligns the row's LEFT edge (its own local start) with the
     // viewport's left edge.
     final listBox = listKey.currentContext!.findRenderObject()! as RenderBox;
-    final rowBox = rowKeys[targetIndex]!.currentContext!.findRenderObject()! as RenderBox;
+    final rowBox =
+        rowKeys[targetIndex]!.currentContext!.findRenderObject()! as RenderBox;
     final rowLeft = rowBox.localToGlobal(Offset.zero).dx;
     final listLeft = listBox.localToGlobal(Offset.zero).dx;
     expect(
       rowLeft - listLeft,
       closeTo(0, 0.5),
-      reason: 'RTL dirty corridor walk must land row $targetIndex at alignment: 0\'s target edge',
+      reason:
+          'RTL dirty corridor walk must land row $targetIndex at alignment: 0\'s target edge',
     );
   });
 
-  testWidgets('alignment: 0.5 and alignment: 1.0 after a dirty corridor walk still center/end the target correctly', (tester) async {
+  testWidgets(
+      'alignment: 0.5 and alignment: 1.0 after a dirty corridor walk still center/end the target correctly',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 60;
@@ -584,7 +638,8 @@ void main() {
     const changedIndices = [20, 40];
 
     for (final alignment in [0.5, 1.0]) {
-      final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+      final rowHeights = List<double>.generate(
+          itemCount, (index) => initialHeights[index % initialHeights.length]);
       final revisions = List<int>.filled(itemCount, 0);
       final rowKeys = <int, GlobalKey>{};
       final listKey = GlobalKey();
@@ -596,7 +651,8 @@ void main() {
       late StateSetter setOuterState;
       addTearDown(controller.dispose);
 
-      GlobalKey rowKeyFor(int index) => rowKeys.putIfAbsent(index, GlobalKey.new);
+      GlobalKey rowKeyFor(int index) =>
+          rowKeys.putIfAbsent(index, GlobalKey.new);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -629,7 +685,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+      await pumpUntilComplete(
+          tester, controller.scrollTo(90, duration: Duration.zero));
 
       setOuterState(() {
         for (final index in changedIndices) {
@@ -638,30 +695,39 @@ void main() {
         }
       });
 
-      await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero, alignment: alignment));
+      await pumpUntilComplete(
+          tester,
+          controller.scrollTo(targetIndex.toDouble(),
+              duration: Duration.zero, alignment: alignment));
 
       final listBox = listKey.currentContext!.findRenderObject()! as RenderBox;
-      final rowBox = rowKeys[targetIndex]!.currentContext!.findRenderObject()! as RenderBox;
+      final rowBox = rowKeys[targetIndex]!.currentContext!.findRenderObject()!
+          as RenderBox;
       final rowTop = rowBox.localToGlobal(Offset.zero).dy;
       final listTop = listBox.localToGlobal(Offset.zero).dy;
       final viewportHeightActual = listBox.size.height;
-      final expectedTop = (viewportHeightActual - rowBox.size.height) * alignment;
+      final expectedTop =
+          (viewportHeightActual - rowBox.size.height) * alignment;
       expect(
         rowTop - listTop,
         closeTo(expectedTop, 0.5),
-        reason: 'alignment: $alignment after a dirty corridor walk must place row $targetIndex at the aligned position',
+        reason:
+            'alignment: $alignment after a dirty corridor walk must place row $targetIndex at the aligned position',
       );
     }
   });
 
-  testWidgets('cancelScroll() during the dirty corridor walk cancels with explicitCancel', (tester) async {
+  testWidgets(
+      'cancelScroll() during the dirty corridor walk cancels with explicitCancel',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 20;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [55, 64, 70, 81];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -706,7 +772,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -715,7 +782,8 @@ void main() {
       }
     });
 
-    final operation = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+    final operation =
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
     Object? error;
     var done = false;
     operation.then(
@@ -738,17 +806,23 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
 
-    expect(done, isTrue, reason: 'scrollTo must not hang after cancelScroll() during the corridor walk');
+    expect(done, isTrue,
+        reason:
+            'scrollTo must not hang after cancelScroll() during the corridor walk');
     expect(error, isA<ScrollCancelledException>());
-    expect((error as ScrollCancelledException).reason, ScrollCancelReason.explicitCancel);
+    expect((error as ScrollCancelledException).reason,
+        ScrollCancelReason.explicitCancel);
   });
 
-  testWidgets('repeated scrollTo calls to different dirty targets each converge to their own correct offset', (tester) async {
+  testWidgets(
+      'repeated scrollTo calls to different dirty targets each converge to their own correct offset',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const initialHeights = [40.0, 50.0, 60.0];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -793,7 +867,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
 
     for (final targetIndex in [30, 70, 10]) {
       setOuterState(() {
@@ -801,23 +876,28 @@ void main() {
         rowHeights[changed] += 22.0;
         revisions[changed]++;
       });
-      await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+      await pumpUntilComplete(tester,
+          controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
       expect(
         _onScreenDelta(listKey, rowKeys[targetIndex]),
         closeTo(0, 0.5),
-        reason: 'repeated scrollTo($targetIndex) must land flush with the viewport start each time',
+        reason:
+            'repeated scrollTo($targetIndex) must land flush with the viewport start each time',
       );
     }
   });
 
-  testWidgets('near-end clamp with a dirty corridor: target near the last index still converges without overshoot', (tester) async {
+  testWidgets(
+      'near-end clamp with a dirty corridor: target near the last index still converges without overshoot',
+      (tester) async {
     const itemCount = 40;
     const viewportHeight = 500.0;
     const targetIndex = 39;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [5, 10];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -862,7 +942,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(0, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(0, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -871,7 +952,8 @@ void main() {
       }
     });
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     // maxScrollExtent is a lazy sliver's ESTIMATE, not exact geometry (see
     // todo.md's "two sources of truth" invariant), so the clamp must be
@@ -882,20 +964,25 @@ void main() {
     // viewport TOP without leaving empty space below the content, so the
     // physical bound must have clamped the position upward from the raw
     // formula's request.
-    expect(_sliverLayoutOffsetOf(rowKeys[targetIndex]), isNotNull, reason: 'the last row must be materialized after the dirty walk');
+    expect(_sliverLayoutOffsetOf(rowKeys[targetIndex]), isNotNull,
+        reason: 'the last row must be materialized after the dirty walk');
     final listBox = listKey.currentContext!.findRenderObject()! as RenderBox;
-    final rowBox = rowKeys[targetIndex]!.currentContext!.findRenderObject()! as RenderBox;
+    final rowBox =
+        rowKeys[targetIndex]!.currentContext!.findRenderObject()! as RenderBox;
     final rowBottom = rowBox.localToGlobal(Offset(0, rowBox.size.height)).dy;
     final listBottom = listBox.localToGlobal(Offset(0, listBox.size.height)).dy;
     expect(
       rowBottom,
       lessThanOrEqualTo(listBottom + 0.5),
-      reason: 'the last row\'s bottom edge must not extend past the viewport\'s bottom edge -- the physical bound, '
+      reason:
+          'the last row\'s bottom edge must not extend past the viewport\'s bottom edge -- the physical bound, '
           'not an alignment: 0 overshoot, must govern the clamp',
     );
   });
 
-  testWidgets('unchanged data: a repeat scrollTo to the same already-live target costs no extra corridor walk', (tester) async {
+  testWidgets(
+      'unchanged data: a repeat scrollTo to the same already-live target costs no extra corridor walk',
+      (tester) async {
     // ISC-99's acceptance criterion requires the clean-corridor path to keep
     // matching ISC-82d's timing contract; this exercises it specifically
     // through the same StatefulBuilder harness style the dirty-corridor
@@ -907,7 +994,8 @@ void main() {
     const targetIndex = 50;
     const initialHeights = [40.0, 50.0, 60.0];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -946,11 +1034,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     var pumps = 0;
-    final second = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+    final second =
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
     var done = false;
     second.then((_) => done = true, onError: (_) => done = true);
     while (!done && pumps < 10) {
@@ -958,17 +1049,22 @@ void main() {
       pumps++;
     }
     await second;
-    expect(pumps, lessThanOrEqualTo(2), reason: 'a repeat scrollTo to the same already-live target must resolve near-synchronously');
+    expect(pumps, lessThanOrEqualTo(2),
+        reason:
+            'a repeat scrollTo to the same already-live target must resolve near-synchronously');
   });
 
-  testWidgets('a user drag during a dirty corridor walk cancels scrollTo with userGesture', (tester) async {
+  testWidgets(
+      'a user drag during a dirty corridor walk cancels scrollTo with userGesture',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 20;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [55, 64, 70, 81];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final controller = IndexedScrollController(
       scrollDuration: Duration.zero,
@@ -996,7 +1092,8 @@ void main() {
               child: StatefulBuilder(
                 builder: (context, setState) {
                   setOuterState = setState;
-                  return IndexedScrollGestureDetector(controller: controller, child: list);
+                  return IndexedScrollGestureDetector(
+                      controller: controller, child: list);
                 },
               ),
             ),
@@ -1006,7 +1103,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -1043,19 +1141,25 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
 
-    expect(done, isTrue, reason: 'scrollTo must not hang after a user drag interrupts the corridor walk');
+    expect(done, isTrue,
+        reason:
+            'scrollTo must not hang after a user drag interrupts the corridor walk');
     expect(error, isA<ScrollCancelledException>());
-    expect((error as ScrollCancelledException).reason, ScrollCancelReason.userGesture);
+    expect((error as ScrollCancelledException).reason,
+        ScrollCancelReason.userGesture);
   });
 
-  testWidgets('invalidateMeasurements() during a dirty corridor walk cancels with dataInvalidated', (tester) async {
+  testWidgets(
+      'invalidateMeasurements() during a dirty corridor walk cancels with dataInvalidated',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 20;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [55, 64, 70, 81];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -1100,7 +1204,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -1130,19 +1235,25 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
 
-    expect(done, isTrue, reason: 'scrollTo must not hang after invalidateMeasurements() during the corridor walk');
+    expect(done, isTrue,
+        reason:
+            'scrollTo must not hang after invalidateMeasurements() during the corridor walk');
     expect(error, isA<ScrollCancelledException>());
-    expect((error as ScrollCancelledException).reason, ScrollCancelReason.dataInvalidated);
+    expect((error as ScrollCancelledException).reason,
+        ScrollCancelReason.dataInvalidated);
   });
 
-  testWidgets('near-start clamp with a dirty corridor: alignment 1.0 near index 0 clamps instead of going negative', (tester) async {
+  testWidgets(
+      'near-start clamp with a dirty corridor: alignment 1.0 near index 0 clamps instead of going negative',
+      (tester) async {
     const itemCount = 60;
     const viewportHeight = 500.0;
     const targetIndex = 2;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [40, 55];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -1187,7 +1298,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(55, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(55, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -1196,24 +1308,31 @@ void main() {
       }
     });
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero, alignment: 1.0));
+    await pumpUntilComplete(
+        tester,
+        controller.scrollTo(targetIndex.toDouble(),
+            duration: Duration.zero, alignment: 1.0));
 
     final position = controller.position;
     expect(
       position.pixels,
       closeTo(position.minScrollExtent, 0.5),
-      reason: 'alignment: 1.0 on a low index must clamp to minScrollExtent instead of the raw formula\'s negative result',
+      reason:
+          'alignment: 1.0 on a low index must clamp to minScrollExtent instead of the raw formula\'s negative result',
     );
   });
 
-  testWidgets('fractional target index after a dirty corridor walk lands at the exact sub-row offset', (tester) async {
+  testWidgets(
+      'fractional target index after a dirty corridor walk lands at the exact sub-row offset',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 60.5;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [20, 40];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -1258,7 +1377,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -1267,11 +1387,13 @@ void main() {
       }
     });
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(targetIndex, duration: Duration.zero));
 
     final targetItemIndex = targetIndex.truncate();
     final fraction = targetIndex - targetItemIndex;
-    final rowBox = rowKeys[targetItemIndex]!.currentContext!.findRenderObject()! as RenderBox;
+    final rowBox = rowKeys[targetItemIndex]!.currentContext!.findRenderObject()!
+        as RenderBox;
     final listBox = listKey.currentContext!.findRenderObject()! as RenderBox;
     final expectedTop = -(rowBox.size.height * fraction);
     final rowTop = rowBox.localToGlobal(Offset.zero).dy;
@@ -1279,11 +1401,14 @@ void main() {
     expect(
       rowTop - listTop,
       closeTo(expectedTop, 0.5),
-      reason: 'a fractional target after a dirty corridor walk must land the sub-row offset exactly',
+      reason:
+          'a fractional target after a dirty corridor walk must land the sub-row offset exactly',
     );
   });
 
-  testWidgets('a second scrollTo during a dirty corridor walk supersedes the first, which cancels with superseded', (tester) async {
+  testWidgets(
+      'a second scrollTo during a dirty corridor walk supersedes the first, which cancels with superseded',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const firstTarget = 20;
@@ -1291,7 +1416,8 @@ void main() {
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [55, 64, 70, 81];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -1336,7 +1462,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -1362,12 +1489,16 @@ void main() {
     // Let the first walk's corridor recovery genuinely begin (its first
     // jumpTo + endOfFrame check-in) before it is superseded.
     await tester.pump(const Duration(milliseconds: 16));
-    expect(firstDone, isFalse, reason: 'the first walk must still be in flight when the second call supersedes it');
+    expect(firstDone, isFalse,
+        reason:
+            'the first walk must still be in flight when the second call supersedes it');
 
     Object? secondError;
     var secondDone = false;
     unawaited(
-      controller.scrollTo(secondTarget.toDouble(), duration: Duration.zero).then(
+      controller
+          .scrollTo(secondTarget.toDouble(), duration: Duration.zero)
+          .then(
         (_) {
           secondDone = true;
         },
@@ -1385,23 +1516,30 @@ void main() {
     expect(firstDone, isTrue);
     expect(secondDone, isTrue);
     expect(firstError, isA<ScrollCancelledException>());
-    expect((firstError as ScrollCancelledException).reason, ScrollCancelReason.superseded);
-    expect(secondError, isNull, reason: 'the second, more recent call must reach its own target uncontested');
+    expect((firstError as ScrollCancelledException).reason,
+        ScrollCancelReason.superseded);
+    expect(secondError, isNull,
+        reason:
+            'the second, more recent call must reach its own target uncontested');
     expect(
       _onScreenDelta(listKey, rowKeys[secondTarget]),
       closeTo(0, 0.5),
-      reason: 'the superseding call must still complete its own dirty-corridor walk and land flush with the viewport start',
+      reason:
+          'the superseding call must still complete its own dirty-corridor walk and land flush with the viewport start',
     );
   });
 
-  testWidgets('detach during a dirty corridor walk cancels with detached instead of hanging', (tester) async {
+  testWidgets(
+      'detach during a dirty corridor walk cancels with detached instead of hanging',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 20;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [55, 64, 70, 81];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final controller = IndexedScrollController(
       scrollDuration: Duration.zero,
@@ -1425,7 +1563,8 @@ void main() {
                     itemCount: itemCount,
                     itemBuilder: (context, index) => controller.watch(
                       index: index,
-                      child: SizedBox(height: rowHeights[index], child: Text('Row $index')),
+                      child: SizedBox(
+                          height: rowHeights[index], child: Text('Row $index')),
                     ),
                   );
                 },
@@ -1437,7 +1576,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -1463,7 +1603,9 @@ void main() {
     for (var i = 0; i < 3; i++) {
       await tester.pump(const Duration(milliseconds: 16));
     }
-    expect(done, isFalse, reason: 'the dirty corridor walk must still be in flight three frames in, or the detach below tests nothing');
+    expect(done, isFalse,
+        reason:
+            'the dirty corridor walk must still be in flight three frames in, or the detach below tests nothing');
 
     // Unmount the Scrollable so the framework performs the one real detach,
     // matching scroll_to_concurrency_test.dart's pattern (a manual detach()
@@ -1475,19 +1617,24 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
 
-    expect(done, isTrue, reason: 'scrollTo must not hang after detach during the corridor walk');
+    expect(done, isTrue,
+        reason: 'scrollTo must not hang after detach during the corridor walk');
     expect(error, isA<ScrollCancelledException>());
-    expect((error as ScrollCancelledException).reason, ScrollCancelReason.detached);
+    expect((error as ScrollCancelledException).reason,
+        ScrollCancelReason.detached);
   });
 
-  testWidgets('dispose during a dirty corridor walk cancels with disposed instead of continuing to drive the position', (tester) async {
+  testWidgets(
+      'dispose during a dirty corridor walk cancels with disposed instead of continuing to drive the position',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 20;
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [55, 64, 70, 81];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final controller = IndexedScrollController(
       scrollDuration: Duration.zero,
@@ -1512,7 +1659,8 @@ void main() {
                     itemCount: itemCount,
                     itemBuilder: (context, index) => controller.watch(
                       index: index,
-                      child: SizedBox(height: rowHeights[index], child: Text('Row $index')),
+                      child: SizedBox(
+                          height: rowHeights[index], child: Text('Row $index')),
                     ),
                   );
                 },
@@ -1524,7 +1672,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -1550,7 +1699,9 @@ void main() {
     for (var i = 0; i < 3; i++) {
       await tester.pump(const Duration(milliseconds: 16));
     }
-    expect(done, isFalse, reason: 'the dirty corridor walk must still be in flight three frames in, or the dispose below tests nothing');
+    expect(done, isFalse,
+        reason:
+            'the dirty corridor walk must still be in flight three frames in, or the dispose below tests nothing');
 
     controller.dispose();
 
@@ -1558,9 +1709,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
 
-    expect(done, isTrue, reason: 'scrollTo must not hang after dispose during the corridor walk');
+    expect(done, isTrue,
+        reason:
+            'scrollTo must not hang after dispose during the corridor walk');
     expect(error, isA<ScrollCancelledException>());
-    expect((error as ScrollCancelledException).reason, ScrollCancelReason.disposed);
+    expect((error as ScrollCancelledException).reason,
+        ScrollCancelReason.disposed);
 
     // Unmount before the test ends so the disposed controller is not left
     // attached to a live Scrollable.
@@ -1624,7 +1778,9 @@ void main() {
     return widget;
   }
 
-  testWidgets('supersede during an in-flight prefix reflow (below-target mismatch) cancels the first with superseded', (tester) async {
+  testWidgets(
+      'supersede during an in-flight prefix reflow (below-target mismatch) cancels the first with superseded',
+      (tester) async {
     const itemCount = 100;
     const startIndex = 90;
     const targetIndex = 70;
@@ -1633,7 +1789,8 @@ void main() {
     const firstChangedIndex = 15;
     const secondChangedIndex = 60;
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -1655,7 +1812,8 @@ void main() {
       captureSetState: (setState) => setOuterState = setState,
     );
 
-    await pumpUntilComplete(tester, controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
 
     setOuterState(() {
       rowHeights[firstChangedIndex] += 60.0;
@@ -1666,7 +1824,8 @@ void main() {
 
     Object? firstError;
     var firstDone = false;
-    final first = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+    final first =
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
     first.then(
       (_) {
         firstDone = true;
@@ -1683,12 +1842,17 @@ void main() {
       final row0Offset = _sliverLayoutOffsetOf(rowKeys[0]);
       if (row0Offset != null && row0Offset.abs() <= 0.5) sawContentStart = true;
     }
-    expect(sawContentStart, isTrue, reason: 'the reflow must reach row 0 before the interruption below tests the reflow phase');
-    expect(firstDone, isFalse, reason: 'the first scrollTo must still be in flight when the second call supersedes it');
+    expect(sawContentStart, isTrue,
+        reason:
+            'the reflow must reach row 0 before the interruption below tests the reflow phase');
+    expect(firstDone, isFalse,
+        reason:
+            'the first scrollTo must still be in flight when the second call supersedes it');
 
     Object? secondError;
     var secondDone = false;
-    final second = controller.scrollTo(secondTarget.toDouble(), duration: Duration.zero);
+    final second =
+        controller.scrollTo(secondTarget.toDouble(), duration: Duration.zero);
     second.then(
       (_) {
         secondDone = true;
@@ -1706,16 +1870,22 @@ void main() {
     expect(firstDone, isTrue);
     expect(secondDone, isTrue);
     expect(firstError, isA<ScrollCancelledException>());
-    expect((firstError as ScrollCancelledException).reason, ScrollCancelReason.superseded);
-    expect(secondError, isNull, reason: 'the second, more recent call must reach its own target uncontested');
+    expect((firstError as ScrollCancelledException).reason,
+        ScrollCancelReason.superseded);
+    expect(secondError, isNull,
+        reason:
+            'the second, more recent call must reach its own target uncontested');
     expect(
       _onScreenDelta(listKey, rowKeys[secondTarget]),
       closeTo(0, 0.5),
-      reason: 'the superseding call must complete its own scrollTo and land flush with the viewport start',
+      reason:
+          'the superseding call must complete its own scrollTo and land flush with the viewport start',
     );
   });
 
-  testWidgets('detach during an in-flight prefix reflow (below-target mismatch) cancels with detached', (tester) async {
+  testWidgets(
+      'detach during an in-flight prefix reflow (below-target mismatch) cancels with detached',
+      (tester) async {
     const itemCount = 100;
     const startIndex = 90;
     const targetIndex = 70;
@@ -1723,7 +1893,8 @@ void main() {
     const firstChangedIndex = 15;
     const secondChangedIndex = 60;
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -1745,7 +1916,8 @@ void main() {
       captureSetState: (setState) => setOuterState = setState,
     );
 
-    await pumpUntilComplete(tester, controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
 
     setOuterState(() {
       rowHeights[firstChangedIndex] += 60.0;
@@ -1756,7 +1928,8 @@ void main() {
 
     Object? error;
     var done = false;
-    final operation = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+    final operation =
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
     operation.then(
       (_) {
         done = true;
@@ -1773,8 +1946,12 @@ void main() {
       final row0Offset = _sliverLayoutOffsetOf(rowKeys[0]);
       if (row0Offset != null && row0Offset.abs() <= 0.5) sawContentStart = true;
     }
-    expect(sawContentStart, isTrue, reason: 'the reflow must reach row 0 before the detach below tests the reflow phase');
-    expect(done, isFalse, reason: 'the reflow must still be in flight when the detach below interrupts it');
+    expect(sawContentStart, isTrue,
+        reason:
+            'the reflow must reach row 0 before the detach below tests the reflow phase');
+    expect(done, isFalse,
+        reason:
+            'the reflow must still be in flight when the detach below interrupts it');
 
     // Unmount so the framework performs the one real detach, matching
     // scroll_to_concurrency_test.dart's pattern.
@@ -1784,12 +1961,16 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
 
-    expect(done, isTrue, reason: 'scrollTo must not hang after detach during the prefix reflow');
+    expect(done, isTrue,
+        reason: 'scrollTo must not hang after detach during the prefix reflow');
     expect(error, isA<ScrollCancelledException>());
-    expect((error as ScrollCancelledException).reason, ScrollCancelReason.detached);
+    expect((error as ScrollCancelledException).reason,
+        ScrollCancelReason.detached);
   });
 
-  testWidgets('dispose during an in-flight prefix reflow (below-target mismatch) cancels with disposed', (tester) async {
+  testWidgets(
+      'dispose during an in-flight prefix reflow (below-target mismatch) cancels with disposed',
+      (tester) async {
     const itemCount = 100;
     const startIndex = 90;
     const targetIndex = 70;
@@ -1797,7 +1978,8 @@ void main() {
     const firstChangedIndex = 15;
     const secondChangedIndex = 60;
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -1820,7 +2002,8 @@ void main() {
       captureSetState: (setState) => setOuterState = setState,
     );
 
-    await pumpUntilComplete(tester, controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
 
     setOuterState(() {
       rowHeights[firstChangedIndex] += 60.0;
@@ -1831,7 +2014,8 @@ void main() {
 
     Object? error;
     var done = false;
-    final operation = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+    final operation =
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
     operation.then(
       (_) {
         done = true;
@@ -1848,8 +2032,12 @@ void main() {
       final row0Offset = _sliverLayoutOffsetOf(rowKeys[0]);
       if (row0Offset != null && row0Offset.abs() <= 0.5) sawContentStart = true;
     }
-    expect(sawContentStart, isTrue, reason: 'the reflow must reach row 0 before the dispose below tests the reflow phase');
-    expect(done, isFalse, reason: 'the reflow must still be in flight when dispose below interrupts it');
+    expect(sawContentStart, isTrue,
+        reason:
+            'the reflow must reach row 0 before the dispose below tests the reflow phase');
+    expect(done, isFalse,
+        reason:
+            'the reflow must still be in flight when dispose below interrupts it');
 
     controller.dispose();
 
@@ -1857,9 +2045,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
 
-    expect(done, isTrue, reason: 'scrollTo must not hang after dispose during the prefix reflow');
+    expect(done, isTrue,
+        reason:
+            'scrollTo must not hang after dispose during the prefix reflow');
     expect(error, isA<ScrollCancelledException>());
-    expect((error as ScrollCancelledException).reason, ScrollCancelReason.disposed);
+    expect((error as ScrollCancelledException).reason,
+        ScrollCancelReason.disposed);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -1870,7 +2061,9 @@ double? _sliverLayoutOffsetOf(GlobalKey? key) {
   if (renderObject == null || !renderObject.attached) return null;
   for (RenderObject? node = renderObject; node != null; node = node.parent) {
     final parentData = node.parentData;
-    if (parentData is SliverMultiBoxAdaptorParentData) return parentData.layoutOffset;
+    if (parentData is SliverMultiBoxAdaptorParentData) {
+      return parentData.layoutOffset;
+    }
   }
   return null;
 }

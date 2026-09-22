@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
 void main() {
-  group('ISC-10/ISC-11: RenderObject registration with index/controller changes', () {
+  group(
+      'ISC-10/ISC-11: RenderObject registration with index/controller changes',
+      () {
     // The core issue: IndexedScrollItem.createRenderObject() creates _RenderIndexedScrollItem
     // with final fields `index` and `controller`. There is no updateRenderObject() override,
     // so when Flutter framework reuses an existing RenderObject (e.g. via GlobalKey),
@@ -53,7 +55,8 @@ void main() {
                             height: rowHeight,
                             color: Colors.blue,
                             child: Center(
-                              child: Text('Tracked Item (index=$currentItemIndex)'),
+                              child: Text(
+                                  'Tracked Item (index=$currentItemIndex)'),
                             ),
                           ),
                         );
@@ -102,7 +105,8 @@ void main() {
         expect(
           measurements.containsKey(0),
           isTrue,
-          reason: 'ISC-11: the earlier measurement at index 0 is retained in _sizes; '
+          reason:
+              'ISC-11: the earlier measurement at index 0 is retained in _sizes; '
               'updateRenderObject() only changes what the *live* RenderObject '
               'registers going forward, it does not purge prior history.',
         );
@@ -110,7 +114,8 @@ void main() {
         expect(
           measurements.containsKey(5),
           isTrue,
-          reason: 'ISC-11 fix: updateRenderObject() updates the reused RenderObject\'s '
+          reason:
+              'ISC-11 fix: updateRenderObject() updates the reused RenderObject\'s '
               'mutable index field to 5 and calls markNeedsLayout(), so the next '
               'performLayout() registers under the new logical index 5.',
         );
@@ -201,7 +206,8 @@ void main() {
         expect(
           controller2.measurementsSizes.containsKey(0),
           isTrue,
-          reason: 'ISC-11 fix: updateRenderObject() updates the reused RenderObject to '
+          reason:
+              'ISC-11 fix: updateRenderObject() updates the reused RenderObject to '
               'hold controller2 and triggers a relayout, so index 0 is now '
               'registered in controller2.',
         );
@@ -209,7 +215,8 @@ void main() {
         expect(
           controller1.measurementsSizes.containsKey(0),
           isTrue,
-          reason: 'ISC-11: controller1 keeps its earlier measurement — switching the '
+          reason:
+              'ISC-11: controller1 keeps its earlier measurement — switching the '
               'live owner to controller2 does not retroactively erase controller1\'s '
               '_sizes history, only the same RenderObject\'s live-owner entry moves.',
         );
@@ -343,7 +350,8 @@ void main() {
             duration: const Duration(milliseconds: 100),
           ),
           throwsA(isA<StateError>()),
-          reason: 'ISC-28: watch(index: 0) was registered by physical slot 2 (a '
+          reason:
+              'ISC-28: watch(index: 0) was registered by physical slot 2 (a '
               'mismatch), so scrollTo(2) must be rejected before it can sum a '
               'prefix through that mismatched entry, instead of completing at '
               'the logical-order sum of 300.0 px.',
@@ -439,14 +447,16 @@ void main() {
         expect(
           controller.measurementsSizes.containsKey(0),
           isTrue,
-          reason: 'ISC-11: index 0\'s earlier measurement is retained in _sizes; only '
+          reason:
+              'ISC-11: index 0\'s earlier measurement is retained in _sizes; only '
               'the live-owner tracking moves when the same RenderObject is reused '
               'for a different index, not the measurement history.',
         );
         expect(
           controller.measurementsSizes.containsKey(1),
           isTrue,
-          reason: 'ISC-11 fix: updateRenderObject() updates the RenderObject\'s mutable '
+          reason:
+              'ISC-11 fix: updateRenderObject() updates the RenderObject\'s mutable '
               'index field to 1 and calls markNeedsLayout(), so the next '
               'performLayout() registers a fresh measurement under index 1.',
         );
@@ -464,12 +474,14 @@ void main() {
         expect(
           controller.measurementsSizes.containsKey(0),
           isTrue,
-          reason: 'ISC-11: index 0\'s history is still retained after a second index change.',
+          reason:
+              'ISC-11: index 0\'s history is still retained after a second index change.',
         );
         expect(
           controller.measurementsSizes.containsKey(1),
           isTrue,
-          reason: 'ISC-11: index 1\'s history is still retained after a second index change.',
+          reason:
+              'ISC-11: index 1\'s history is still retained after a second index change.',
         );
         expect(
           controller.measurementsSizes.containsKey(2),

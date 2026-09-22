@@ -6,8 +6,11 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 import 'support/scroll_harness.dart';
 
 void main() {
-  group('ISC-97: fingerprint-corridor frontier jump with a preceding sliver', () {
-    testWidgets('the frontier jump lands on the row\'s coordinate including precedingScrollExtent, not the raw sliver-local layoutOffset', (
+  group('ISC-97: fingerprint-corridor frontier jump with a preceding sliver',
+      () {
+    testWidgets(
+        'the frontier jump lands on the row\'s coordinate including precedingScrollExtent, not the raw sliver-local layoutOffset',
+        (
       tester,
     ) async {
       // ISC-97 third acceptance round: _frontierJumpTarget's live layoutOffset
@@ -51,7 +54,8 @@ void main() {
       late StateSetter setOuterState;
       addTearDown(controller.dispose);
 
-      GlobalKey rowKeyFor(int index) => rowKeys.putIfAbsent(index, GlobalKey.new);
+      GlobalKey rowKeyFor(int index) =>
+          rowKeys.putIfAbsent(index, GlobalKey.new);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -64,7 +68,8 @@ void main() {
                   return CustomScrollView(
                     controller: controller,
                     slivers: [
-                      const SliverToBoxAdapter(child: SizedBox(height: precedingHeight)),
+                      const SliverToBoxAdapter(
+                          child: SizedBox(height: precedingHeight)),
                       SliverList.builder(
                         itemCount: 3,
                         itemBuilder: (context, index) => controller.watch(
@@ -88,8 +93,10 @@ void main() {
 
       expect(controller.precedingScrollExtentForTesting, precedingHeight);
 
-      await pumpUntilComplete(tester, controller.scrollTo(2, duration: Duration.zero));
-      await pumpUntilComplete(tester, controller.scrollTo(0, duration: Duration.zero));
+      await pumpUntilComplete(
+          tester, controller.scrollTo(2, duration: Duration.zero));
+      await pumpUntilComplete(
+          tester, controller.scrollTo(0, duration: Duration.zero));
 
       setOuterState(() {
         rowHeights[1] = 12000.0;
@@ -124,12 +131,16 @@ void main() {
       // row, begins) -- see _frontierJumpTarget's Dartdoc. In scrollable
       // (not sliver-local) coordinates that is precedingHeight + row 0's
       // extent + row 1's extent.
-      final correctFrontierLanding = precedingHeight + rowHeights[0] + rowHeights[1];
-      final wrongFrontierLanding = correctFrontierLanding - precedingHeight; // the pre-fix bug's landing spot.
+      final correctFrontierLanding =
+          precedingHeight + rowHeights[0] + rowHeights[1];
+      final wrongFrontierLanding = correctFrontierLanding -
+          precedingHeight; // the pre-fix bug's landing spot.
       expect(
-        observedJumps.any((pixels) => (pixels - correctFrontierLanding).abs() <= 1.0),
+        observedJumps
+            .any((pixels) => (pixels - correctFrontierLanding).abs() <= 1.0),
         isTrue,
-        reason: 'the frontier jump must land on precedingScrollExtent + the sliver-local coordinate '
+        reason:
+            'the frontier jump must land on precedingScrollExtent + the sliver-local coordinate '
             '($correctFrontierLanding), not the raw layoutOffset alone ($wrongFrontierLanding) -- '
             'observed jumps: $observedJumps',
       );
@@ -137,11 +148,14 @@ void main() {
   });
 
   group('ISC-75: preceding sliver extent', () {
-    testWidgets('CustomScrollView accounts for a preceding sliver when aligning a measured target', (tester) async {
+    testWidgets(
+        'CustomScrollView accounts for a preceding sliver when aligning a measured target',
+        (tester) async {
       const precedingHeight = 150.0;
       const itemHeight = 80.0;
       const targetIndex = 20;
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       await tester.pumpWidget(
@@ -150,12 +164,14 @@ void main() {
             body: CustomScrollView(
               controller: controller,
               slivers: [
-                const SliverToBoxAdapter(child: SizedBox(height: precedingHeight)),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: precedingHeight)),
                 SliverList.builder(
                   itemCount: 40,
                   itemBuilder: (context, index) => controller.watch(
                     index: index,
-                    child: SizedBox(height: itemHeight, child: Text('Item $index')),
+                    child: SizedBox(
+                        height: itemHeight, child: Text('Item $index')),
                   ),
                 ),
               ],
@@ -169,17 +185,23 @@ void main() {
 
       await pumpUntilComplete(
         tester,
-        controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+        controller.scrollTo(targetIndex.toDouble(),
+            duration: const Duration(milliseconds: 100)),
       );
 
-      expect(controller.position.pixels, closeTo(precedingHeight + targetIndex * itemHeight, 1.0));
-      expect(tester.getTopLeft(find.text('Item $targetIndex')).dy, closeTo(0.0, 1.0));
+      expect(controller.position.pixels,
+          closeTo(precedingHeight + targetIndex * itemHeight, 1.0));
+      expect(tester.getTopLeft(find.text('Item $targetIndex')).dy,
+          closeTo(0.0, 1.0));
     });
   });
 
   group('ISC-77: unbounded preceding sliver', () {
-    testWidgets('an unbounded preceding SliverList makes scrollTo fail instead of searching forever', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+    testWidgets(
+        'an unbounded preceding SliverList makes scrollTo fail instead of searching forever',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       await tester.pumpWidget(
@@ -197,7 +219,8 @@ void main() {
                   itemCount: 20,
                   itemBuilder: (context, index) => controller.watch(
                     index: index,
-                    child: SizedBox(height: 80.0, child: Text('Indexed item $index')),
+                    child: SizedBox(
+                        height: 80.0, child: Text('Indexed item $index')),
                   ),
                 ),
               ],
@@ -242,11 +265,14 @@ void main() {
     // ISC-75's Dartdoc) already covers this case; nothing here needed a
     // code change, only this test and the "verified, not a limitation"
     // update to README/CHANGELOG's known-limitations text.
-    testWidgets('scrollTo lands at the exact offset with a floating+snap SliverAppBar preceding the list', (tester) async {
+    testWidgets(
+        'scrollTo lands at the exact offset with a floating+snap SliverAppBar preceding the list',
+        (tester) async {
       const appBarHeight = 200.0;
       const itemHeight = 100.0;
       const targetIndex = 20;
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       await tester.pumpWidget(
@@ -266,7 +292,8 @@ void main() {
                   itemCount: 40,
                   itemBuilder: (context, index) => controller.watch(
                     index: index,
-                    child: SizedBox(height: itemHeight, child: Text('Item $index')),
+                    child: SizedBox(
+                        height: itemHeight, child: Text('Item $index')),
                   ),
                 ),
               ],
@@ -277,14 +304,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(controller.precedingScrollExtentForTesting, appBarHeight,
-          reason: 'A floating+snap SliverAppBar still reports a fixed precedingScrollExtent, same as pinned');
+          reason:
+              'A floating+snap SliverAppBar still reports a fixed precedingScrollExtent, same as pinned');
 
       await pumpUntilComplete(
         tester,
-        controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+        controller.scrollTo(targetIndex.toDouble(),
+            duration: const Duration(milliseconds: 100)),
       );
 
-      expect(controller.position.pixels, closeTo(appBarHeight + targetIndex * itemHeight, 1.0));
+      expect(controller.position.pixels,
+          closeTo(appBarHeight + targetIndex * itemHeight, 1.0));
 
       // Re-check after the app bar has scrolled away and collapsed (per its
       // own floating/snap animation), to confirm the formula does not
@@ -292,7 +322,8 @@ void main() {
       expect(
         controller.precedingScrollExtentForTesting,
         appBarHeight,
-        reason: 'precedingScrollExtent must still read the fixed expandedHeight after the app '
+        reason:
+            'precedingScrollExtent must still read the fixed expandedHeight after the app '
             'bar has scrolled out of view and collapsed, not some smaller "currently visible" '
             'extent',
       );
@@ -312,7 +343,9 @@ double? _sliverLayoutOffsetOf(GlobalKey? key) {
   if (renderObject == null || !renderObject.attached) return null;
   for (RenderObject? node = renderObject; node != null; node = node.parent) {
     final parentData = node.parentData;
-    if (parentData is SliverMultiBoxAdaptorParentData) return parentData.layoutOffset;
+    if (parentData is SliverMultiBoxAdaptorParentData) {
+      return parentData.layoutOffset;
+    }
   }
   return null;
 }

@@ -35,7 +35,9 @@ void main() {
     if (renderObject == null || !renderObject.attached) return null;
     for (RenderObject? node = renderObject; node != null; node = node.parent) {
       final parentData = node.parentData;
-      if (parentData is SliverMultiBoxAdaptorParentData) return parentData.layoutOffset;
+      if (parentData is SliverMultiBoxAdaptorParentData) {
+        return parentData.layoutOffset;
+      }
     }
     return null;
   }
@@ -82,7 +84,9 @@ void main() {
                       key: rowKeyFor(index),
                       height: rowHeights[index],
                       child: ColoredBox(
-                        color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
+                        color: index.isEven
+                            ? const Color(0xFFBBDEFB)
+                            : const Color(0xFFFFE0B2),
                         child: Center(child: Text('Row $index')),
                       ),
                     ),
@@ -123,7 +127,9 @@ void main() {
 
       var done = false;
       Object? err;
-      controller.scrollTo(target.toDouble(), duration: duration, alignment: 0.0).then(
+      controller
+          .scrollTo(target.toDouble(), duration: duration, alignment: 0.0)
+          .then(
         (_) => done = true,
         onError: (Object e) {
           done = true;
@@ -138,7 +144,8 @@ void main() {
 
       final listBox = listKey.currentContext!.findRenderObject()! as RenderBox;
       final listTop = listBox.localToGlobal(Offset.zero).dy;
-      final rowBox = rowKeys[target]?.currentContext?.findRenderObject() as RenderBox?;
+      final rowBox =
+          rowKeys[target]?.currentContext?.findRenderObject() as RenderBox?;
       final rowTop = rowBox?.localToGlobal(Offset.zero).dy;
       final onScreenDelta = rowTop == null ? null : rowTop - listTop;
       final layoutOffset = sliverLayoutOffsetOf(rowKeys[target]);
@@ -181,16 +188,21 @@ void main() {
     return results;
   }
 
-  testWidgets('animated scrollTo + reshuffle: computed offset always matches the target row\'s live layoutOffset', (tester) async {
+  testWidgets(
+      'animated scrollTo + reshuffle: computed offset always matches the target row\'s live layoutOffset',
+      (tester) async {
     final results = await runTrials(tester);
 
     for (final r in results) {
-      expect(r.err, isNull, reason: 'trial ${r.trial} (target ${r.target}): scrollTo must not throw');
+      expect(r.err, isNull,
+          reason:
+              'trial ${r.trial} (target ${r.target}): scrollTo must not throw');
       if (r.atMax) continue;
       expect(
         r.layoutOffset,
         isNotNull,
-        reason: 'trial ${r.trial} (target ${r.target}): target row must be materialized once scrollTo completes',
+        reason:
+            'trial ${r.trial} (target ${r.target}): target row must be materialized once scrollTo completes',
       );
       // ISC-98: controller.offset is now derived from the target row's own
       // live layoutOffset, not a summed prefix -- see the file-level
@@ -201,20 +213,24 @@ void main() {
       expect(
         r.offset,
         closeTo(r.layoutOffset!, 0.5),
-        reason: 'trial ${r.trial} (target ${r.target}): the computed offset must equal the target row\'s own '
+        reason:
+            'trial ${r.trial} (target ${r.target}): the computed offset must equal the target row\'s own '
             'live layoutOffset (${r.layoutOffset}), not necessarily the prefix sum (realSum=${r.realSum})',
       );
     }
   });
 
-  testWidgets('animated scrollTo + reshuffle: target row settles flush with the viewport top', (tester) async {
+  testWidgets(
+      'animated scrollTo + reshuffle: target row settles flush with the viewport top',
+      (tester) async {
     final results = await runTrials(tester);
 
     for (final r in results) {
       expect(
         r.onScreenDelta,
         isNotNull,
-        reason: 'trial ${r.trial} (target ${r.target}): target row must be mounted after scrollTo',
+        reason:
+            'trial ${r.trial} (target ${r.target}): target row must be mounted after scrollTo',
       );
       // A trial clamped against maxScrollExtent's own estimate is not
       // expected to land flush -- see the arithmetic test's note on atMax.
@@ -225,7 +241,8 @@ void main() {
       expect(
         r.onScreenDelta!,
         closeTo(0, 0.5),
-        reason: 'trial ${r.trial} (target ${r.target}): target row must sit flush with the viewport top',
+        reason:
+            'trial ${r.trial} (target ${r.target}): target row must sit flush with the viewport top',
       );
     }
   });

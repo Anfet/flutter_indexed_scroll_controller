@@ -17,9 +17,14 @@ import 'support/scroll_harness.dart';
 /// combined row height is 100px and a scroll to logical index 10 (10 whole
 /// rows preceding it) lands at 1000.0px.
 void main() {
-  group('ISC-81: primary form — ListView.builder, one watch() per row, separator inside the row', () {
-    testWidgets('scrollTo(10) reaches exactly 1000.0 and the target row\'s top sits at the viewport top', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+  group(
+      'ISC-81: primary form — ListView.builder, one watch() per row, separator inside the row',
+      () {
+    testWidgets(
+        'scrollTo(10) reaches exactly 1000.0 and the target row\'s top sits at the viewport top',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       const itemCount = 20;
@@ -40,7 +45,8 @@ void main() {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const SizedBox(height: itemExtent),
-                    if (index < itemCount - 1) const SizedBox(height: separatorExtent),
+                    if (index < itemCount - 1)
+                      const SizedBox(height: separatorExtent),
                   ],
                 ),
               ),
@@ -50,7 +56,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await pumpUntilComplete(tester, controller.scrollTo(10.0, duration: const Duration(milliseconds: 100)));
+      await pumpUntilComplete(
+          tester,
+          controller.scrollTo(10.0,
+              duration: const Duration(milliseconds: 100)));
 
       // README's exact claim: scrollTo(10) with 80px items + 20px separators
       // reaches 1000.0 (10 whole preceding rows of 100px each).
@@ -67,9 +76,14 @@ void main() {
     });
   });
 
-  group('ISC-81: fallback form — ListView.separated with both items and separators wrapped by physical slot', () {
-    testWidgets('watch() on physical slot 20 (item index 10) reaches exactly 1000.0', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+  group(
+      'ISC-81: fallback form — ListView.separated with both items and separators wrapped by physical slot',
+      () {
+    testWidgets(
+        'watch() on physical slot 20 (item index 10) reaches exactly 1000.0',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       const itemCount = 20;
@@ -103,13 +117,18 @@ void main() {
       await tester.pumpAndSettle();
 
       // README's exact claim: slot 20 (item index 10, 2 * 10) reaches 1000.0.
-      await pumpUntilComplete(tester, controller.scrollTo(20.0, duration: const Duration(milliseconds: 100)));
+      await pumpUntilComplete(
+          tester,
+          controller.scrollTo(20.0,
+              duration: const Duration(milliseconds: 100)));
       expect(controller.position.pixels, closeTo(1000.0, 1.0));
     });
 
-    testWidgets('wrapping only items in ListView.separated (the documented anti-pattern) throws StateError, not a silently wrong offset',
+    testWidgets(
+        'wrapping only items in ListView.separated (the documented anti-pattern) throws StateError, not a silently wrong offset',
         (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       const itemCount = 20;
@@ -126,7 +145,8 @@ void main() {
             body: ListView.separated(
               controller: controller,
               itemCount: itemCount,
-              separatorBuilder: (context, i) => const SizedBox(height: separatorExtent),
+              separatorBuilder: (context, i) =>
+                  const SizedBox(height: separatorExtent),
               itemBuilder: (context, i) => controller.watch(
                 index: i,
                 child: const SizedBox(height: itemExtent),
@@ -145,7 +165,9 @@ void main() {
       Object? error;
       var settled = false;
       unawaited(
-        controller.scrollTo(10.0, duration: const Duration(milliseconds: 100)).then(
+        controller
+            .scrollTo(10.0, duration: const Duration(milliseconds: 100))
+            .then(
           (_) => settled = true,
           onError: (Object e) {
             error = e;
@@ -161,15 +183,22 @@ void main() {
       // silently-wrong offset of 500.0 (10 * 80.0, ignoring the separators
       // watch() never saw).
       expect(error, isA<StateError>(),
-          reason: 'Wrapping only items in ListView.separated must fail loudly, not silently land at the wrong (separator-blind) offset.');
+          reason:
+              'Wrapping only items in ListView.separated must fail loudly, not silently land at the wrong (separator-blind) offset.');
       expect(controller.position.pixels, isNot(closeTo(500.0, 1.0)),
-          reason: 'The documented anti-pattern must not silently succeed at the separator-blind offset.');
+          reason:
+              'The documented anti-pattern must not silently succeed at the separator-blind offset.');
     });
   });
 
-  group('ISC-81: primary form, alignment: 1 measures against the whole row, separator included', () {
-    testWidgets('alignment: 1 puts the item\'s bottom one separator-height above the viewport bottom', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+  group(
+      'ISC-81: primary form, alignment: 1 measures against the whole row, separator included',
+      () {
+    testWidgets(
+        'alignment: 1 puts the item\'s bottom one separator-height above the viewport bottom',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       const itemCount = 20;
@@ -193,8 +222,10 @@ void main() {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(key: index == 10 ? itemKey : null, height: itemExtent),
-                    if (index < itemCount - 1) const SizedBox(height: separatorExtent),
+                    SizedBox(
+                        key: index == 10 ? itemKey : null, height: itemExtent),
+                    if (index < itemCount - 1)
+                      const SizedBox(height: separatorExtent),
                   ],
                 ),
               ),
@@ -204,7 +235,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await pumpUntilComplete(tester, controller.scrollTo(10.0, alignment: 1.0, duration: const Duration(milliseconds: 100)));
+      await pumpUntilComplete(
+          tester,
+          controller.scrollTo(10.0,
+              alignment: 1.0, duration: const Duration(milliseconds: 100)));
 
       final viewport = tester.getRect(find.byType(ListView));
       final itemRect = tester.getRect(find.byKey(itemKey));

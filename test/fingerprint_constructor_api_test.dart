@@ -24,7 +24,9 @@ void main() {
       controller.dispose();
     });
 
-    test('providing only itemCount throws ArgumentError, including in release-equivalent checks', () {
+    test(
+        'providing only itemCount throws ArgumentError, including in release-equivalent checks',
+        () {
       expect(
         () => IndexedScrollController(
           scrollDuration: const Duration(milliseconds: 100),
@@ -34,7 +36,9 @@ void main() {
       );
     });
 
-    test('providing only contentFingerprint throws ArgumentError, including in release-equivalent checks', () {
+    test(
+        'providing only contentFingerprint throws ArgumentError, including in release-equivalent checks',
+        () {
       expect(
         () => IndexedScrollController(
           scrollDuration: const Duration(milliseconds: 100),
@@ -44,7 +48,9 @@ void main() {
       );
     });
 
-    test('contentFingerprint is never called by the controller for an out-of-range index', () {
+    test(
+        'contentFingerprint is never called by the controller for an out-of-range index',
+        () {
       final items = <String>['a', 'b', 'c'];
       var calledWith = <int>[];
       final controller = IndexedScrollController(

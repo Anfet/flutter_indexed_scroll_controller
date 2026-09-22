@@ -27,7 +27,9 @@ import 'support/scroll_harness.dart';
 /// scenario 1's repeatability check to protect against flakiness regressions
 /// without hard-coding a single lucky run).
 void main() {
-  group('ISC-06/ISC-07: scrollTo concurrency (overlapping calls, detach, dispose)', () {
+  group(
+      'ISC-06/ISC-07: scrollTo concurrency (overlapping calls, detach, dispose)',
+      () {
     testWidgets(
       'two overlapping scrollTo calls: the second supersedes the first, so '
       'the first is cancelled and only the second reaches its target',
@@ -60,7 +62,8 @@ void main() {
             guardLimit: 500,
           ),
         );
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         bool firstCompleted = false;
@@ -162,7 +165,8 @@ void main() {
               guardLimit: 500,
             ),
           );
-          final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+          final state =
+              tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
           await tester.pumpAndSettle();
 
           bool firstCompleted = false;
@@ -192,7 +196,9 @@ void main() {
             ),
           );
 
-          for (int i = 0; i < 400 && !(firstCompleted && secondCompleted); i++) {
+          for (int i = 0;
+              i < 400 && !(firstCompleted && secondCompleted);
+              i++) {
             await tester.pump(const Duration(milliseconds: 16));
           }
 

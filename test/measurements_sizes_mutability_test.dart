@@ -13,7 +13,8 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// why `expectLater` alone can hang here). Fails the test explicitly if
 /// [future] has not settled within [maxPumps], rather than let the whole
 /// suite run into the global test timeout.
-Future<void> pumpUntilDone(WidgetTester tester, Future<void> future, {int maxPumps = 60}) async {
+Future<void> pumpUntilDone(WidgetTester tester, Future<void> future,
+    {int maxPumps = 60}) async {
   var settled = false;
   Object? error;
   unawaited(future.then((_) => settled = true, onError: (Object e) {
@@ -23,7 +24,8 @@ Future<void> pumpUntilDone(WidgetTester tester, Future<void> future, {int maxPum
   for (var i = 0; i < maxPumps && !settled; i++) {
     await tester.pump(const Duration(milliseconds: 16));
   }
-  expect(settled, isTrue, reason: 'scrollTo() must settle within $maxPumps pumps.');
+  expect(settled, isTrue,
+      reason: 'scrollTo() must settle within $maxPumps pumps.');
   if (error != null) {
     // ignore: only_throw_errors
     throw error!;
@@ -46,7 +48,9 @@ Future<void> pumpUntilDone(WidgetTester tester, Future<void> future, {int maxPum
 /// reaching `_sizes`. This file is now a regression anchor: both scenarios
 /// below assert that the exploit write throws, not that it succeeds.
 void main() {
-  group('ISC-37: measurementsSizes is an unmodifiable, still-live view of _sizes', () {
+  group(
+      'ISC-37: measurementsSizes is an unmodifiable, still-live view of _sizes',
+      () {
     const itemCount = 5;
     final heights = [100.0, 100.0, 100.0, 100.0, 100.0]; // sum = 500
 
@@ -95,7 +99,8 @@ void main() {
         expect(
           () => measurements[1] = const Size(0, 999.0),
           throwsUnsupportedError,
-          reason: 'measurementsSizes is an UnmodifiableMapView -- attempting to '
+          reason:
+              'measurementsSizes is an UnmodifiableMapView -- attempting to '
               'write through it must throw UnsupportedError, not silently '
               'mutate the live _sizes map (ISC-36 showed this write used to '
               'succeed and corrupt a later scrollTo() offset).',
@@ -123,12 +128,14 @@ void main() {
         // needs to satisfy the internal `endOfFrame` awaits, not a full
         // animation -- bounded and fast, per this project's no-unbounded-wait
         // testing convention (ISC-04/05).
-        await pumpUntilDone(tester, controller.scrollTo(3.0, duration: Duration.zero));
+        await pumpUntilDone(
+            tester, controller.scrollTo(3.0, duration: Duration.zero));
 
         expect(
           controller.position.pixels,
           closeTo(controller.position.maxScrollExtent, 1.0),
-          reason: 'The content (500px) is shorter than the viewport (600px), so '
+          reason:
+              'The content (500px) is shorter than the viewport (600px), so '
               'maxScrollExtent is 0 and scrollTo(3) clamps to it rather than '
               'resolving at the unreachable 300px the raw offset formula '
               'produces.',
@@ -172,7 +179,8 @@ void main() {
         expect(
           controller.measurementsSizes.containsKey(3),
           isFalse,
-          reason: 'Index 3 was never built or laid out -- it must not be in _sizes yet.',
+          reason:
+              'Index 3 was never built or laid out -- it must not be in _sizes yet.',
         );
 
         // ISC-37: attempting to fabricate an entry for index 3 through the
@@ -182,7 +190,8 @@ void main() {
         expect(
           () => controller.measurementsSizes[3] = const Size(0, 50.0),
           throwsUnsupportedError,
-          reason: 'measurementsSizes is an UnmodifiableMapView -- fabricating a '
+          reason:
+              'measurementsSizes is an UnmodifiableMapView -- fabricating a '
               'key through it must throw, not silently let a never-laid-out '
               'index masquerade as measured (ISC-36 showed this write used '
               'to succeed and let scrollTo(3) skip the search-and-measure '

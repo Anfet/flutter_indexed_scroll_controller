@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
 void main() {
-  group('ISC-62: leading axis padding self-maintains across the layout lifecycle', () {
+  group(
+      'ISC-62: leading axis padding self-maintains across the layout lifecycle',
+      () {
     testWidgets(
       'reads zero before the first frame and the correct value after it',
       (WidgetTester tester) async {

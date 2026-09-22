@@ -33,14 +33,17 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// made explicit. The only physical exclusion still needed here is room past
 /// the target for a full viewport, which `maxScrollExtent` alone answers.
 void main() {
-  group('ISC-95: target materialization, interior targets only (no boundary)', () {
+  group('ISC-95: target materialization, interior targets only (no boundary)',
+      () {
     /// The live scroll offset the sliver has actually assigned to [index]'s
     /// row, or `null` when that row is not currently laid out. Read straight
     /// off the render tree, independent of anything the controller computes.
     double? sliverLayoutOffsetOf(Map<int, GlobalKey> rowKeys, int index) {
       final renderObject = rowKeys[index]?.currentContext?.findRenderObject();
       if (renderObject == null || !renderObject.attached) return null;
-      for (RenderObject? node = renderObject; node != null; node = node.parent) {
+      for (RenderObject? node = renderObject;
+          node != null;
+          node = node.parent) {
         final parentData = node.parentData;
         if (parentData is SliverMultiBoxAdaptorParentData) {
           return parentData.layoutOffset;
@@ -61,7 +64,9 @@ void main() {
         final renderObject = rowKeys[index]?.currentContext?.findRenderObject();
         if (renderObject == null || !renderObject.attached) continue;
         var isLive = false;
-        for (RenderObject? node = renderObject; node != null; node = node.parent) {
+        for (RenderObject? node = renderObject;
+            node != null;
+            node = node.parent) {
           if (node.parentData is SliverMultiBoxAdaptorParentData) {
             isLive = true;
             break;
@@ -75,12 +80,15 @@ void main() {
       return (lowest, highest);
     }
 
-    testWidgets('reshuffle then animate to interior targets: target row is flush with the viewport top', (tester) async {
+    testWidgets(
+        'reshuffle then animate to interior targets: target row is flush with the viewport top',
+        (tester) async {
       const itemCount = 100;
       const heights = [20.0, 40.0, 60.0];
       const viewportHeight = 511.0;
       const duration = Duration(seconds: 1);
-      final rowHeights = List<double>.generate(itemCount, (i) => heights[i % 3]);
+      final rowHeights =
+          List<double>.generate(itemCount, (i) => heights[i % 3]);
       final revisions = List<int>.filled(itemCount, 0);
 
       final controller = IndexedScrollController(
@@ -113,7 +121,9 @@ void main() {
                         key: rowKeyFor(index),
                         height: rowHeights[index],
                         child: ColoredBox(
-                          color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
+                          color: index.isEven
+                              ? const Color(0xFFBBDEFB)
+                              : const Color(0xFFFFE0B2),
                           child: Center(child: Text('Row $index')),
                         ),
                       ),
@@ -129,9 +139,11 @@ void main() {
 
       double? onScreenDelta(int index) {
         final lb = listKey.currentContext!.findRenderObject()! as RenderBox;
-        final rb = rowKeys[index]?.currentContext?.findRenderObject() as RenderBox?;
+        final rb =
+            rowKeys[index]?.currentContext?.findRenderObject() as RenderBox?;
         if (rb == null || !rb.attached) return null;
-        return rb.localToGlobal(Offset.zero).dy - lb.localToGlobal(Offset.zero).dy;
+        return rb.localToGlobal(Offset.zero).dy -
+            lb.localToGlobal(Offset.zero).dy;
       }
 
       // Fixed, hand-picked targets in the interior of the list -- never near
@@ -164,7 +176,9 @@ void main() {
 
         var done = false;
         Object? err;
-        controller.scrollTo(target.toDouble(), duration: duration, alignment: 0.0).then(
+        controller
+            .scrollTo(target.toDouble(), duration: duration, alignment: 0.0)
+            .then(
           (_) => done = true,
           onError: (Object e) {
             done = true;
@@ -177,7 +191,8 @@ void main() {
         }
         await tester.pump(const Duration(milliseconds: 16));
 
-        final realSum = rowHeights.take(target).fold<double>(0, (a, b) => a + b);
+        final realSum =
+            rowHeights.take(target).fold<double>(0, (a, b) => a + b);
         // Excluding the boundary honestly: every target here is chosen deep
         // in the interior (see the file-level Dartdoc), but a trial's own
         // reshuffle could in principle still push maxScrollExtent's estimate
@@ -188,7 +203,8 @@ void main() {
         // `layoutOffset` is now the source of truth for where `scrollTo`
         // lands, and it can legitimately differ from the prefix sum while
         // still being the visually correct, flush position.
-        final ruledOutBoundary = realSum + viewportHeight <= controller.position.maxScrollExtent;
+        final ruledOutBoundary =
+            realSum + viewportHeight <= controller.position.maxScrollExtent;
 
         results.add(
           _TrialResult(
@@ -205,11 +221,14 @@ void main() {
       }
 
       for (final r in results) {
-        expect(r.err, isNull, reason: 'trial ${r.trial} (target ${r.target}): scrollTo must not throw');
+        expect(r.err, isNull,
+            reason:
+                'trial ${r.trial} (target ${r.target}): scrollTo must not throw');
         expect(
           r.ruledOutBoundary,
           isTrue,
-          reason: 'trial ${r.trial} (target ${r.target}): offset=${r.offset} realSum=${r.realSum} -- '
+          reason:
+              'trial ${r.trial} (target ${r.target}): offset=${r.offset} realSum=${r.realSum} -- '
               'either the computed offset does not equal the true prefix sum (arithmetic regressed) or '
               'there was not a full viewport of room past the target (this trial cannot rule out the '
               'physical boundary, and must not be used as evidence either way -- pick a different target)',
@@ -227,7 +246,8 @@ void main() {
         expect(
           r.onScreenDelta,
           isNotNull,
-          reason: 'trial ${r.trial} (target ${r.target}): target row must be mounted',
+          reason:
+              'trial ${r.trial} (target ${r.target}): target row must be mounted',
         );
         // The public contract ISC-98 exists to deliver: scrollTo(alignment:
         // 0) places the target row flush with the viewport top, even after a
@@ -240,19 +260,24 @@ void main() {
         expect(
           r.onScreenDelta,
           closeTo(0, 0.5),
-          reason: 'trial ${r.trial} (target ${r.target}): target row must sit flush with the viewport top -- '
+          reason:
+              'trial ${r.trial} (target ${r.target}): target row must sit flush with the viewport top -- '
               'realSum=${r.realSum} layoutOffset=${r.layoutOffset} onScreenDelta=${r.onScreenDelta}',
         );
       }
     });
 
-    testWidgets('materialization lifecycle: layoutOffset is read at every phase of one scrollTo', (tester) async {
+    testWidgets(
+        'materialization lifecycle: layoutOffset is read at every phase of one scrollTo',
+        (tester) async {
       const itemCount = 100;
       const heights = [20.0, 40.0, 60.0];
       const viewportHeight = 511.0;
       const duration = Duration(seconds: 1);
-      const target = 62; // interior: far enough from both 0 and 99 to need a real search.
-      final rowHeights = List<double>.generate(itemCount, (i) => heights[i % 3]);
+      const target =
+          62; // interior: far enough from both 0 and 99 to need a real search.
+      final rowHeights =
+          List<double>.generate(itemCount, (i) => heights[i % 3]);
       final revisions = List<int>.filled(itemCount, 0);
 
       final controller = IndexedScrollController(
@@ -283,7 +308,9 @@ void main() {
                         key: rowKeyFor(index),
                         height: rowHeights[index],
                         child: ColoredBox(
-                          color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
+                          color: index.isEven
+                              ? const Color(0xFFBBDEFB)
+                              : const Color(0xFFFFE0B2),
                           child: Center(child: Text('Row $index')),
                         ),
                       ),
@@ -338,7 +365,9 @@ void main() {
 
       var done = false;
       Object? err;
-      controller.scrollTo(target.toDouble(), duration: duration, alignment: 0.0).then(
+      controller
+          .scrollTo(target.toDouble(), duration: duration, alignment: 0.0)
+          .then(
         (_) => done = true,
         onError: (Object e) {
           done = true;
@@ -375,7 +404,8 @@ void main() {
         // This is a distinct lifecycle point: animateTo may now be scheduled,
         // but its first 16ms tick has not run yet. Recording it explicitly
         // fixes the otherwise missing "before final animation" observation.
-        final isPreFinalAnimation = !sawPreFinalAnimation && jumpCount > 0 && !jumpDetected;
+        final isPreFinalAnimation =
+            !sawPreFinalAnimation && jumpCount > 0 && !jumpDetected;
         if (isPreFinalAnimation) sawPreFinalAnimation = true;
         samples.add(
           _LifecycleSample(
@@ -412,7 +442,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
 
       expect(err, isNull, reason: 'scrollTo must not throw');
-      expect(done, isTrue, reason: 'scrollTo must complete within the guard budget');
+      expect(done, isTrue,
+          reason: 'scrollTo must complete within the guard budget');
 
       // Baseline, before scrollTo was ever called: the review asked for this
       // state to actually be captured, not left implicit.
@@ -424,17 +455,22 @@ void main() {
       );
 
       final pumpedSamples = samples.where((s) => s.pumpIndex >= 0).toList();
-      final liveSamples = pumpedSamples.where((s) => s.layoutOffset != null).toList();
+      final liveSamples =
+          pumpedSamples.where((s) => s.layoutOffset != null).toList();
       expect(
         liveSamples,
         isNotEmpty,
-        reason: 'target row must materialize (enter the live render tree) at some '
+        reason:
+            'target row must materialize (enter the live render tree) at some '
             'point before the operation completes -- if this is empty, ISC-88 regressed',
       );
 
-      final approachSamples = pumpedSamples.where((s) => !s.isPreFinalAnimation && !s.isFinalLeg).toList();
+      final approachSamples = pumpedSamples
+          .where((s) => !s.isPreFinalAnimation && !s.isFinalLeg)
+          .toList();
       final finalLegSamples = pumpedSamples.where((s) => s.isFinalLeg).toList();
-      final preFinalSamples = pumpedSamples.where((s) => s.isPreFinalAnimation).toList();
+      final preFinalSamples =
+          pumpedSamples.where((s) => s.isPreFinalAnimation).toList();
 
       // The laid-out range boundary the review asked for: which phase the
       // target first became live in, stated explicitly rather than left as
@@ -442,18 +478,22 @@ void main() {
       expect(
         finalLegSamples,
         isNotEmpty,
-        reason: 'the observation window must include at least one final-leg pump, or the phase split '
+        reason:
+            'the observation window must include at least one final-leg pump, or the phase split '
             'above could not distinguish approach from the final animation',
       );
       expect(
         preFinalSamples,
         hasLength(1),
-        reason: 'there must be exactly one zero-pump sample after the last approach jump and before the first '
+        reason:
+            'there must be exactly one zero-pump sample after the last approach jump and before the first '
             '16ms animateTo tick',
       );
 
-      final liveDuringApproach = approachSamples.where((s) => s.layoutOffset != null).toList();
-      final firstLiveDuringApproach = liveDuringApproach.isEmpty ? null : liveDuringApproach.first;
+      final liveDuringApproach =
+          approachSamples.where((s) => s.layoutOffset != null).toList();
+      final firstLiveDuringApproach =
+          liveDuringApproach.isEmpty ? null : liveDuringApproach.first;
       // This is the assertion the previous version only printed: the target
       // must actually become live WHILE the approach phase is still running,
       // not for the first time once the final leg has already started. If it
@@ -464,7 +504,8 @@ void main() {
       expect(
         firstLiveDuringApproach,
         isNotNull,
-        reason: 'target row must materialize during the APPROACH phase, before the final animation leg starts -- '
+        reason:
+            'target row must materialize during the APPROACH phase, before the final animation leg starts -- '
             'firstLive was ${liveSamples.first.pumpIndex >= 0 ? "pump ${liveSamples.first.pumpIndex}" : "the pre-approach baseline"}, '
             'finalLegSamples start at pump ${finalLegSamples.first.pumpIndex}; a target that only ever '
             'materializes once the final leg has already begun cannot be sampled beforehand the way ISC-96 plans to',
@@ -473,7 +514,9 @@ void main() {
       final preFinalAnimation = preFinalSamples.single;
       final firstFinalLeg = finalLegSamples.first;
 
-      expect(firstLive.jumpNumber, greaterThan(0), reason: 'the target must first materialize after a numbered approach jump');
+      expect(firstLive.jumpNumber, greaterThan(0),
+          reason:
+              'the target must first materialize after a numbered approach jump');
       expect(preFinalAnimation.isAfterZeroPump, isTrue);
       expect(preFinalAnimation.wasJumpTo, isFalse);
 
@@ -510,7 +553,8 @@ void main() {
       expect(
         preFinalAnimation.layoutOffset,
         isNotNull,
-        reason: 'the target row must be materialized on the last completed layout frame before the final leg -- '
+        reason:
+            'the target row must be materialized on the last completed layout frame before the final leg -- '
             'preFinalPump=${preFinalAnimation.pumpIndex} preFinalRange=${preFinalAnimation.liveRange}; a null '
             'layoutOffset here means the contractual materialization guarantee (ISC-96 point 4) was not honored '
             'at the one point that actually matters: immediately before the coordinate is read and the final leg '

@@ -12,14 +12,17 @@ import 'support/scroll_harness.dart';
 /// could work, never that `scrollTo`'s own implementation of it did (see the
 /// ISC-97 acceptance review in todo.md, point 4).
 void main() {
-  testWidgets('scrollTo(50) after scrollTo(90) refreshes changes between 90 and 50 without invalidation', (tester) async {
+  testWidgets(
+      'scrollTo(50) after scrollTo(90) refreshes changes between 90 and 50 without invalidation',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const targetIndex = 50;
     const initialHeights = [40.0, 50.0, 60.0];
 
     const changedIndices = [55, 64, 70, 81];
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -64,8 +67,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
-    expect(_sliverLayoutOffsetOf(rowKeys[90]), isNotNull, reason: 'the experiment must begin around row 90');
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
+    expect(_sliverLayoutOffsetOf(rowKeys[90]), isNotNull,
+        reason: 'the experiment must begin around row 90');
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -79,35 +84,48 @@ void main() {
     // while the callback already exposes the new revisions.
     final changedInTravelCorridor = <int>[
       for (var index = targetIndex; index <= 90; index++)
-        if (!controller.hasFingerprintFor(index) || controller.fingerprintFor(index) != revisions[index]) index,
+        if (!controller.hasFingerprintFor(index) ||
+            controller.fingerprintFor(index) != revisions[index])
+          index,
     ];
-    expect(changedInTravelCorridor, changedIndices, reason: 'the fingerprint scan must identify exactly the changed rows on the physical path');
+    expect(changedInTravelCorridor, changedIndices,
+        reason:
+            'the fingerprint scan must identify exactly the changed rows on the physical path');
 
-    final registrationsBeforeWalk = <int, int>{for (final index in changedIndices) index: controller.registrationCountFor(index)};
+    final registrationsBeforeWalk = <int, int>{
+      for (final index in changedIndices)
+        index: controller.registrationCountFor(index)
+    };
 
     // The public entry point this whole recovery mechanism exists to serve --
     // scrollTo() itself must detect the mismatch, walk the corridor, and
     // materialize the target, with no test-side jumpTo loop standing in for
     // any part of that.
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     for (final index in changedIndices) {
       expect(
         controller.registrationCountFor(index),
         greaterThan(registrationsBeforeWalk[index]!),
-        reason: 'changed row $index must perform a fresh layout while the walk passes over it',
+        reason:
+            'changed row $index must perform a fresh layout while the walk passes over it',
       );
-      expect(controller.fingerprintFor(index), revisions[index], reason: 'row $index must register the fingerprint of its rebuilt version');
+      expect(controller.fingerprintFor(index), revisions[index],
+          reason:
+              'row $index must register the fingerprint of its rebuilt version');
       expect(
         controller.measurementsSizes[index]?.height,
         rowHeights[index],
-        reason: 'changed row $index must publish its current size while the walk passes over it',
+        reason:
+            'changed row $index must publish its current size while the walk passes over it',
       );
     }
 
     // The corridor was walked, every changed row got a fresh registration,
     // and the target materialized -- confirmed above and by this assertion.
-    expect(_sliverLayoutOffsetOf(rowKeys[targetIndex]), isNotNull, reason: 'target row must be materialized once scrollTo completes');
+    expect(_sliverLayoutOffsetOf(rowKeys[targetIndex]), isNotNull,
+        reason: 'target row must be materialized once scrollTo completes');
     // ISC-98's own scope, now landed: the target row is flush with the
     // viewport top, not merely materialized somewhere -- see
     // isc95_target_materialization_test.dart's file-level Dartdoc for the
@@ -154,7 +172,8 @@ void main() {
       late StateSetter setOuterState;
       addTearDown(controller.dispose);
 
-      GlobalKey rowKeyFor(int index) => rowKeys.putIfAbsent(index, GlobalKey.new);
+      GlobalKey rowKeyFor(int index) =>
+          rowKeys.putIfAbsent(index, GlobalKey.new);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -190,22 +209,29 @@ void main() {
       // Every row from 0 is already live at the initial scroll offset (0) --
       // no scrollTo has run yet, and both changedIndex (3) and targetIndex
       // (7) sit well within the first viewport's worth of rows.
-      expect(_sliverLayoutOffsetOf(rowKeys[changedIndex]), isNotNull, reason: 'sanity: the changed row must already be live before scrollTo runs');
-      expect(_sliverLayoutOffsetOf(rowKeys[targetIndex]), isNotNull, reason: 'sanity: the target row must already be live before scrollTo runs');
+      expect(_sliverLayoutOffsetOf(rowKeys[changedIndex]), isNotNull,
+          reason:
+              'sanity: the changed row must already be live before scrollTo runs');
+      expect(_sliverLayoutOffsetOf(rowKeys[targetIndex]), isNotNull,
+          reason:
+              'sanity: the target row must already be live before scrollTo runs');
 
       setOuterState(() {
-        rowHeights[changedIndex] += 60.0; // 40 -> 100, a real, non-trivial growth.
+        rowHeights[changedIndex] +=
+            60.0; // 40 -> 100, a real, non-trivial growth.
         revisions[changedIndex]++;
       });
 
-      final registrationsBeforeWalk = controller.registrationCountFor(changedIndex);
+      final registrationsBeforeWalk =
+          controller.registrationCountFor(changedIndex);
 
       // scrollTo(7) itself must detect the mismatch at row 3 (still live and
       // on screen), recover it, and -- the case this test exists for --
       // notice that row 7's OWN layoutOffset has not moved to reflect row
       // 3's growth, so it must keep working (not report success on the
       // stale offset) until row 7 is itself geometry-consistent.
-      await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+      await pumpUntilComplete(tester,
+          controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
       expect(
         controller.registrationCountFor(changedIndex),
@@ -214,17 +240,20 @@ void main() {
       );
       expect(controller.fingerprintFor(changedIndex), revisions[changedIndex]);
 
-      final expectedPixels = rowHeights.take(targetIndex).fold<double>(0, (a, b) => a + b);
+      final expectedPixels =
+          rowHeights.take(targetIndex).fold<double>(0, (a, b) => a + b);
       expect(
         controller.position.pixels,
         closeTo(expectedPixels, 0.5),
-        reason: 'the computed offset must reflect row $changedIndex\'s growth ($expectedPixels), not a stale '
+        reason:
+            'the computed offset must reflect row $changedIndex\'s growth ($expectedPixels), not a stale '
             'pre-growth sum a naive "materialized is enough" check would have trusted',
       );
       expect(
         _onScreenDelta(listKey, rowKeys[targetIndex]),
         closeTo(0, 0.5),
-        reason: 'scrollTo must put row $targetIndex at the viewport start, using its own now-consistent layoutOffset',
+        reason:
+            'scrollTo must put row $targetIndex at the viewport start, using its own now-consistent layoutOffset',
       );
     },
   );
@@ -261,7 +290,8 @@ void main() {
       late StateSetter setOuterState;
       addTearDown(controller.dispose);
 
-      GlobalKey rowKeyFor(int index) => rowKeys.putIfAbsent(index, GlobalKey.new);
+      GlobalKey rowKeyFor(int index) =>
+          rowKeys.putIfAbsent(index, GlobalKey.new);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -294,9 +324,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(_sliverLayoutOffsetOf(rowKeys[firstChangedIndex]), isNotNull, reason: 'sanity: row 2 must already be live before scrollTo runs');
-      expect(_sliverLayoutOffsetOf(rowKeys[secondChangedIndex]), isNotNull, reason: 'sanity: row 4 must already be live before scrollTo runs');
-      expect(_sliverLayoutOffsetOf(rowKeys[targetIndex]), isNotNull, reason: 'sanity: the target row must already be live before scrollTo runs');
+      expect(_sliverLayoutOffsetOf(rowKeys[firstChangedIndex]), isNotNull,
+          reason: 'sanity: row 2 must already be live before scrollTo runs');
+      expect(_sliverLayoutOffsetOf(rowKeys[secondChangedIndex]), isNotNull,
+          reason: 'sanity: row 4 must already be live before scrollTo runs');
+      expect(_sliverLayoutOffsetOf(rowKeys[targetIndex]), isNotNull,
+          reason:
+              'sanity: the target row must already be live before scrollTo runs');
 
       setOuterState(() {
         rowHeights[firstChangedIndex] += 60.0; // 40 -> 100.
@@ -310,7 +344,8 @@ void main() {
         secondChangedIndex: controller.registrationCountFor(secondChangedIndex),
       };
 
-      await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+      await pumpUntilComplete(tester,
+          controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
       for (final index in [firstChangedIndex, secondChangedIndex]) {
         expect(
@@ -321,17 +356,20 @@ void main() {
         expect(controller.fingerprintFor(index), revisions[index]);
       }
 
-      final expectedPixels = rowHeights.take(targetIndex).fold<double>(0, (a, b) => a + b);
+      final expectedPixels =
+          rowHeights.take(targetIndex).fold<double>(0, (a, b) => a + b);
       expect(
         controller.position.pixels,
         closeTo(expectedPixels, 0.5),
-        reason: 'the computed offset must reflect both rows\' growth ($expectedPixels), not a value that only '
+        reason:
+            'the computed offset must reflect both rows\' growth ($expectedPixels), not a value that only '
             'accounted for one of them',
       );
       expect(
         _onScreenDelta(listKey, rowKeys[targetIndex]),
         closeTo(0, 0.5),
-        reason: 'scrollTo must put row $targetIndex at the viewport start, using its own now-consistent layoutOffset',
+        reason:
+            'scrollTo must put row $targetIndex at the viewport start, using its own now-consistent layoutOffset',
       );
     },
   );
@@ -362,7 +400,8 @@ void main() {
       const firstChangedIndex = 15;
       const secondChangedIndex = 60;
 
-      final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+      final rowHeights = List<double>.generate(
+          itemCount, (index) => initialHeights[index % initialHeights.length]);
       final revisions = List<int>.filled(itemCount, 0);
       final rowKeys = <int, GlobalKey>{};
       final listKey = GlobalKey();
@@ -374,7 +413,8 @@ void main() {
       late StateSetter setOuterState;
       addTearDown(controller.dispose);
 
-      GlobalKey rowKeyFor(int index) => rowKeys.putIfAbsent(index, GlobalKey.new);
+      GlobalKey rowKeyFor(int index) =>
+          rowKeys.putIfAbsent(index, GlobalKey.new);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -411,8 +451,10 @@ void main() {
       // and 60 are genuinely STALE re-measurements (already cached, then
       // invalidated) rather than never-measured holes the ordinary search
       // path would fill anyway.
-      await pumpUntilComplete(tester, controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
-      expect(_sliverLayoutOffsetOf(rowKeys[startIndex]), isNotNull, reason: 'the experiment must begin around row 90');
+      await pumpUntilComplete(tester,
+          controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
+      expect(_sliverLayoutOffsetOf(rowKeys[startIndex]), isNotNull,
+          reason: 'the experiment must begin around row 90');
 
       setOuterState(() {
         rowHeights[firstChangedIndex] += 60.0; // 40 -> 100.
@@ -424,11 +466,14 @@ void main() {
       // Sanity: both changed rows must be confirmed stale on entry -- their
       // fingerprint no longer matches the cached one -- otherwise this test
       // would not be exercising the scenario it exists for.
-      expect(controller.fingerprintFor(firstChangedIndex), isNot(revisions[firstChangedIndex]));
-      expect(controller.fingerprintFor(secondChangedIndex), isNot(revisions[secondChangedIndex]));
+      expect(controller.fingerprintFor(firstChangedIndex),
+          isNot(revisions[firstChangedIndex]));
+      expect(controller.fingerprintFor(secondChangedIndex),
+          isNot(revisions[secondChangedIndex]));
 
       final registrationsBeforeRow0 = controller.registrationCountFor(0);
-      final registrationsBeforeTarget = controller.registrationCountFor(targetIndex);
+      final registrationsBeforeTarget =
+          controller.registrationCountFor(targetIndex);
 
       // Observe the mechanism itself, not merely the final pixels: the
       // reflow must actually visit content start -- row 0's own live
@@ -445,17 +490,22 @@ void main() {
       var monotonicSinceContentStart = true;
       double? lastPixelsSinceContentStart;
       var settled = false;
-      final scrollFuture = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+      final scrollFuture =
+          controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
       scrollFuture.then((_) => settled = true, onError: (_) => settled = true);
       for (var i = 0; i < 300 && !settled; i++) {
         await tester.pump(const Duration(milliseconds: 16));
         final row0Offset = _sliverLayoutOffsetOf(rowKeys[0]);
-        if (row0Offset != null && row0Offset.abs() <= 0.5) sawContentStart = true;
+        if (row0Offset != null && row0Offset.abs() <= 0.5) {
+          sawContentStart = true;
+        }
         if (sawContentStart) {
-          if (controller.registrationCountFor(0) > registrationsBeforeRow0 && !targetRegisteredFreshYet) {
+          if (controller.registrationCountFor(0) > registrationsBeforeRow0 &&
+              !targetRegisteredFreshYet) {
             row0FreshBeforeTargetFresh = true;
           }
-          if (controller.registrationCountFor(targetIndex) > registrationsBeforeTarget) {
+          if (controller.registrationCountFor(targetIndex) >
+              registrationsBeforeTarget) {
             targetRegisteredFreshYet = true;
           }
           final pixels = controller.position.pixels;
@@ -463,32 +513,45 @@ void main() {
           // The forward pass never moves backward once it has left content
           // start -- an anchor-frame recheck step does not move pixels at
           // all, which is not a decrease.
-          if (priorPixels != null && pixels < priorPixels - 0.5) monotonicSinceContentStart = false;
+          if (priorPixels != null && pixels < priorPixels - 0.5) {
+            monotonicSinceContentStart = false;
+          }
           lastPixelsSinceContentStart = pixels;
         }
       }
-      expect(settled, isTrue, reason: 'scrollTo() did not complete within 300 pumps');
+      expect(settled, isTrue,
+          reason: 'scrollTo() did not complete within 300 pumps');
       await scrollFuture;
 
       expect(sawContentStart, isTrue,
-          reason: 'the reflow must physically lay out row 0 at its own sliver-local content start before reaching the target');
+          reason:
+              'the reflow must physically lay out row 0 at its own sliver-local content start before reaching the target');
       expect(
         row0FreshBeforeTargetFresh,
         isTrue,
-        reason: 'row 0 must register a fresh layout at content start before the target ever does -- proves the '
+        reason:
+            'row 0 must register a fresh layout at content start before the target ever does -- proves the '
             'reflow, not just a lucky final offset',
       );
-      expect(controller.registrationCountFor(0), greaterThan(registrationsBeforeRow0), reason: 'row 0 must end with a fresh registration');
-      expect(controller.registrationCountFor(targetIndex), greaterThan(registrationsBeforeTarget),
+      expect(controller.registrationCountFor(0),
+          greaterThan(registrationsBeforeRow0),
+          reason: 'row 0 must end with a fresh registration');
+      expect(controller.registrationCountFor(targetIndex),
+          greaterThan(registrationsBeforeTarget),
           reason: 'the target must end with a fresh registration');
-      expect(monotonicSinceContentStart, isTrue, reason: 'the forward pass from content start to the target must never move backward');
+      expect(monotonicSinceContentStart, isTrue,
+          reason:
+              'the forward pass from content start to the target must never move backward');
 
-      final expectedPixels = rowHeights.take(targetIndex).fold<double>(0, (a, b) => a + b);
-      expect(expectedPixels, 3610.0, reason: 'sanity check on the scenario\'s own arithmetic');
+      final expectedPixels =
+          rowHeights.take(targetIndex).fold<double>(0, (a, b) => a + b);
+      expect(expectedPixels, 3610.0,
+          reason: 'sanity check on the scenario\'s own arithmetic');
       expect(
         controller.position.pixels,
         closeTo(expectedPixels, 0.5),
-        reason: 'the computed offset must reflect both rows\' growth ($expectedPixels) via a genuine reflow from '
+        reason:
+            'the computed offset must reflect both rows\' growth ($expectedPixels) via a genuine reflow from '
             'row 0, not a coordinate inherited from a stale internal anchor chain (the measured regression '
             'value here was 3490.0, the pre-growth sum)',
       );
@@ -524,7 +587,8 @@ void main() {
       const firstChangedIndex = 15;
       const secondChangedIndex = 60;
 
-      final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+      final rowHeights = List<double>.generate(
+          itemCount, (index) => initialHeights[index % initialHeights.length]);
       final revisions = List<int>.filled(itemCount, 0);
       final rowKeys = <int, GlobalKey>{};
       final listKey = GlobalKey();
@@ -536,7 +600,8 @@ void main() {
       late StateSetter setOuterState;
       addTearDown(controller.dispose);
 
-      GlobalKey rowKeyFor(int index) => rowKeys.putIfAbsent(index, GlobalKey.new);
+      GlobalKey rowKeyFor(int index) =>
+          rowKeys.putIfAbsent(index, GlobalKey.new);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -570,8 +635,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await pumpUntilComplete(tester, controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
-      expect(_sliverLayoutOffsetOf(rowKeys[startIndex]), isNotNull, reason: 'the experiment must begin around row 90');
+      await pumpUntilComplete(tester,
+          controller.scrollTo(startIndex.toDouble(), duration: Duration.zero));
+      expect(_sliverLayoutOffsetOf(rowKeys[startIndex]), isNotNull,
+          reason: 'the experiment must begin around row 90');
 
       setOuterState(() {
         rowHeights[firstChangedIndex] += 60.0; // 40 -> 100.
@@ -580,11 +647,14 @@ void main() {
         revisions[secondChangedIndex]++;
       });
 
-      expect(controller.fingerprintFor(firstChangedIndex), isNot(revisions[firstChangedIndex]));
-      expect(controller.fingerprintFor(secondChangedIndex), isNot(revisions[secondChangedIndex]));
+      expect(controller.fingerprintFor(firstChangedIndex),
+          isNot(revisions[firstChangedIndex]));
+      expect(controller.fingerprintFor(secondChangedIndex),
+          isNot(revisions[secondChangedIndex]));
 
       final registrationsBeforeRow0 = controller.registrationCountFor(0);
-      final registrationsBeforeTarget = controller.registrationCountFor(targetIndex);
+      final registrationsBeforeTarget =
+          controller.registrationCountFor(targetIndex);
 
       var sawContentStart = false;
       var row0FreshBeforeTargetFresh = false;
@@ -592,43 +662,59 @@ void main() {
       var monotonicSinceContentStart = true;
       double? lastPixelsSinceContentStart;
       var settled = false;
-      final scrollFuture = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+      final scrollFuture =
+          controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
       scrollFuture.then((_) => settled = true, onError: (_) => settled = true);
       for (var i = 0; i < 300 && !settled; i++) {
         await tester.pump(const Duration(milliseconds: 16));
         final row0Offset = _sliverLayoutOffsetOf(rowKeys[0]);
-        if (row0Offset != null && row0Offset.abs() <= 0.5) sawContentStart = true;
+        if (row0Offset != null && row0Offset.abs() <= 0.5) {
+          sawContentStart = true;
+        }
         if (sawContentStart) {
-          if (controller.registrationCountFor(0) > registrationsBeforeRow0 && !targetRegisteredFreshYet) {
+          if (controller.registrationCountFor(0) > registrationsBeforeRow0 &&
+              !targetRegisteredFreshYet) {
             row0FreshBeforeTargetFresh = true;
           }
-          if (controller.registrationCountFor(targetIndex) > registrationsBeforeTarget) {
+          if (controller.registrationCountFor(targetIndex) >
+              registrationsBeforeTarget) {
             targetRegisteredFreshYet = true;
           }
           final pixels = controller.position.pixels;
           final priorPixels = lastPixelsSinceContentStart;
-          if (priorPixels != null && pixels < priorPixels - 0.5) monotonicSinceContentStart = false;
+          if (priorPixels != null && pixels < priorPixels - 0.5) {
+            monotonicSinceContentStart = false;
+          }
           lastPixelsSinceContentStart = pixels;
         }
       }
-      expect(settled, isTrue, reason: 'scrollTo() did not complete within 300 pumps');
+      expect(settled, isTrue,
+          reason: 'scrollTo() did not complete within 300 pumps');
       await scrollFuture;
 
       expect(sawContentStart, isTrue,
-          reason: 'the reflow must physically lay out row 0 at its own sliver-local content start before reaching the target');
+          reason:
+              'the reflow must physically lay out row 0 at its own sliver-local content start before reaching the target');
       expect(
         row0FreshBeforeTargetFresh,
         isTrue,
-        reason: 'row 0 must register a fresh layout at content start before the target ever does, under reverse too',
+        reason:
+            'row 0 must register a fresh layout at content start before the target ever does, under reverse too',
       );
-      expect(controller.registrationCountFor(0), greaterThan(registrationsBeforeRow0), reason: 'row 0 must end with a fresh registration');
-      expect(controller.registrationCountFor(targetIndex), greaterThan(registrationsBeforeTarget),
+      expect(controller.registrationCountFor(0),
+          greaterThan(registrationsBeforeRow0),
+          reason: 'row 0 must end with a fresh registration');
+      expect(controller.registrationCountFor(targetIndex),
+          greaterThan(registrationsBeforeTarget),
           reason: 'the target must end with a fresh registration');
       expect(monotonicSinceContentStart, isTrue,
-          reason: 'the forward pass from content start to the target must never move backward, under reverse too');
+          reason:
+              'the forward pass from content start to the target must never move backward, under reverse too');
 
-      final priorItems = rowHeights.take(targetIndex).fold<double>(0, (a, b) => a + b);
-      expect(priorItems, 3610.0, reason: 'sanity check on the scenario\'s own arithmetic');
+      final priorItems =
+          rowHeights.take(targetIndex).fold<double>(0, (a, b) => a + b);
+      expect(priorItems, 3610.0,
+          reason: 'sanity check on the scenario\'s own arithmetic');
       // alignment: 0 (the default) means the visual START of the list under
       // reverse too -- which, since RenderSliverList never inverts indices,
       // is the FAR edge of the target row's own extent, not its near edge
@@ -637,19 +723,24 @@ void main() {
       // for the same `effectiveAlignment = 1.0 - alignment` term).
       final extent = rowHeights[targetIndex];
       const effectiveAlignment = 1.0 - 0.0;
-      final alignmentAdjust = -(controller.position.viewportDimension - extent) * effectiveAlignment;
+      final alignmentAdjust =
+          -(controller.position.viewportDimension - extent) *
+              effectiveAlignment;
       final expectedPixels = priorItems + alignmentAdjust;
       expect(
         controller.position.pixels,
         closeTo(expectedPixels, 0.5),
-        reason: 'the computed offset must reflect both rows\' growth via a genuine reflow from row 0 under reverse '
+        reason:
+            'the computed offset must reflect both rows\' growth via a genuine reflow from row 0 under reverse '
             'too -- reverse never inverts logical-index semantics, only the visual alignment adjustment at the '
             'very end',
       );
     },
   );
 
-  testWidgets('scrollTo(20) after scrollTo(90) still converges when the only changed row (81) sits far above the target', (tester) async {
+  testWidgets(
+      'scrollTo(20) after scrollTo(90) still converges when the only changed row (81) sits far above the target',
+      (tester) async {
     // ISC-97 acceptance review, point 4: the regression the row-by-row
     // "stop at the last mismatch" walk this replaced was vulnerable to --
     // every changed row sits between the STARTING range and the target, but
@@ -663,7 +754,8 @@ void main() {
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndex = 81;
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -708,22 +800,27 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
-    expect(_sliverLayoutOffsetOf(rowKeys[90]), isNotNull, reason: 'the experiment must begin around row 90');
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
+    expect(_sliverLayoutOffsetOf(rowKeys[90]), isNotNull,
+        reason: 'the experiment must begin around row 90');
 
     setOuterState(() {
       rowHeights[changedIndex] += 35.0;
       revisions[changedIndex]++;
     });
 
-    final registrationsBeforeWalk = controller.registrationCountFor(changedIndex);
+    final registrationsBeforeWalk =
+        controller.registrationCountFor(changedIndex);
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
 
     expect(
       controller.registrationCountFor(changedIndex),
       greaterThan(registrationsBeforeWalk),
-      reason: 'row $changedIndex must still get a fresh layout on the way, even though it sits far above the target',
+      reason:
+          'row $changedIndex must still get a fresh layout on the way, even though it sits far above the target',
     );
     expect(controller.fingerprintFor(changedIndex), revisions[changedIndex]);
     // The materialization guarantee this scenario exists to prove: the walk
@@ -731,7 +828,8 @@ void main() {
     expect(
       _sliverLayoutOffsetOf(rowKeys[targetIndex]),
       isNotNull,
-      reason: 'target row 20 must be materialized -- the walk must not stop merely because the last mismatch (81) was resolved',
+      reason:
+          'target row 20 must be materialized -- the walk must not stop merely because the last mismatch (81) was resolved',
     );
     // ISC-98, now landed: flush with the viewport top, not merely live.
     expect(
@@ -741,7 +839,9 @@ void main() {
     );
   });
 
-  testWidgets('a single row far taller than one stride still converges without a numeric stride-count guard', (tester) async {
+  testWidgets(
+      'a single row far taller than one stride still converges without a numeric stride-count guard',
+      (tester) async {
     // ISC-97 third acceptance round: the numeric hard guard tried in the
     // previous round (a bound derived from the corridor's index span) was
     // itself wrong, because a single row's own physical height is
@@ -800,8 +900,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(2, duration: Duration.zero));
-    await pumpUntilComplete(tester, controller.scrollTo(0, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(2, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(0, duration: Duration.zero));
 
     setOuterState(() {
       rowHeights[1] = 12000.0;
@@ -819,11 +921,14 @@ void main() {
     expect(
       _sliverLayoutOffsetOf(rowKeys[targetIndex]),
       isNotNull,
-      reason: 'the walk must converge on row 2 by crossing the overgrown row 1, not be rejected by a stride-count/index-span guard',
+      reason:
+          'the walk must converge on row 2 by crossing the overgrown row 1, not be rejected by a stride-count/index-span guard',
     );
   });
 
-  testWidgets('itemCount shrinking below the snapshot corridorHiIndex during a suspended walk cancels with dataInvalidated', (tester) async {
+  testWidgets(
+      'itemCount shrinking below the snapshot corridorHiIndex during a suspended walk cancels with dataInvalidated',
+      (tester) async {
     // ISC-97 second acceptance round, point 1: _hasOperationDataChanged must
     // treat a shrink that drops itemCount to or below the snapshot's
     // corridorHiIndex as a data change, even though the TARGET itself is
@@ -839,7 +944,8 @@ void main() {
     const changedIndex = 81;
 
     var itemCountValue = itemCount;
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -884,8 +990,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
-    expect(_sliverLayoutOffsetOf(rowKeys[90]), isNotNull, reason: 'the experiment must begin around row 90');
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
+    expect(_sliverLayoutOffsetOf(rowKeys[90]), isNotNull,
+        reason: 'the experiment must begin around row 90');
 
     // A mismatch far above the target (same shape as the previous test) so
     // the recovery walk takes multiple pumped steps instead of resolving on
@@ -896,7 +1004,8 @@ void main() {
       revisions[changedIndex]++;
     });
 
-    final recovery = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+    final recovery =
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
     Object? error;
     var done = false;
     recovery.then(
@@ -921,17 +1030,21 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
 
-    expect(done, isTrue, reason: 'scrollTo must not hang after the corridor shrink');
+    expect(done, isTrue,
+        reason: 'scrollTo must not hang after the corridor shrink');
     expect(error, isA<ScrollCancelledException>());
     expect(
       (error as ScrollCancelledException).reason,
       ScrollCancelReason.dataInvalidated,
-      reason: 'a shrink that drops itemCount to or below the snapshot corridorHiIndex must cancel as a data change, '
+      reason:
+          'a shrink that drops itemCount to or below the snapshot corridorHiIndex must cancel as a data change, '
           'even though the target index itself is still valid',
     );
   });
 
-  testWidgets('a long valid walk still converges even though maxScrollExtent starts far below the corridor\'s true extent', (tester) async {
+  testWidgets(
+      'a long valid walk still converges even though maxScrollExtent starts far below the corridor\'s true extent',
+      (tester) async {
     // ISC-97 second acceptance round, point 2: the guard budget must not be
     // derived from position.maxScrollExtent, because that estimate only
     // covers the rows built so far and keeps growing as the walk discovers
@@ -952,7 +1065,8 @@ void main() {
     const initialHeights = [40.0, 50.0, 60.0];
     const changedIndices = [16, 290];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -1000,10 +1114,14 @@ void main() {
     // Only the first viewport's worth of rows is measured at this point, so
     // position.maxScrollExtent's estimate starts small -- exactly the
     // starting condition the old geometry-derived guard budget relied on.
-    await pumpUntilComplete(tester, controller.scrollTo(299, duration: Duration.zero));
-    expect(_sliverLayoutOffsetOf(rowKeys[299]), isNotNull, reason: 'the experiment must begin at the far end, with the whole list now measured once');
+    await pumpUntilComplete(
+        tester, controller.scrollTo(299, duration: Duration.zero));
+    expect(_sliverLayoutOffsetOf(rowKeys[299]), isNotNull,
+        reason:
+            'the experiment must begin at the far end, with the whole list now measured once');
 
-    await pumpUntilComplete(tester, controller.scrollTo(0, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(0, duration: Duration.zero));
 
     setOuterState(() {
       for (final index in changedIndices) {
@@ -1012,26 +1130,35 @@ void main() {
       }
     });
 
-    final registrationsBeforeWalk = <int, int>{for (final index in changedIndices) index: controller.registrationCountFor(index)};
+    final registrationsBeforeWalk = <int, int>{
+      for (final index in changedIndices)
+        index: controller.registrationCountFor(index)
+    };
 
-    await pumpUntilComplete(tester, controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero), maxPumps: 600);
+    await pumpUntilComplete(tester,
+        controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero),
+        maxPumps: 600);
 
     for (final index in changedIndices) {
       expect(
         controller.registrationCountFor(index),
         greaterThan(registrationsBeforeWalk[index]!),
-        reason: 'changed row $index must still get a fresh layout during the long walk',
+        reason:
+            'changed row $index must still get a fresh layout during the long walk',
       );
       expect(controller.fingerprintFor(index), revisions[index]);
     }
     expect(
       _sliverLayoutOffsetOf(rowKeys[targetIndex]),
       isNotNull,
-      reason: 'the walk must converge on the far target despite maxScrollExtent starting out far below the corridor\'s true extent',
+      reason:
+          'the walk must converge on the far target despite maxScrollExtent starting out far below the corridor\'s true extent',
     );
   });
 
-  testWidgets('clean corridor: scrollTo(50) after scrollTo(90) with no data changes takes no multi-step recovery walk', (tester) async {
+  testWidgets(
+      'clean corridor: scrollTo(50) after scrollTo(90) with no data changes takes no multi-step recovery walk',
+      (tester) async {
     // The counterpart to the two tests above: when nothing in the corridor
     // changed, the fast (already-measured) path must be taken, not the
     // multi-step recovery walk -- ISC-97's acceptance criterion explicitly
@@ -1042,7 +1169,8 @@ void main() {
     const targetIndex = 50;
     const initialHeights = [40.0, 50.0, 60.0];
 
-    final rowHeights = List<double>.generate(itemCount, (index) => initialHeights[index % initialHeights.length]);
+    final rowHeights = List<double>.generate(
+        itemCount, (index) => initialHeights[index % initialHeights.length]);
     final revisions = List<int>.filled(itemCount, 0);
     final rowKeys = <int, GlobalKey>{};
     final listKey = GlobalKey();
@@ -1081,7 +1209,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await pumpUntilComplete(tester, controller.scrollTo(90, duration: Duration.zero));
+    await pumpUntilComplete(
+        tester, controller.scrollTo(90, duration: Duration.zero));
     expect(_sliverLayoutOffsetOf(rowKeys[90]), isNotNull);
 
     // Scroll back to a target already measured, already inside the
@@ -1090,7 +1219,9 @@ void main() {
     // enough for the whole operation on the Duration.zero fast path.
     var pumps = 0;
     var done = false;
-    controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero).then((_) => done = true);
+    controller
+        .scrollTo(targetIndex.toDouble(), duration: Duration.zero)
+        .then((_) => done = true);
     while (!done && pumps < 10) {
       await tester.pump(const Duration(milliseconds: 16));
       pumps++;
@@ -1099,7 +1230,8 @@ void main() {
     expect(
       pumps,
       lessThanOrEqualTo(3),
-      reason: 'a clean corridor to an already-measured, already-inside-the-prefix target must not pay the '
+      reason:
+          'a clean corridor to an already-measured, already-inside-the-prefix target must not pay the '
           'multi-step recovery walk\'s per-step frame cost -- got $pumps pumps',
     );
     expect(
@@ -1115,7 +1247,9 @@ double? _sliverLayoutOffsetOf(GlobalKey? key) {
   if (renderObject == null || !renderObject.attached) return null;
   for (RenderObject? node = renderObject; node != null; node = node.parent) {
     final parentData = node.parentData;
-    if (parentData is SliverMultiBoxAdaptorParentData) return parentData.layoutOffset;
+    if (parentData is SliverMultiBoxAdaptorParentData) {
+      return parentData.layoutOffset;
+    }
   }
   return null;
 }

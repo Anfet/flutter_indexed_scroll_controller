@@ -43,7 +43,8 @@ void main() {
         await tester.pumpAndSettle();
         await future;
 
-        expect(controller.position.pixels, 0.0, reason: 'scrollTo(0.5, alignment: 1) should clamp to offset 0');
+        expect(controller.position.pixels, 0.0,
+            reason: 'scrollTo(0.5, alignment: 1) should clamp to offset 0');
       },
     );
 
@@ -82,7 +83,8 @@ void main() {
         await future;
 
         final offset = controller.position.pixels;
-        expect(offset, lessThanOrEqualTo(controller.position.maxScrollExtent), reason: 'scrollTo(9.5) should clamp to maxScrollExtent');
+        expect(offset, lessThanOrEqualTo(controller.position.maxScrollExtent),
+            reason: 'scrollTo(9.5) should clamp to maxScrollExtent');
         expect(offset, greaterThanOrEqualTo(0.0));
       },
     );
@@ -179,7 +181,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          () => controller.scrollTo(5.0, duration: const Duration(milliseconds: -50)),
+          () => controller.scrollTo(5.0,
+              duration: const Duration(milliseconds: -50)),
           throwsA(isA<ArgumentError>()),
           reason: 'Negative duration must throw ArgumentError',
         );
@@ -389,7 +392,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(controller.positions.length, 2, reason: 'Controller should have 2 positions');
+        expect(controller.positions.length, 2,
+            reason: 'Controller should have 2 positions');
 
         expect(
           () => controller.scrollTo(5.0),
@@ -434,7 +438,8 @@ void main() {
                       itemBuilder: (context, i) {
                         return controller.watch(
                           index: i,
-                          child: SizedBox(height: 100.0, child: Text('Item $i')),
+                          child:
+                              SizedBox(height: 100.0, child: Text('Item $i')),
                         );
                       },
                     ),
@@ -462,7 +467,8 @@ void main() {
           viewportHeight = 600;
         });
         await tester.pumpAndSettle();
-        expect(controller.position.viewportDimension, 600.0, reason: 'Resize must be reflected before the next scrollTo call');
+        expect(controller.position.viewportDimension, 600.0,
+            reason: 'Resize must be reflected before the next scrollTo call');
 
         // alignment: 1 puts the item's bottom at the viewport's bottom, so
         // its target offset is priorItems - (viewportSize - height)
@@ -515,7 +521,8 @@ void main() {
                       itemBuilder: (context, i) {
                         return controller.watch(
                           index: i,
-                          child: SizedBox(height: 100.0, child: Text('Item $i')),
+                          child:
+                              SizedBox(height: 100.0, child: Text('Item $i')),
                         );
                       },
                     ),
@@ -582,10 +589,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final noPaddingScroll = controllerNoPadding.scrollTo(5.0, alignment: 0.0);
+        final noPaddingScroll =
+            controllerNoPadding.scrollTo(5.0, alignment: 0.0);
         await tester.pumpAndSettle();
         await noPaddingScroll;
-        expect(controllerNoPadding.position.pixels, 500.0, reason: 'Baseline without padding: offset is exactly 5 * 100');
+        expect(controllerNoPadding.position.pixels, 500.0,
+            reason: 'Baseline without padding: offset is exactly 5 * 100');
 
         final controllerWithPadding = IndexedScrollController(
           scrollDuration: const Duration(milliseconds: 100),
@@ -611,7 +620,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final paddedScroll = controllerWithPadding.scrollTo(5.0, alignment: 0.0);
+        final paddedScroll =
+            controllerWithPadding.scrollTo(5.0, alignment: 0.0);
         await tester.pumpAndSettle();
         await paddedScroll;
 

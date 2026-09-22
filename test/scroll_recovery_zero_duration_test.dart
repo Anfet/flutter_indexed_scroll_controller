@@ -19,7 +19,8 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// never stalled and the search walked the position past the physical end
 /// of the list instead of completing or erroring.
 void main() {
-  group('ISC-41: recovery after invalidateMeasurements() with Duration.zero', () {
+  group('ISC-41: recovery after invalidateMeasurements() with Duration.zero',
+      () {
     testWidgets(
       'row height change + invalidateMeasurements() + immediate '
       'scrollTo(10, duration: Duration.zero) settles at the exact offset, '
@@ -36,7 +37,8 @@ void main() {
         );
         addTearDown(controller.dispose);
 
-        double heightForIndex(int index) => index == mutatedIndex ? _rowHeight.value : defaultHeight;
+        double heightForIndex(int index) =>
+            index == mutatedIndex ? _rowHeight.value : defaultHeight;
 
         await tester.pumpWidget(
           MaterialApp(
@@ -74,12 +76,14 @@ void main() {
         // 100px height) so the list is positioned exactly as the task
         // describes, and index `mutatedIndex` (9) is measured at its
         // original height before it changes.
-        unawaited(controller.scrollTo(8.0, duration: const Duration(milliseconds: 100)));
+        unawaited(controller.scrollTo(8.0,
+            duration: const Duration(milliseconds: 100)));
         for (int i = 0; i < 300; i++) {
           await tester.pump(const Duration(milliseconds: 16));
         }
         expect(controller.position.pixels, closeTo(800.0, 1.0));
-        expect(controller.measurementsSizes[mutatedIndex]?.height, closeTo(defaultHeight, 1.0));
+        expect(controller.measurementsSizes[mutatedIndex]?.height,
+            closeTo(defaultHeight, 1.0));
 
         // Step 2: change row 9's height and invalidate. This is the ISC-41
         // reproduction setup: the position is NOT reset to 0 by the caller,
@@ -95,7 +99,8 @@ void main() {
         // (it reached 40400px against a 30-row list). The fix
         // must make this settle in a bounded number of frames at the exact
         // target: rows 0-8 at 100px (900) + row 9 at its new 350px = 1250px.
-        const expectedOffset = mutatedIndex * defaultHeight + newHeight; // 1250.0
+        const expectedOffset =
+            mutatedIndex * defaultHeight + newHeight; // 1250.0
 
         bool completed = false;
         Object? error;
@@ -135,8 +140,11 @@ void main() {
           reason: 'scrollTo(10, duration: Duration.zero) must settle within '
               '$maxFrames frames after invalidateMeasurements(), not hang.',
         );
-        expect(error, isNull, reason: 'scrollTo must complete successfully, not error. Got: $error');
-        expect(controller.measurementsSizes.containsKey(0), isTrue, reason: 'Index 0 must have been measured during recovery.');
+        expect(error, isNull,
+            reason:
+                'scrollTo must complete successfully, not error. Got: $error');
+        expect(controller.measurementsSizes.containsKey(0), isTrue,
+            reason: 'Index 0 must have been measured during recovery.');
         expect(
           controller.position.pixels,
           closeTo(expectedOffset, 1.0),
@@ -170,7 +178,8 @@ void main() {
                   itemBuilder: (context, index) {
                     return controller.watch(
                       index: index,
-                      child: SizedBox(height: rowHeight, child: Text('index=$index')),
+                      child: SizedBox(
+                          height: rowHeight, child: Text('index=$index')),
                     );
                   },
                 ),
@@ -180,7 +189,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        unawaited(controller.scrollTo(8.0, duration: const Duration(milliseconds: 100)));
+        unawaited(controller.scrollTo(8.0,
+            duration: const Duration(milliseconds: 100)));
         for (int i = 0; i < 300; i++) {
           await tester.pump(const Duration(milliseconds: 16));
         }
@@ -209,10 +219,12 @@ void main() {
           await tester.pump(const Duration(milliseconds: 16));
         }
 
-        expect(completed, isTrue, reason: 'A cancelled call must still settle, not hang.');
+        expect(completed, isTrue,
+            reason: 'A cancelled call must still settle, not hang.');
         expect(
           error,
-          isA<ScrollCancelledException>().having((e) => e.reason, 'reason', ScrollCancelReason.explicitCancel),
+          isA<ScrollCancelledException>().having(
+              (e) => e.reason, 'reason', ScrollCancelReason.explicitCancel),
           reason: 'Cancelling during the post-invalidation frame wait must '
               'report explicitCancel. Got: $error',
         );
@@ -221,7 +233,8 @@ void main() {
         // happened before _animateTo's try/finally) would make this next,
         // independent scrollTo() get silently superseded before it even
         // starts, or otherwise misbehave. It must complete cleanly.
-        final nextFuture = controller.scrollTo(5.0, duration: const Duration(milliseconds: 100));
+        final nextFuture = controller.scrollTo(5.0,
+            duration: const Duration(milliseconds: 100));
         await tester.pumpAndSettle();
         await expectLater(nextFuture, completes);
         expect(controller.position.pixels, closeTo(500.0, 1.0));
@@ -260,7 +273,8 @@ void main() {
                   itemBuilder: (context, index) {
                     return controller.watch(
                       index: index,
-                      child: SizedBox(height: rowHeight, child: Text('index=$index')),
+                      child: SizedBox(
+                          height: rowHeight, child: Text('index=$index')),
                     );
                   },
                 ),

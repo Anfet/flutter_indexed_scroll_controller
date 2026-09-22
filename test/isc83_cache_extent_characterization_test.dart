@@ -52,7 +52,8 @@ Widget _harness({
     textDirection: TextDirection.ltr,
     child: ListView.builder(
       controller: controller,
-      scrollCacheExtent: cacheExtent != null ? ScrollCacheExtent.pixels(cacheExtent) : null,
+      scrollCacheExtent:
+          cacheExtent != null ? ScrollCacheExtent.pixels(cacheExtent) : null,
       itemCount: itemCount,
       itemBuilder: (context, index) {
         return controller.watch(
@@ -71,7 +72,8 @@ Widget _harness({
 /// [ScrollPosition.viewportDimension] equals [size].height precisely --
 /// the default 800x600 test surface silently clamps a taller in-tree
 /// `SizedBox` instead of granting it (see [_harness]'s Dartdoc).
-Future<void> _pumpAtSurfaceSize(WidgetTester tester, Widget widget, Size size) async {
+Future<void> _pumpAtSurfaceSize(
+    WidgetTester tester, Widget widget, Size size) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
@@ -90,7 +92,9 @@ int _maxMeasuredIndex(IndexedScrollController controller) {
 
 void main() {
   group('ISC-83: cache extent characterization', () {
-    testWidgets('base case: many small rows, default cache extent, measures viewport + 250px on both sides', (tester) async {
+    testWidgets(
+        'base case: many small rows, default cache extent, measures viewport + 250px on both sides',
+        (tester) async {
       // 20px rows, 500px viewport: viewport alone covers rows 0-24 (25
       // rows). The default 250px cache extent on the trailing edge should
       // add another 12-13 rows (250 / 20 = 12.5), so layout should reach
@@ -99,7 +103,8 @@ void main() {
       const rowHeight = 20.0;
       const viewportHeight = 500.0;
 
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       await _pumpAtSurfaceSize(
@@ -127,7 +132,8 @@ void main() {
       expect(
         maxBuiltExtentPx,
         closeTo(expectedReachPx, rowHeight),
-        reason: 'Layout should reach viewport ($viewportHeight) + default cache extent '
+        reason:
+            'Layout should reach viewport ($viewportHeight) + default cache extent '
             '($_defaultCacheExtent) = $expectedReachPx px past the list start, within one '
             'row height of slack; actually reached ${maxBuiltExtentPx}px (row $maxIndex)',
       );
@@ -143,10 +149,14 @@ void main() {
             'cache extent was applied',
       );
 
-      expect(maxIndex, lessThan(expectedMaxIndex + 5), reason: 'Layout must not reach dramatically further than viewport + cache extent implies');
+      expect(maxIndex, lessThan(expectedMaxIndex + 5),
+          reason:
+              'Layout must not reach dramatically further than viewport + cache extent implies');
     });
 
-    testWidgets('cache extent reach is independent of viewport size (pixels, not a fraction of viewport)', (tester) async {
+    testWidgets(
+        'cache extent reach is independent of viewport size (pixels, not a fraction of viewport)',
+        (tester) async {
       // Same row height, two different viewport heights. If the reach past
       // the viewport were a FRACTION of viewport size (the "half a screen"
       // hypothesis behind the discredited 1.5x coefficient), the absolute
@@ -156,7 +166,8 @@ void main() {
       const rowHeight = 20.0;
 
       Future<double> overshootPastViewportPx(double viewportHeight) async {
-        final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+        final controller = IndexedScrollController(
+            scrollDuration: const Duration(milliseconds: 100));
         addTearDown(controller.dispose);
 
         await _pumpAtSurfaceSize(
@@ -170,7 +181,8 @@ void main() {
         );
         await tester.pump();
 
-        final maxBuiltExtentPx = (_maxMeasuredIndex(controller) + 1) * rowHeight;
+        final maxBuiltExtentPx =
+            (_maxMeasuredIndex(controller) + 1) * rowHeight;
         return maxBuiltExtentPx - viewportHeight;
       }
 
@@ -188,7 +200,8 @@ void main() {
       expect(
         (overshootLarge - overshootSmall).abs(),
         lessThan(rowHeight * 2),
-        reason: 'Overshoot past the viewport edge must not scale with viewport size: got '
+        reason:
+            'Overshoot past the viewport edge must not scale with viewport size: got '
             '${overshootSmall}px at 300px viewport vs ${overshootLarge}px at 900px viewport. '
             'A difference this large would mean cache extent is proportional to viewport, '
             'not the fixed-pixel constant the SDK documents -- and the step-size formula in '
@@ -196,7 +209,9 @@ void main() {
       );
     });
 
-    testWidgets('a row larger than viewport + cache extent is still built in full (SliverList is not lazy within a row)', (tester) async {
+    testWidgets(
+        'a row larger than viewport + cache extent is still built in full (SliverList is not lazy within a row)',
+        (tester) async {
       // A 2000px row against a 100px viewport (built extent budget: 100 +
       // 250 = 350px) is not itself covered by the cache extent budget. If
       // SliverList built rows lazily WITHIN a row's own extent, this row
@@ -205,7 +220,8 @@ void main() {
       // the whole oversized row is laid out and measured as one unit.
       const viewportHeight = 100.0;
 
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       await _pumpAtSurfaceSize(
@@ -220,7 +236,8 @@ void main() {
       await tester.pump();
 
       expect(controller.measurementsSizes.containsKey(0), isTrue,
-          reason: 'The oversized row 0 must be built and measured despite exceeding viewport + cache extent');
+          reason:
+              'The oversized row 0 must be built and measured despite exceeding viewport + cache extent');
       expect(controller.measurementsSizes[0]!.height, 2000.0);
 
       // Because row 0 alone consumes 2000px against a 350px build budget,
@@ -230,15 +247,18 @@ void main() {
       // exceed: a step landing inside row 0 would still need row 0's full
       // extent laid out before the next row is even attempted.
       expect(controller.measurementsSizes.containsKey(1), isFalse,
-          reason: 'An oversized leading row should exhaust the build budget on its own, before any row past it is reached');
+          reason:
+              'An oversized leading row should exhaust the build budget on its own, before any row past it is reached');
     });
 
-    testWidgets('an explicit pixel cacheExtent shifts the reach predictably', (tester) async {
+    testWidgets('an explicit pixel cacheExtent shifts the reach predictably',
+        (tester) async {
       const rowHeight = 20.0;
       const viewportHeight = 500.0;
       const explicitCacheExtent = 1000.0;
 
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       await _pumpAtSurfaceSize(
@@ -258,7 +278,8 @@ void main() {
       expect(
         maxBuiltExtentPx,
         closeTo(viewportHeight + explicitCacheExtent, rowHeight),
-        reason: 'An explicit cacheExtent of $explicitCacheExtent should replace the default '
+        reason:
+            'An explicit cacheExtent of $explicitCacheExtent should replace the default '
             '250px, reaching viewport + $explicitCacheExtent px, not viewport + $_defaultCacheExtent px',
       );
 
@@ -269,23 +290,28 @@ void main() {
       // settle this -- if unreadable from outside the render tree, ISC-82c
       // must stay closed and the step size must stay at a conservative
       // 1.0x viewport.
-      final renderViewport = tester.allRenderObjects.whereType<RenderViewport>().first;
+      final renderViewport =
+          tester.allRenderObjects.whereType<RenderViewport>().first;
       expect(
         renderViewport.scrollCacheExtent.style,
         CacheExtentStyle.pixel,
-        reason: 'An explicit double cacheExtent should be readable back as a pixel-style '
+        reason:
+            'An explicit double cacheExtent should be readable back as a pixel-style '
             'ScrollCacheExtent',
       );
       expect(
         renderViewport.scrollCacheExtent.value,
         explicitCacheExtent,
-        reason: 'RenderViewportBase.scrollCacheExtent must be readable from the render object '
+        reason:
+            'RenderViewportBase.scrollCacheExtent must be readable from the render object '
             'at runtime for ISC-82c (a step formula of viewport + actual cache extent) to be '
             'possible at all',
       );
     });
 
-    testWidgets('a single jumpTo teleport does NOT retain a leading cache extent behind the new position', (tester) async {
+    testWidgets(
+        'a single jumpTo teleport does NOT retain a leading cache extent behind the new position',
+        (tester) async {
       // This scenario set out to confirm the "before the leading edge"
       // half of scrollCacheExtent's contract after a jump -- and found the
       // opposite. Recorded as its own test because it directly bears on
@@ -302,7 +328,8 @@ void main() {
       const rowHeight = 20.0;
       const viewportHeight = 500.0;
 
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       await _pumpAtSurfaceSize(
@@ -339,13 +366,15 @@ void main() {
       expect(
         find.text('Item $leadingRowIndexAtViewportStart'),
         findsOneWidget,
-        reason: 'The row exactly at the new viewport start must be built immediately after '
+        reason:
+            'The row exactly at the new viewport start must be built immediately after '
             'the jump',
       );
       expect(
         find.text('Item ${leadingRowIndexAtViewportStart - 1}'),
         findsNothing,
-        reason: 'A single-frame jumpTo teleport must not retain ANY row behind the new '
+        reason:
+            'A single-frame jumpTo teleport must not retain ANY row behind the new '
             'viewport position -- confirmed: the leading cache extent only applies to '
             'positions reached by continuous/incremental scrolling, not a bare jump. '
             'ISC-82a\'s search loop (which jumps repeatedly) gets no free lookback from this '

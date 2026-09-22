@@ -15,7 +15,8 @@ void main() {
           itemHeightBuilder: (index) => 100.0,
         ),
       );
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       expect(
@@ -25,14 +26,16 @@ void main() {
       );
     });
 
-    testWidgets('scrollTo(double.nan) throws ArgumentError', (WidgetTester tester) async {
+    testWidgets('scrollTo(double.nan) throws ArgumentError',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ScrollHarness(
           itemCount: 20,
           itemHeightBuilder: (index) => 100.0,
         ),
       );
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       expect(
@@ -42,14 +45,16 @@ void main() {
       );
     });
 
-    testWidgets('scrollTo(double.infinity) throws ArgumentError', (WidgetTester tester) async {
+    testWidgets('scrollTo(double.infinity) throws ArgumentError',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ScrollHarness(
           itemCount: 20,
           itemHeightBuilder: (index) => 100.0,
         ),
       );
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       expect(
@@ -59,14 +64,16 @@ void main() {
       );
     });
 
-    testWidgets('scrollTo negative duration throws ArgumentError', (WidgetTester tester) async {
+    testWidgets('scrollTo negative duration throws ArgumentError',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ScrollHarness(
           itemCount: 20,
           itemHeightBuilder: (index) => 100.0,
         ),
       );
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       expect(
@@ -79,14 +86,16 @@ void main() {
       );
     });
 
-    testWidgets('scrollTo alignment below 0 throws ArgumentError', (WidgetTester tester) async {
+    testWidgets('scrollTo alignment below 0 throws ArgumentError',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ScrollHarness(
           itemCount: 20,
           itemHeightBuilder: (index) => 100.0,
         ),
       );
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       expect(
@@ -96,14 +105,16 @@ void main() {
       );
     });
 
-    testWidgets('scrollTo alignment above 1 throws ArgumentError', (WidgetTester tester) async {
+    testWidgets('scrollTo alignment above 1 throws ArgumentError',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ScrollHarness(
           itemCount: 20,
           itemHeightBuilder: (index) => 100.0,
         ),
       );
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       expect(
@@ -113,7 +124,8 @@ void main() {
       );
     });
 
-    testWidgets('scrollTo with no attached ScrollPosition throws StateError', (WidgetTester tester) async {
+    testWidgets('scrollTo with no attached ScrollPosition throws StateError',
+        (WidgetTester tester) async {
       // Controller never attached to any Scrollable: hasClients is false.
       final controller = IndexedScrollController(
         scrollDuration: const Duration(milliseconds: 100),
@@ -124,7 +136,8 @@ void main() {
       expect(
         () => controller.scrollTo(5.0),
         throwsA(isA<StateError>()),
-        reason: 'scrollTo with zero attached positions must be rejected with StateError, '
+        reason:
+            'scrollTo with zero attached positions must be rejected with StateError, '
             'distinguishing "no clients" from "more than one position".',
       );
     });
@@ -144,13 +157,16 @@ void main() {
         expect(
           () => controller.scrollTo(-1.0),
           throwsA(isA<RangeError>()),
-          reason: 'Parameter validation (RangeError for negative index) must run '
+          reason:
+              'Parameter validation (RangeError for negative index) must run '
               'before any attachment/position check, per the ISC-03 contract order.',
         );
       },
     );
 
-    testWidgets('non-contiguous watch() indices give StateError naming the missing index', (WidgetTester tester) async {
+    testWidgets(
+        'non-contiguous watch() indices give StateError naming the missing index',
+        (WidgetTester tester) async {
       // Registering logical indices 0,1,2,50,51,52 must surface a StateError with a useful
       // message instead of an unqualified _TypeError from `_sizes[i]!`.
       final controller = IndexedScrollController(
@@ -193,7 +209,9 @@ void main() {
       Object? scrollError;
       bool scrollCompleted = false;
       unawaited(
-        controller.scrollTo(52.0, duration: const Duration(milliseconds: 100)).then(
+        controller
+            .scrollTo(52.0, duration: const Duration(milliseconds: 100))
+            .then(
           (_) => scrollCompleted = true,
           onError: (Object e) {
             scrollError = e;
@@ -213,7 +231,8 @@ void main() {
           'message',
           contains('3'),
         ),
-        reason: 'Summing the prefix 0..51 hits the first missing index (3), which must '
+        reason:
+            'Summing the prefix 0..51 hits the first missing index (3), which must '
             'be named in a StateError rather than throwing _TypeError.',
       );
     });
@@ -240,7 +259,8 @@ void _errorDeliveryContract() {
     testWidgets(
       'a try/catch around a non-awaited scrollTo does NOT catch them',
       (tester) async {
-        final controller = IndexedScrollController(scrollDuration: Duration.zero);
+        final controller =
+            IndexedScrollController(scrollDuration: Duration.zero);
         addTearDown(controller.dispose);
         await tester.pumpWidget(buildList(controller));
         await tester.pumpAndSettle();

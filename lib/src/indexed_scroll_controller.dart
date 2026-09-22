@@ -157,7 +157,7 @@ class IndexedScrollController extends ScrollController {
   /// Indices must be consecutive and match the `itemBuilder` index.
   Widget watch({required int index, required Widget child}) {
     final fingerprintCallback = contentFingerprint;
-    return IndexedScrollItem(
+    return _IndexedScrollItem(
       controller: this,
       index: index,
       hasFingerprintSnapshot: fingerprintCallback != null,
@@ -171,7 +171,7 @@ class IndexedScrollController extends ScrollController {
   /// Use with [ScrollAlignmentTarget.item] to align the item without its
   /// trailing separator.
   Widget separator({required int index, required Widget child}) {
-    return IndexedScrollSeparator(
+    return _IndexedScrollSeparator(
       controller: this,
       index: index,
       child: child,
@@ -662,9 +662,9 @@ class IndexedScrollController extends ScrollController {
     var stalledSteps = 0;
 
     bool progressed() {
-      final distance =
-          (targetPixelsEstimateForStallCheck(targetItemIndex) - position.pixels)
-              .abs();
+      final distance = (_targetPixelsEstimateForStallCheck(targetItemIndex) -
+              position.pixels)
+          .abs();
       final range = _laidOutIndexRange;
       final registrationSum =
           _corridorRegistrationSum(targetItemIndex, snapshot);
@@ -846,9 +846,9 @@ class IndexedScrollController extends ScrollController {
     stalledSteps = 0;
     double? lastDistanceToTarget;
     while (!_targetIsMaterialized(targetItemIndex)) {
-      final distance =
-          (targetPixelsEstimateForStallCheck(targetItemIndex) - position.pixels)
-              .abs();
+      final distance = (_targetPixelsEstimateForStallCheck(targetItemIndex) -
+              position.pixels)
+          .abs();
       final priorDistance = lastDistanceToTarget;
       final madeProgress = priorDistance == null || distance < priorDistance;
       lastDistanceToTarget = distance;
@@ -885,7 +885,7 @@ class IndexedScrollController extends ScrollController {
     }
   }
 
-  double targetPixelsEstimateForStallCheck(int targetItemIndex) {
+  double _targetPixelsEstimateForStallCheck(int targetItemIndex) {
     if (_hasCompletePrefix(targetItemIndex)) {
       return _leadingAxisPadding + _prefixExtentBefore(targetItemIndex);
     }

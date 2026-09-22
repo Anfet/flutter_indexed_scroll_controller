@@ -37,7 +37,8 @@ void main() {
             guardLimit: 500,
           ),
         );
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         // JumpTo a specific pixel offset (not starting from 0)
@@ -53,20 +54,23 @@ void main() {
         expect(
           postJumpSizes.isNotEmpty,
           isTrue,
-          reason: 'After jumpTo, the controller should have measured at least one item.',
+          reason:
+              'After jumpTo, the controller should have measured at least one item.',
         );
 
         // If there are measured items, check that they form a continuous prefix
         // starting from index 0. Find the maximum index measured.
         if (postJumpSizes.isNotEmpty) {
-          final maxMeasuredIndex = postJumpSizes.keys.reduce((a, b) => a > b ? a : b);
+          final maxMeasuredIndex =
+              postJumpSizes.keys.reduce((a, b) => a > b ? a : b);
 
           // Verify all indices from 0 to maxMeasuredIndex are present (no gaps).
           for (int i = 0; i <= maxMeasuredIndex; i++) {
             expect(
               postJumpSizes.containsKey(i),
               isTrue,
-              reason: 'After jumpTo, indices should form a continuous prefix from 0; '
+              reason:
+                  'After jumpTo, indices should form a continuous prefix from 0; '
                   'index $i is missing between 0 and $maxMeasuredIndex.',
             );
           }
@@ -103,7 +107,8 @@ void main() {
         expect(
           forwardError,
           isNull,
-          reason: 'scrollTo(50.0) must complete without error. Got: $forwardError',
+          reason:
+              'scrollTo(50.0) must complete without error. Got: $forwardError',
         );
 
         final offsetAfterScrollToForward = state.controller.position.pixels;
@@ -115,7 +120,8 @@ void main() {
         expect(
           offsetAfterScrollToForward,
           closeTo(expectedOffsetForIndex50, 2.0),
-          reason: 'After scrollTo(50.0), offset should be approximately ${expectedOffsetForIndex50}px '
+          reason:
+              'After scrollTo(50.0), offset should be approximately ${expectedOffsetForIndex50}px '
               '(sum of heights 0..49 with item height $itemHeight each), '
               'but got $offsetAfterScrollToForward.',
         );
@@ -163,7 +169,8 @@ void main() {
         expect(
           offsetAfterScrollToBack,
           closeTo(expectedOffsetForIndex2, 2.0),
-          reason: 'After scrollTo(2.0), offset should be approximately ${expectedOffsetForIndex2}px '
+          reason:
+              'After scrollTo(2.0), offset should be approximately ${expectedOffsetForIndex2}px '
               '(sum of heights 0..1 with item height $itemHeight each), '
               'but got $offsetAfterScrollToBack.',
         );
@@ -171,9 +178,12 @@ void main() {
         // Final check: verify continuous prefix is still measured up to at least index 2
         final finalSizes = state.controller.measurementsSizes;
         expect(
-          finalSizes.containsKey(0) && finalSizes.containsKey(1) && finalSizes.containsKey(2),
+          finalSizes.containsKey(0) &&
+              finalSizes.containsKey(1) &&
+              finalSizes.containsKey(2),
           isTrue,
-          reason: 'After both scrollTo operations, indices 0, 1, and 2 should be measured.',
+          reason:
+              'After both scrollTo operations, indices 0, 1, and 2 should be measured.',
         );
       },
     );
@@ -215,18 +225,21 @@ void main() {
         expect(
           measuredSizes.isNotEmpty,
           isTrue,
-          reason: 'After initialScrollOffset, the controller should have measured at least one item.',
+          reason:
+              'After initialScrollOffset, the controller should have measured at least one item.',
         );
 
         // Check continuity of measured indices from 0
         if (measuredSizes.isNotEmpty) {
-          final maxMeasuredIndex = measuredSizes.keys.reduce((a, b) => a > b ? a : b);
+          final maxMeasuredIndex =
+              measuredSizes.keys.reduce((a, b) => a > b ? a : b);
 
           for (int i = 0; i <= maxMeasuredIndex; i++) {
             expect(
               measuredSizes.containsKey(i),
               isTrue,
-              reason: 'After initialScrollOffset, indices should form a continuous prefix from 0; '
+              reason:
+                  'After initialScrollOffset, indices should form a continuous prefix from 0; '
                   'index $i is missing between 0 and $maxMeasuredIndex.',
             );
           }
@@ -261,7 +274,8 @@ void main() {
         expect(
           scrollError,
           isNull,
-          reason: 'scrollTo(2.0) must complete without error. Got: $scrollError',
+          reason:
+              'scrollTo(2.0) must complete without error. Got: $scrollError',
         );
 
         final offsetAfterScroll = state.controller.position.pixels;
@@ -270,7 +284,8 @@ void main() {
         expect(
           offsetAfterScroll,
           closeTo(expectedOffset, 2.0),
-          reason: 'After scrollTo(2.0) from initialScrollOffset, offset should be '
+          reason:
+              'After scrollTo(2.0) from initialScrollOffset, offset should be '
               '$expectedOffset px, but got $offsetAfterScroll.',
         );
       },
@@ -328,7 +343,9 @@ void main() {
         Object? scrollError;
         bool scrollCompleted = false;
         unawaited(
-          controller.scrollTo(52.0, duration: const Duration(milliseconds: 100)).then(
+          controller
+              .scrollTo(52.0, duration: const Duration(milliseconds: 100))
+              .then(
             (_) => scrollCompleted = true,
             onError: (Object e) {
               scrollError = e;
@@ -348,7 +365,8 @@ void main() {
             'message',
             contains('3'),
           ),
-          reason: 'Non-contiguous watch() indices must raise StateError naming the '
+          reason:
+              'Non-contiguous watch() indices must raise StateError naming the '
               'first missing index (3 in this case), not _TypeError.',
         );
       },

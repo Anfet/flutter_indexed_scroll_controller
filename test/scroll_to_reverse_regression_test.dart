@@ -19,7 +19,8 @@ void main() {
   // Deliberately irregular per-index extent: a constant stride (e.g. 20 + 5*i)
   // would still let a swapped pair of terms cancel out at some particular
   // target index. Multiplying by a small varying factor breaks that.
-  double raggedExtent(int index, {double base = 40.0}) => base + (index % 7) * 11.0 + (index.isEven ? 3.0 : 0.0);
+  double raggedExtent(int index, {double base = 40.0}) =>
+      base + (index % 7) * 11.0 + (index.isEven ? 3.0 : 0.0);
 
   Future<IndexedScrollController> pumpReverseVertical(
     WidgetTester tester, {
@@ -42,7 +43,8 @@ void main() {
             itemCount: itemCount,
             itemBuilder: (context, index) => controller.watch(
               index: index,
-              child: SizedBox(height: heightOf(index), child: Text('Item $index')),
+              child:
+                  SizedBox(height: heightOf(index), child: Text('Item $index')),
             ),
           ),
         ),
@@ -72,7 +74,8 @@ void main() {
             itemCount: itemCount,
             itemBuilder: (context, index) => controller.watch(
               index: index,
-              child: SizedBox(width: widthOf(index), child: Text('Item $index')),
+              child:
+                  SizedBox(width: widthOf(index), child: Text('Item $index')),
             ),
           ),
         ),
@@ -103,7 +106,8 @@ void main() {
     final extent = extentOf(targetIndex);
     final effectiveAlignment = 1.0 - alignment; // reverse: true
     final alignmentAdjust = -(viewportExtent - extent) * effectiveAlignment;
-    final raw = leadingPadding + priorItems + extent * fraction + alignmentAdjust;
+    final raw =
+        leadingPadding + priorItems + extent * fraction + alignmentAdjust;
     if (minScrollExtent == null || maxScrollExtent == null) {
       return raw;
     }
@@ -119,12 +123,15 @@ void main() {
           const targetIndex = 22;
           double heightOf(int i) => raggedExtent(i, base: 30.0);
 
-          final controller = await pumpReverseVertical(tester, itemCount: itemCount, heightOf: heightOf);
+          final controller = await pumpReverseVertical(tester,
+              itemCount: itemCount, heightOf: heightOf);
           final viewport = controller.position.viewportDimension;
 
           await pumpUntilComplete(
             tester,
-            controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100), alignment: alignment),
+            controller.scrollTo(targetIndex.toDouble(),
+                duration: const Duration(milliseconds: 100),
+                alignment: alignment),
           );
 
           final expected = expectedOffset(
@@ -137,7 +144,8 @@ void main() {
           expect(
             controller.position.pixels,
             closeTo(expected, 1.0),
-            reason: 'Non-uniform row heights must not cancel a swapped term in the offset formula.',
+            reason:
+                'Non-uniform row heights must not cancel a swapped term in the offset formula.',
           );
         },
       );
@@ -149,12 +157,15 @@ void main() {
           const targetIndex = 18;
           double widthOf(int i) => raggedExtent(i, base: 45.0);
 
-          final controller = await pumpReverseHorizontal(tester, itemCount: itemCount, widthOf: widthOf);
+          final controller = await pumpReverseHorizontal(tester,
+              itemCount: itemCount, widthOf: widthOf);
           final viewport = controller.position.viewportDimension;
 
           await pumpUntilComplete(
             tester,
-            controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100), alignment: alignment),
+            controller.scrollTo(targetIndex.toDouble(),
+                duration: const Duration(milliseconds: 100),
+                alignment: alignment),
           );
 
           final expected = expectedOffset(
@@ -167,7 +178,8 @@ void main() {
           expect(
             controller.position.pixels,
             closeTo(expected, 1.0),
-            reason: 'Non-uniform column widths must not cancel a swapped term in the offset formula.',
+            reason:
+                'Non-uniform column widths must not cancel a swapped term in the offset formula.',
           );
         },
       );
@@ -179,7 +191,8 @@ void main() {
         const itemCount = 40;
         double heightOf(int i) => raggedExtent(i, base: 25.0);
 
-        final controller = await pumpReverseVertical(tester, itemCount: itemCount, heightOf: heightOf);
+        final controller = await pumpReverseVertical(tester,
+            itemCount: itemCount, heightOf: heightOf);
         final viewport = controller.position.viewportDimension;
 
         await pumpUntilComplete(
@@ -207,12 +220,14 @@ void main() {
         const lastIndex = itemCount - 1;
         double heightOf(int i) => raggedExtent(i, base: 35.0);
 
-        final controller = await pumpReverseVertical(tester, itemCount: itemCount, heightOf: heightOf);
+        final controller = await pumpReverseVertical(tester,
+            itemCount: itemCount, heightOf: heightOf);
         final viewport = controller.position.viewportDimension;
 
         await pumpUntilComplete(
           tester,
-          controller.scrollTo(lastIndex.toDouble(), duration: const Duration(milliseconds: 100), alignment: 1.0),
+          controller.scrollTo(lastIndex.toDouble(),
+              duration: const Duration(milliseconds: 100), alignment: 1.0),
         );
 
         final unclamped = expectedOffset(
@@ -222,7 +237,8 @@ void main() {
           viewportExtent: viewport,
           alignment: 1.0,
         );
-        final expected = unclamped.clamp(controller.position.minScrollExtent, controller.position.maxScrollExtent);
+        final expected = unclamped.clamp(controller.position.minScrollExtent,
+            controller.position.maxScrollExtent);
         expect(controller.position.pixels, closeTo(expected, 1.0));
       },
     );
@@ -235,7 +251,8 @@ void main() {
         const fraction = 0.5;
         double heightOf(int i) => raggedExtent(i, base: 50.0);
 
-        final controller = await pumpReverseVertical(tester, itemCount: itemCount, heightOf: heightOf);
+        final controller = await pumpReverseVertical(tester,
+            itemCount: itemCount, heightOf: heightOf);
         final viewport = controller.position.viewportDimension;
 
         await pumpUntilComplete(
@@ -265,10 +282,12 @@ void main() {
         const targetIndex = 9;
         double heightOf(int i) => raggedExtent(i, base: 55.0);
 
-        final controller = await pumpReverseVertical(tester, itemCount: itemCount, heightOf: heightOf);
+        final controller = await pumpReverseVertical(tester,
+            itemCount: itemCount, heightOf: heightOf);
         final viewport = controller.position.viewportDimension;
 
-        final future = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero, alignment: 0.5);
+        final future = controller.scrollTo(targetIndex.toDouble(),
+            duration: Duration.zero, alignment: 0.5);
         await tester.pump();
         await future;
 
@@ -295,17 +314,20 @@ void main() {
         const targetIndex = 140;
         double heightOf(int i) => raggedExtent(i, base: 20.0);
 
-        final controller = await pumpReverseVertical(tester, itemCount: itemCount, heightOf: heightOf);
+        final controller = await pumpReverseVertical(tester,
+            itemCount: itemCount, heightOf: heightOf);
         expect(
           controller.measurementsSizes.containsKey(targetIndex),
           isFalse,
-          reason: 'Sanity check: the target must genuinely be unmeasured so this exercises the search loop.',
+          reason:
+              'Sanity check: the target must genuinely be unmeasured so this exercises the search loop.',
         );
         final viewport = controller.position.viewportDimension;
 
         await pumpUntilComplete(
           tester,
-          controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100), alignment: 0.5),
+          controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100), alignment: 0.5),
           maxPumps: 500,
         );
 
@@ -333,13 +355,15 @@ void main() {
         const targetIndex = 100;
         double widthOf(int i) => raggedExtent(i, base: 30.0);
 
-        final controller = await pumpReverseHorizontal(tester, itemCount: itemCount, widthOf: widthOf);
+        final controller = await pumpReverseHorizontal(tester,
+            itemCount: itemCount, widthOf: widthOf);
         expect(controller.measurementsSizes.containsKey(targetIndex), isFalse);
         final viewport = controller.position.viewportDimension;
 
         await pumpUntilComplete(
           tester,
-          controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100), alignment: 0.0),
+          controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100), alignment: 0.0),
           maxPumps: 500,
         );
 
@@ -383,7 +407,8 @@ void main() {
 
         await pumpUntilComplete(
           tester,
-          controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100), alignment: 0.5),
+          controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100), alignment: 0.5),
         );
 
         final expected = expectedOffset(
@@ -424,7 +449,8 @@ void main() {
         const targetIndex = 20;
         double widthOf(int i) => raggedExtent(i, base: 33.0);
 
-        final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+        final controller = IndexedScrollController(
+            scrollDuration: const Duration(milliseconds: 100));
         addTearDown(controller.dispose);
 
         await tester.pumpWidget(
@@ -438,7 +464,8 @@ void main() {
                 itemCount: itemCount,
                 itemBuilder: (context, index) => controller.watch(
                   index: index,
-                  child: SizedBox(width: widthOf(index), child: Text('Item $index')),
+                  child: SizedBox(
+                      width: widthOf(index), child: Text('Item $index')),
                 ),
               ),
             ),
@@ -450,7 +477,8 @@ void main() {
 
         await pumpUntilComplete(
           tester,
-          controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100), alignment: 0.0),
+          controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100), alignment: 0.0),
         );
 
         final expected = expectedOffset(
@@ -472,7 +500,8 @@ void main() {
         const itemCount = 200;
         double heightOf(int i) => raggedExtent(i, base: 28.0);
 
-        final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 300));
+        final controller = IndexedScrollController(
+            scrollDuration: const Duration(milliseconds: 300));
         addTearDown(controller.dispose);
 
         await tester.pumpWidget(
@@ -486,7 +515,8 @@ void main() {
                   itemCount: itemCount,
                   itemBuilder: (context, index) => controller.watch(
                     index: index,
-                    child: SizedBox(height: heightOf(index), child: Text('Item $index')),
+                    child: SizedBox(
+                        height: heightOf(index), child: Text('Item $index')),
                   ),
                 ),
               ),
@@ -529,7 +559,8 @@ void main() {
               'on axis direction.',
         );
         expect(error, isA<ScrollCancelledException>());
-        expect((error! as ScrollCancelledException).reason, ScrollCancelReason.userGesture);
+        expect((error! as ScrollCancelledException).reason,
+            ScrollCancelReason.userGesture);
       },
     );
 
@@ -568,7 +599,8 @@ void main() {
                       itemCount: itemCount,
                       itemBuilder: (context, index) => controller.watch(
                         index: index,
-                        child: SizedBox(height: heights[index], child: Text('row $index')),
+                        child: SizedBox(
+                            height: heights[index], child: Text('row $index')),
                       ),
                     );
                   },
@@ -579,23 +611,28 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final initialScroll = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+        final initialScroll = controller.scrollTo(targetIndex.toDouble(),
+            duration: Duration.zero);
         await tester.pumpAndSettle();
         await initialScroll;
         final generationBeforeRecovery = controller.measurementGeneration;
-        expect(controller.measurementsSizes.containsKey(unchangedIndex), isTrue);
+        expect(
+            controller.measurementsSizes.containsKey(unchangedIndex), isTrue);
 
         const firstDelta = 55.0;
         const secondDelta = -9.0;
         rebuild(() {
-          heights[firstChangedIndex] = baseHeight(firstChangedIndex) + firstDelta;
+          heights[firstChangedIndex] =
+              baseHeight(firstChangedIndex) + firstDelta;
           fingerprints[firstChangedIndex] = 1;
-          heights[secondChangedIndex] = baseHeight(secondChangedIndex) + secondDelta;
+          heights[secondChangedIndex] =
+              baseHeight(secondChangedIndex) + secondDelta;
           fingerprints[secondChangedIndex] = 1;
         });
         await tester.pumpAndSettle();
 
-        final recovery = controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+        final recovery = controller.scrollTo(targetIndex.toDouble(),
+            duration: Duration.zero);
         await tester.pumpAndSettle();
         await recovery;
 

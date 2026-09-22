@@ -22,7 +22,13 @@ enum _RowHeightMode {
 }
 
 class VerticalScreen extends StatefulWidget {
-  const VerticalScreen({super.key});
+  /// Overrides the source of "Scroll to Random Index"'s target and reshuffle
+  /// picks. Defaults to an unseeded [Random] (genuinely random, as the app
+  /// shows it); tests pass a seeded instance so the picked index and
+  /// reshuffled rows are reproducible.
+  const VerticalScreen({super.key, Random? random}) : _random = random;
+
+  final Random? _random;
 
   @override
   State<VerticalScreen> createState() => _VerticalScreenState();
@@ -48,7 +54,7 @@ class _VerticalScreenState extends State<VerticalScreen> {
   static const List<double> _fixedHeights = [20.0, 40.0, 60.0];
 
   late IndexedScrollController _scrollController;
-  final _random = Random();
+  late final _random = widget._random ?? Random();
   late List<_LoremRow> _loremRows;
   late List<_FixedHeightRow> _fixedRows;
   double _selectedAlignment = 0.0;
@@ -68,8 +74,10 @@ class _VerticalScreenState extends State<VerticalScreen> {
   @override
   void initState() {
     super.initState();
-    _loremRows = List.generate(_itemCount, (index) => _LoremRow.random(_random));
-    _fixedRows = List.generate(_itemCount, (index) => _FixedHeightRow.random(_random, _fixedHeights));
+    _loremRows =
+        List.generate(_itemCount, (index) => _LoremRow.random(_random));
+    _fixedRows = List.generate(
+        _itemCount, (index) => _FixedHeightRow.random(_random, _fixedHeights));
     _scrollController = _buildController();
   }
 
@@ -138,7 +146,8 @@ class _VerticalScreenState extends State<VerticalScreen> {
           case _RowHeightMode.lorem:
             _loremRows[index] = _loremRows[index].reshuffled(_random);
           case _RowHeightMode.fixed:
-            _fixedRows[index] = _fixedRows[index].reshuffled(_random, _fixedHeights);
+            _fixedRows[index] =
+                _fixedRows[index].reshuffled(_random, _fixedHeights);
         }
       }
     });
@@ -157,8 +166,12 @@ class _VerticalScreenState extends State<VerticalScreen> {
   /// rather than one whose heights were fixed for the app's whole lifetime.
   Future<void> _scrollToRandomIndex() async {
     final index = _random.nextInt(_itemCount);
-    final reshuffled = _rowHeightMode == _RowHeightMode.synthetic ? const <int>{} : _reshuffleRandomRows();
-    final reshufflePrefix = reshuffled.isEmpty ? '' : 'Reshuffled rows ${(reshuffled.toList()..sort()).join(', ')}. ';
+    final reshuffled = _rowHeightMode == _RowHeightMode.synthetic
+        ? const <int>{}
+        : _reshuffleRandomRows();
+    final reshufflePrefix = reshuffled.isEmpty
+        ? ''
+        : 'Reshuffled rows ${(reshuffled.toList()..sort()).join(', ')}. ';
     setState(() {
       _scrollStatus = '$reshufflePrefix'
           'Scrolling to random index $index (${_maxScrollDuration.inMilliseconds} ms)…';
@@ -173,7 +186,8 @@ class _VerticalScreenState extends State<VerticalScreen> {
 
       if (mounted) {
         setState(() {
-          _scrollStatus = 'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
+          _scrollStatus =
+              'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
         });
       }
     } on ScrollCancelledException catch (e) {
@@ -195,7 +209,8 @@ class _VerticalScreenState extends State<VerticalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('Vertical Scrolling with Alignment Control')),
+      appBar: AppBar(
+          title: const Text('Vertical Scrolling with Alignment Control')),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -209,9 +224,15 @@ class _VerticalScreenState extends State<VerticalScreen> {
                     Expanded(
                       child: SegmentedButton<_RowHeightMode>(
                         segments: const [
-                          ButtonSegment(value: _RowHeightMode.synthetic, label: Text('Synthetic')),
-                          ButtonSegment(value: _RowHeightMode.lorem, label: Text('Lorem text')),
-                          ButtonSegment(value: _RowHeightMode.fixed, label: Text('Fixed 20/40/60')),
+                          ButtonSegment(
+                              value: _RowHeightMode.synthetic,
+                              label: Text('Synthetic')),
+                          ButtonSegment(
+                              value: _RowHeightMode.lorem,
+                              label: Text('Lorem text')),
+                          ButtonSegment(
+                              value: _RowHeightMode.fixed,
+                              label: Text('Fixed 20/40/60')),
                         ],
                         selected: <_RowHeightMode>{_rowHeightMode},
                         onSelectionChanged: (Set<_RowHeightMode> newSelection) {
@@ -227,8 +248,10 @@ class _VerticalScreenState extends State<VerticalScreen> {
                       child: SegmentedButton<double>(
                         segments: const [
                           ButtonSegment(value: 0.0, label: Text('Top (0.0)')),
-                          ButtonSegment(value: 0.5, label: Text('Center (0.5)')),
-                          ButtonSegment(value: 1.0, label: Text('Bottom (1.0)')),
+                          ButtonSegment(
+                              value: 0.5, label: Text('Center (0.5)')),
+                          ButtonSegment(
+                              value: 1.0, label: Text('Bottom (1.0)')),
                         ],
                         selected: <double>{_selectedAlignment},
                         onSelectionChanged: (Set<double> newSelection) {
@@ -241,7 +264,8 @@ class _VerticalScreenState extends State<VerticalScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Options:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Options:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -296,7 +320,8 @@ class _VerticalScreenState extends State<VerticalScreen> {
                 if (!_scrollController.hasClients) {
                   return const Text('Current offset: -');
                 }
-                return Text('Current offset: ${_scrollController.offset.toStringAsFixed(1)} px');
+                return Text(
+                    'Current offset: ${_scrollController.offset.toStringAsFixed(1)} px');
               },
             ),
           ),
@@ -305,9 +330,13 @@ class _VerticalScreenState extends State<VerticalScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: _scrollStatus.startsWith('Error') ? const Color(0xFFFFEBEE) : const Color(0xFFFFF8E1),
+                  color: _scrollStatus.startsWith('Error')
+                      ? const Color(0xFFFFEBEE)
+                      : const Color(0xFFFFF8E1),
                   border: Border.all(
-                    color: _scrollStatus.startsWith('Error') ? const Color(0xFFEF5350) : const Color(0xFFFBC02D),
+                    color: _scrollStatus.startsWith('Error')
+                        ? const Color(0xFFEF5350)
+                        : const Color(0xFFFBC02D),
                   ),
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -323,7 +352,9 @@ class _VerticalScreenState extends State<VerticalScreen> {
                 key: ValueKey(_listGeneration),
                 controller: _scrollController,
                 reverse: _isReverse,
-                padding: _hasPadding ? const EdgeInsets.only(top: 40) : EdgeInsets.zero,
+                padding: _hasPadding
+                    ? const EdgeInsets.only(top: 40)
+                    : EdgeInsets.zero,
                 itemCount: _itemCount,
                 itemBuilder: (context, index) {
                   // Fixed mode's row must be EXACTLY _fixedRows[index].height,
@@ -335,9 +366,12 @@ class _VerticalScreenState extends State<VerticalScreen> {
                     final sized = SizedBox(
                       height: fixedRow.height,
                       child: ColoredBox(
-                        color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
+                        color: index.isEven
+                            ? const Color(0xFFBBDEFB)
+                            : const Color(0xFFFFE0B2),
                         child: Center(
-                          child: Text('Row $index (rev ${fixedRow.revision}): ${fixedRow.height.toStringAsFixed(0)}px'),
+                          child: Text(
+                              'Row $index (rev ${fixedRow.revision}): ${fixedRow.height.toStringAsFixed(0)}px'),
                         ),
                       ),
                     );
@@ -345,15 +379,21 @@ class _VerticalScreenState extends State<VerticalScreen> {
                   }
 
                   final content = _rowHeightMode == _RowHeightMode.lorem
-                      ? Text('Row $index (rev ${_loremRows[index].revision}): ${_loremRows[index].text}')
-                      : Text('Row $index (${_calculateItemHeight(index).toStringAsFixed(0)}px)');
+                      ? Text(
+                          'Row $index (rev ${_loremRows[index].revision}): ${_loremRows[index].text}')
+                      : Text(
+                          'Row $index (${_calculateItemHeight(index).toStringAsFixed(0)}px)');
                   // Saturated, clearly alternating colors with a visible
                   // divider -- pale near-white shades made adjacent rows'
                   // edges hard to tell apart on a short viewport.
                   final row = Container(
                     decoration: BoxDecoration(
-                      color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
-                      border: const Border(bottom: BorderSide(color: Color(0xFF9E9E9E), width: 1)),
+                      color: index.isEven
+                          ? const Color(0xFFBBDEFB)
+                          : const Color(0xFFFFE0B2),
+                      border: const Border(
+                          bottom:
+                              BorderSide(color: Color(0xFF9E9E9E), width: 1)),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(32),
@@ -386,7 +426,9 @@ class _LoremRow {
   }
 
   _LoremRow reshuffled(Random random) {
-    return _LoremRow(text: lorem(paragraphs: 1, words: 5 + random.nextInt(60)), revision: revision + 1);
+    return _LoremRow(
+        text: lorem(paragraphs: 1, words: 5 + random.nextInt(60)),
+        revision: revision + 1);
   }
 }
 

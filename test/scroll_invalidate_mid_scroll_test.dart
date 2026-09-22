@@ -64,7 +64,8 @@ void main() {
           );
           addTearDown(controller.dispose);
 
-          final ValueNotifier<double> heightNotifier = ValueNotifier<double>(defaultHeight);
+          final ValueNotifier<double> heightNotifier =
+              ValueNotifier<double>(defaultHeight);
 
           await tester.pumpWidget(
             MaterialApp(
@@ -90,10 +91,13 @@ void main() {
                         cacheExtent: 5000,
                         itemCount: itemCount,
                         itemBuilder: (context, index) {
-                          final height = index == mutatedIndex ? mutatedHeight : defaultHeight;
+                          final height = index == mutatedIndex
+                              ? mutatedHeight
+                              : defaultHeight;
                           return controller.watch(
                             index: index,
-                            child: SizedBox(height: height, child: Text('Item $index')),
+                            child: SizedBox(
+                                height: height, child: Text('Item $index')),
                           );
                         },
                       );
@@ -108,7 +112,8 @@ void main() {
           // Scroll to the MIDDLE of the list (not offset 0), so mutatedIndex
           // (9) ends up on screen: offset 800 puts rows 8-11 visible within
           // the 400px viewport at 100px/row.
-          final scrollToMiddle = controller.scrollTo(8.0, duration: const Duration(milliseconds: 100));
+          final scrollToMiddle = controller.scrollTo(8.0,
+              duration: const Duration(milliseconds: 100));
           await tester.pumpAndSettle();
           await scrollToMiddle;
           expect(controller.position.pixels, 800.0);
@@ -117,7 +122,8 @@ void main() {
           expect(
             measurements[mutatedIndex]?.height,
             closeTo(defaultHeight, 0.5),
-            reason: 'Row $mutatedIndex must be live and measured at its original '
+            reason:
+                'Row $mutatedIndex must be live and measured at its original '
                 'height before mutation, confirming it is genuinely on screen '
                 'mid-scroll.',
           );
@@ -139,7 +145,8 @@ void main() {
           expect(
             measurements.containsKey(mutatedIndex),
             isFalse,
-            reason: 'invalidateMeasurements() clears _sizes and does not re-populate it '
+            reason:
+                'invalidateMeasurements() clears _sizes and does not re-populate it '
                 'from RenderBox.size, so index $mutatedIndex has no entry at all '
                 'immediately after the call -- it is filled back in only once '
                 "scrollTo()'s internal search pass drives a real layout.",
@@ -168,7 +175,8 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason: 'FIXED (ISC-31): scrollTo(${mutatedIndex + 1}) completes at the '
+            reason:
+                'FIXED (ISC-31): scrollTo(${mutatedIndex + 1}) completes at the '
                 'correct $correctOffset px (9*100 + $newHeight) even with no pump '
                 'between the mutation and invalidateMeasurements(), because '
                 "scrollTo()'s internal search-from-0 pass only trusts sizes from a "
@@ -194,7 +202,8 @@ void main() {
           );
           addTearDown(controller.dispose);
 
-          final ValueNotifier<double> heightNotifier = ValueNotifier<double>(defaultHeight);
+          final ValueNotifier<double> heightNotifier =
+              ValueNotifier<double>(defaultHeight);
 
           await tester.pumpWidget(
             MaterialApp(
@@ -210,10 +219,13 @@ void main() {
                         cacheExtent: 5000,
                         itemCount: itemCount,
                         itemBuilder: (context, index) {
-                          final height = index == mutatedIndex ? mutatedHeight : defaultHeight;
+                          final height = index == mutatedIndex
+                              ? mutatedHeight
+                              : defaultHeight;
                           return controller.watch(
                             index: index,
-                            child: SizedBox(height: height, child: Text('Item $index')),
+                            child: SizedBox(
+                                height: height, child: Text('Item $index')),
                           );
                         },
                       );
@@ -225,13 +237,15 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          final scrollToMiddle = controller.scrollTo(8.0, duration: const Duration(milliseconds: 100));
+          final scrollToMiddle = controller.scrollTo(8.0,
+              duration: const Duration(milliseconds: 100));
           await tester.pumpAndSettle();
           await scrollToMiddle;
           expect(controller.position.pixels, 800.0);
 
           var measurements = controller.measurementsSizes;
-          expect(measurements[mutatedIndex]?.height, closeTo(defaultHeight, 0.5));
+          expect(
+              measurements[mutatedIndex]?.height, closeTo(defaultHeight, 0.5));
 
           // Mutate, then let a real frame/layout run BEFORE invalidating.
           heightNotifier.value = newHeight;
@@ -258,7 +272,8 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason: 'Variant B confirmed correct: scrollTo(${mutatedIndex + 1}) '
+            reason:
+                'Variant B confirmed correct: scrollTo(${mutatedIndex + 1}) '
                 'completes at the visually correct $correctOffset px '
                 '($mutatedIndex*$defaultHeight + $newHeight).',
           );
@@ -285,7 +300,8 @@ void main() {
           );
           addTearDown(controller.dispose);
 
-          List<String> contentIds = List<String>.generate(itemCount, (i) => 'orig$i');
+          List<String> contentIds =
+              List<String>.generate(itemCount, (i) => 'orig$i');
           late StateSetter setContentIds;
 
           Widget buildList() {
@@ -303,10 +319,14 @@ void main() {
                         itemCount: contentIds.length,
                         itemBuilder: (context, index) {
                           final contentId = contentIds[index];
-                          final height = contentId == 'INSERTED' ? insertedHeight : defaultHeight;
+                          final height = contentId == 'INSERTED'
+                              ? insertedHeight
+                              : defaultHeight;
                           return controller.watch(
                             index: index,
-                            child: SizedBox(height: height, child: Text('index=$index id=$contentId')),
+                            child: SizedBox(
+                                height: height,
+                                child: Text('index=$index id=$contentId')),
                           );
                         },
                       );
@@ -322,7 +342,8 @@ void main() {
 
           // Scroll to the middle so index insertAt (9) is on screen: offset
           // 800 shows rows 8-11 within the 400px viewport at 100px/row.
-          final scrollToMiddle = controller.scrollTo(8.0, duration: const Duration(milliseconds: 100));
+          final scrollToMiddle = controller.scrollTo(8.0,
+              duration: const Duration(milliseconds: 100));
           await tester.pumpAndSettle();
           await scrollToMiddle;
           expect(controller.position.pixels, 800.0);
@@ -351,7 +372,8 @@ void main() {
           expect(
             measurements.containsKey(insertAt),
             isFalse,
-            reason: 'ISC-31: invalidateMeasurements() no longer re-populates _sizes from '
+            reason:
+                'ISC-31: invalidateMeasurements() no longer re-populates _sizes from '
                 'RenderBox.size, so slot $insertAt has no entry at all immediately '
                 'after the call.',
           );
@@ -373,7 +395,8 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason: 'FIXED (ISC-31): scrollTo(${insertAt + 1}) after inserting a row at '
+            reason:
+                'FIXED (ISC-31): scrollTo(${insertAt + 1}) after inserting a row at '
                 '$insertAt and calling invalidateMeasurements() with no intervening '
                 'pump completes at the correct $correctOffset px (9*100 + '
                 '$insertedHeight), because the search pass only trusts a real '
@@ -397,7 +420,8 @@ void main() {
           );
           addTearDown(controller.dispose);
 
-          List<String> contentIds = List<String>.generate(itemCount, (i) => 'orig$i');
+          List<String> contentIds =
+              List<String>.generate(itemCount, (i) => 'orig$i');
           late StateSetter setContentIds;
 
           Widget buildList() {
@@ -415,10 +439,14 @@ void main() {
                         itemCount: contentIds.length,
                         itemBuilder: (context, index) {
                           final contentId = contentIds[index];
-                          final height = contentId == 'INSERTED' ? insertedHeight : defaultHeight;
+                          final height = contentId == 'INSERTED'
+                              ? insertedHeight
+                              : defaultHeight;
                           return controller.watch(
                             index: index,
-                            child: SizedBox(height: height, child: Text('index=$index id=$contentId')),
+                            child: SizedBox(
+                                height: height,
+                                child: Text('index=$index id=$contentId')),
                           );
                         },
                       );
@@ -432,7 +460,8 @@ void main() {
           await tester.pumpWidget(buildList());
           await tester.pumpAndSettle();
 
-          final scrollToMiddle = controller.scrollTo(8.0, duration: const Duration(milliseconds: 100));
+          final scrollToMiddle = controller.scrollTo(8.0,
+              duration: const Duration(milliseconds: 100));
           await tester.pumpAndSettle();
           await scrollToMiddle;
           expect(controller.position.pixels, 800.0);
@@ -498,7 +527,8 @@ void main() {
           );
           addTearDown(controller.dispose);
 
-          final ValueNotifier<double> heightNotifier = ValueNotifier<double>(defaultHeight);
+          final ValueNotifier<double> heightNotifier =
+              ValueNotifier<double>(defaultHeight);
 
           await tester.pumpWidget(
             MaterialApp(
@@ -512,10 +542,13 @@ void main() {
                         controller: controller,
                         itemCount: itemCount,
                         itemBuilder: (context, index) {
-                          final height = index == mutatedIndex ? mutatedHeight : defaultHeight;
+                          final height = index == mutatedIndex
+                              ? mutatedHeight
+                              : defaultHeight;
                           return controller.watch(
                             index: index,
-                            child: SizedBox(height: height, child: Text('Item $index')),
+                            child: SizedBox(
+                                height: height, child: Text('Item $index')),
                           );
                         },
                       );
@@ -530,7 +563,8 @@ void main() {
           // Scroll to the middle: offset 2800 puts rows ~28-31 on screen at
           // 100px/row within a 400px viewport, with the default cacheExtent
           // (250px) rows near index 0 are no longer built/live.
-          final scrollToMiddle = controller.scrollTo(28.0, duration: const Duration(milliseconds: 100));
+          final scrollToMiddle = controller.scrollTo(28.0,
+              duration: const Duration(milliseconds: 100));
           await tester.pumpAndSettle();
           await scrollToMiddle;
           expect(controller.position.pixels, 2800.0);
@@ -538,7 +572,8 @@ void main() {
           expect(
             controller.measurementsSizes[mutatedIndex]?.height,
             closeTo(defaultHeight, 0.5),
-            reason: 'Row $mutatedIndex must be live and measured before mutation.',
+            reason:
+                'Row $mutatedIndex must be live and measured before mutation.',
           );
 
           heightNotifier.value = newHeight;
@@ -574,7 +609,8 @@ void main() {
           expect(
             observedOffset,
             closeTo(correctOffset, 1.0),
-            reason: 'scrollTo(${mutatedIndex + 1}) must recover the missing 0-prefix on '
+            reason:
+                'scrollTo(${mutatedIndex + 1}) must recover the missing 0-prefix on '
                 'its own (internally returning to offset 0 and re-measuring forward, '
                 'ISC-05\'s search mechanism) and complete at the correct '
                 '$correctOffset px (29*100 + $newHeight), without the caller ever '
@@ -609,7 +645,8 @@ void main() {
                   itemBuilder: (context, index) {
                     return controller.watch(
                       index: index,
-                      child: SizedBox(height: rowHeight, child: Text('Item $index')),
+                      child: SizedBox(
+                          height: rowHeight, child: Text('Item $index')),
                     );
                   },
                 ),
@@ -618,7 +655,8 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          final scrollToMiddle = controller.scrollTo(30.0, duration: const Duration(milliseconds: 100));
+          final scrollToMiddle = controller.scrollTo(30.0,
+              duration: const Duration(milliseconds: 100));
           await tester.pumpAndSettle();
           await scrollToMiddle;
 
@@ -627,7 +665,9 @@ void main() {
           Object? firstError;
           bool firstCompleted = false;
           unawaited(
-            controller.scrollTo(50.0, duration: const Duration(milliseconds: 100)).then(
+            controller
+                .scrollTo(50.0, duration: const Duration(milliseconds: 100))
+                .then(
               (_) => firstCompleted = true,
               onError: (Object e) {
                 firstError = e;
@@ -644,7 +684,8 @@ void main() {
           expect(
             firstCompleted,
             isFalse,
-            reason: 'The first scrollTo(50) must still be actively recovering the '
+            reason:
+                'The first scrollTo(50) must still be actively recovering the '
                 'prefix when the second invalidateMeasurements() runs.',
           );
 
@@ -662,7 +703,8 @@ void main() {
               'reason',
               ScrollCancelReason.dataInvalidated,
             ),
-            reason: 'A second invalidateMeasurements() call while the first scrollTo() '
+            reason:
+                'A second invalidateMeasurements() call while the first scrollTo() '
                 'is still in its internal recovery search must cancel it with '
                 'dataInvalidated, the same typed reason as any other invalidation '
                 'during an in-flight scrollTo() (ISC-13).',

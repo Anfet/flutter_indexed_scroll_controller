@@ -43,10 +43,13 @@ For automatic invalidation, provide both callbacks. A fingerprint must identify 
 
 ```dart
 final controller = IndexedScrollController(
+  scrollDuration: const Duration(milliseconds: 250),
   itemCount: () => items.length,
   contentFingerprint: (index) => (items[index].id, items[index].expanded),
 );
 ```
+
+When data changes, the controller compares the fingerprint of each row to detect which measurements are invalid. The fingerprint does not estimate geometry; it is only a tag for invalidation. After a detected change, the controller re-measures the affected row and any preceding rows whose layout may have shifted.
 
 ## Separators and gestures
 

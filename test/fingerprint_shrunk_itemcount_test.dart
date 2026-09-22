@@ -51,7 +51,8 @@ void main() {
                       itemBuilder: (context, index) {
                         return controller.watch(
                           index: index,
-                          child: SizedBox(height: rowHeight, child: Text('index=$index')),
+                          child: SizedBox(
+                              height: rowHeight, child: Text('index=$index')),
                         );
                       },
                     );
@@ -66,7 +67,8 @@ void main() {
         // Step 1: measure the full original prefix by scrolling through the
         // entire original list once.
         unawaited(
-          controller.scrollTo((originalItemCount - 1).toDouble(), duration: const Duration(milliseconds: 100)),
+          controller.scrollTo((originalItemCount - 1).toDouble(),
+              duration: const Duration(milliseconds: 100)),
         );
         for (int i = 0; i < 300; i++) {
           await tester.pump(const Duration(milliseconds: 16));
@@ -74,7 +76,8 @@ void main() {
         expect(
           controller.measurementsSizes.length,
           originalItemCount,
-          reason: 'Every original index must be measured before the list shrinks.',
+          reason:
+              'Every original index must be measured before the list shrinks.',
         );
 
         // Step 2: shrink itemCount and the underlying data via a REAL
@@ -104,7 +107,10 @@ void main() {
         Object? caughtError;
         var completed = false;
         unawaited(
-          controller.scrollTo(deletedIndex.toDouble(), duration: const Duration(milliseconds: 100)).then(
+          controller
+              .scrollTo(deletedIndex.toDouble(),
+                  duration: const Duration(milliseconds: 100))
+              .then(
             (_) => completed = true,
             onError: (Object e) {
               caughtError = e;
@@ -116,25 +122,30 @@ void main() {
           await tester.pump(const Duration(milliseconds: 16));
         }
 
-        expect(completed, isTrue, reason: 'scrollTo() must settle (success or error) within the frame budget.');
+        expect(completed, isTrue,
+            reason:
+                'scrollTo() must settle (success or error) within the frame budget.');
         expect(
           caughtError,
           isA<RangeError>(),
-          reason: 'ISC-57: a target at or beyond the shrunk itemCount ($shrunkItemCount) must be '
+          reason:
+              'ISC-57: a target at or beyond the shrunk itemCount ($shrunkItemCount) must be '
               'rejected with RangeError, even though the stale cache still has a complete, '
               'fingerprint-matching prefix for the OLD list.',
         );
         expect(
           fingerprintCallLog.where((i) => i >= shrunkItemCount).toList(),
           isEmpty,
-          reason: 'ISC-57: contentFingerprint() must never be called for an index at or beyond '
+          reason:
+              'ISC-57: contentFingerprint() must never be called for an index at or beyond '
               'the current itemCount -- the bound check must reject the target before any '
               'fingerprint scan runs at all.',
         );
         expect(
           controller.position.pixels,
           offsetBeforeRejectedScroll,
-          reason: 'ISC-57: rejecting the out-of-range target must not move the position at all, '
+          reason:
+              'ISC-57: rejecting the out-of-range target must not move the position at all, '
               'in particular not to the stale offset the old (deleted) row would have summed to.',
         );
       },
@@ -177,7 +188,8 @@ void main() {
                       itemBuilder: (context, index) {
                         return controller.watch(
                           index: index,
-                          child: SizedBox(height: rowHeight, child: Text('index=$index')),
+                          child: SizedBox(
+                              height: rowHeight, child: Text('index=$index')),
                         );
                       },
                     );
@@ -190,7 +202,8 @@ void main() {
         await tester.pumpAndSettle();
 
         unawaited(
-          controller.scrollTo((originalItemCount - 1).toDouble(), duration: const Duration(milliseconds: 100)),
+          controller.scrollTo((originalItemCount - 1).toDouble(),
+              duration: const Duration(milliseconds: 100)),
         );
         for (int i = 0; i < 300; i++) {
           await tester.pump(const Duration(milliseconds: 16));
@@ -204,7 +217,8 @@ void main() {
         const survivingIndex = shrunkItemCount - 1;
         const correctOffset = survivingIndex * rowHeight;
 
-        unawaited(controller.scrollTo(survivingIndex.toDouble(), duration: const Duration(milliseconds: 100)));
+        unawaited(controller.scrollTo(survivingIndex.toDouble(),
+            duration: const Duration(milliseconds: 100)));
         for (int i = 0; i < 300; i++) {
           await tester.pump(const Duration(milliseconds: 16));
         }
@@ -212,7 +226,8 @@ void main() {
         expect(
           controller.position.pixels,
           closeTo(correctOffset, 1.0),
-          reason: 'ISC-57: the bound check must only reject targets at or beyond itemCount, not '
+          reason:
+              'ISC-57: the bound check must only reject targets at or beyond itemCount, not '
               'every scrollTo() after a shrink -- a still-valid index must keep working normally.',
         );
       },
@@ -220,7 +235,9 @@ void main() {
   });
 
   group('ISC-58: itemCount() is snapshotted for entry validation', () {
-    testWidgets('a rejected (out-of-range) scrollTo() calls itemCount() exactly once', (WidgetTester tester) async {
+    testWidgets(
+        'a rejected (out-of-range) scrollTo() calls itemCount() exactly once',
+        (WidgetTester tester) async {
       const itemCountValue = 10;
       const rowHeight = 100.0;
       const viewportHeight = 100.0;
@@ -246,7 +263,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: rowHeight, child: Text('index=$index')),
+                    child: SizedBox(
+                        height: rowHeight, child: Text('index=$index')),
                   );
                 },
               ),
@@ -266,11 +284,14 @@ void main() {
       );
       await tester.pump();
 
-      expect(caughtError, isA<RangeError>(), reason: 'scrollTo(itemCount) is exactly one past the last valid index.');
+      expect(caughtError, isA<RangeError>(),
+          reason:
+              'scrollTo(itemCount) is exactly one past the last valid index.');
       expect(
         itemCountCalls,
         1,
-        reason: 'ISC-58: a single scrollTo() call -- rejected or not -- must call itemCount() '
+        reason:
+            'ISC-58: a single scrollTo() call -- rejected or not -- must call itemCount() '
             'exactly once. Calling it again for the error message or for a fingerprint scan '
             'that never actually runs (this call is rejected before either) would let the '
             'checked bound and the value actually reported/used silently diverge if itemCount() '
@@ -278,7 +299,9 @@ void main() {
       );
     });
 
-    testWidgets('a successful multi-frame scrollTo() rechecks itemCount() after awaits', (WidgetTester tester) async {
+    testWidgets(
+        'a successful multi-frame scrollTo() rechecks itemCount() after awaits',
+        (WidgetTester tester) async {
       const itemCountValue = 30;
       const rowHeight = 100.0;
       const viewportHeight = 100.0;
@@ -305,7 +328,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: rowHeight, child: Text('index=$index')),
+                    child: SizedBox(
+                        height: rowHeight, child: Text('index=$index')),
                   );
                 },
               ),
@@ -317,7 +341,8 @@ void main() {
 
       itemCountCalls = 0;
 
-      unawaited(controller.scrollTo(5.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(5.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -326,14 +351,16 @@ void main() {
       expect(
         itemCountCalls,
         greaterThan(1),
-        reason: 'ISC-47: the entry snapshot validates the requested index, then every await '
+        reason:
+            'ISC-47: the entry snapshot validates the requested index, then every await '
             'rechecks current data before another search step can use an old target.',
       );
 
       // A second operation gets its own entry snapshot and its own liveness
       // checks; neither operation may reuse the other operation's data view.
       itemCountCalls = 0;
-      unawaited(controller.scrollTo(10.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(10.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }

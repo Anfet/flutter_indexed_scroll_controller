@@ -73,7 +73,9 @@ void main() {
                             child: Container(
                               height: heights[logicalIndex],
                               color: Colors.teal,
-                              child: Center(child: Text('slot=$slotPosition logical=$logicalIndex')),
+                              child: Center(
+                                  child: Text(
+                                      'slot=$slotPosition logical=$logicalIndex')),
                             ),
                           );
                         },
@@ -91,7 +93,8 @@ void main() {
           await tester.pumpWidget(buildList());
           await tester.pumpAndSettle();
 
-          unawaited(controller.scrollTo(4.0, duration: const Duration(milliseconds: 100)));
+          unawaited(controller.scrollTo(4.0,
+              duration: const Duration(milliseconds: 100)));
           for (int i = 0; i < 300; i++) {
             await tester.pump(const Duration(milliseconds: 16));
           }
@@ -154,7 +157,9 @@ void main() {
           Object? scrollError;
           bool scrollCompleted = false;
           unawaited(
-            controller.scrollTo(4.0, duration: const Duration(milliseconds: 100)).then(
+            controller
+                .scrollTo(4.0, duration: const Duration(milliseconds: 100))
+                .then(
               (_) => scrollCompleted = true,
               onError: (Object e) {
                 scrollError = e;
@@ -170,19 +175,22 @@ void main() {
           expect(
             scrollCompleted,
             isTrue,
-            reason: 'scrollTo() must settle (success or error) within the frame budget.',
+            reason:
+                'scrollTo() must settle (success or error) within the frame budget.',
           );
           expect(
             scrollError,
             isNull,
-            reason: 'ISC-27\'s contract: watch(index: slotPosition) always equals the row\'s '
+            reason:
+                'ISC-27\'s contract: watch(index: slotPosition) always equals the row\'s '
                 'physical position, reorder or not, so ISC-28\'s mismatch check must stay '
                 'a no-op here -- this scrollTo() must NOT throw StateError.',
           );
           expect(
             controller.position.pixels,
             closeTo(expectedOffset, 1.0),
-            reason: 'scrollTo(4) after the reorder must land on the offset implied by the '
+            reason:
+                'scrollTo(4) after the reorder must land on the offset implied by the '
                 'NEW post-reorder height order (240+150+100+260 = 750.0 px), computed '
                 'purely from the correctly-updated positional watch(index:) values.',
           );

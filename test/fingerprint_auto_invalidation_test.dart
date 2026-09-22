@@ -18,7 +18,9 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// since that would silently fix the very staleness under test.
 void main() {
   group('ISC-43: automatic fingerprint invalidation', () {
-    testWidgets('visible-row replacement with a different height is picked up immediately by watch()', (
+    testWidgets(
+        'visible-row replacement with a different height is picked up immediately by watch()',
+        (
       WidgetTester tester,
     ) async {
       // A visible row is rebuilt by Flutter on the very next frame regardless
@@ -48,7 +50,8 @@ void main() {
                   itemBuilder: (context, index) {
                     return controller.watch(
                       index: index,
-                      child: SizedBox(height: heights[index], child: Text('index=$index')),
+                      child: SizedBox(
+                          height: heights[index], child: Text('index=$index')),
                     );
                   },
                 );
@@ -70,12 +73,15 @@ void main() {
       expect(
         controller.measurementsSizes[0]?.height,
         closeTo(250.0, 1.0),
-        reason: 'A visible row is rebuilt and re-measured by watch() on the next frame '
+        reason:
+            'A visible row is rebuilt and re-measured by watch() on the next frame '
             'regardless of the automatic mode; this must already hold without ISC-46.',
       );
     });
 
-    testWidgets('a real rebuild with unchanged fingerprints reuses the cached size, no forced re-scan', (
+    testWidgets(
+        'a real rebuild with unchanged fingerprints reuses the cached size, no forced re-scan',
+        (
       WidgetTester tester,
     ) async {
       const itemCount = 10;
@@ -139,7 +145,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      unawaited(controller.scrollTo(5.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(5.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -161,7 +168,8 @@ void main() {
       // reused RenderObject is an internal implementation detail this test
       // must not depend on.
       final registrationCountsBeforeRebuild = {
-        for (final i in rebuiltVisibleIndices) i: controller.registrationCountFor(i),
+        for (final i in rebuiltVisibleIndices)
+          i: controller.registrationCountFor(i),
       };
 
       // A genuine rebuild of every currently-visible row, with nothing in
@@ -182,13 +190,15 @@ void main() {
       // to fingerprint checking. This directly connects the measured
       // registration to the row that was really rebuilt, per ISC-55.
       final registrationCountsAfterRebuild = {
-        for (final i in rebuiltVisibleIndices) i: controller.registrationCountFor(i),
+        for (final i in rebuiltVisibleIndices)
+          i: controller.registrationCountFor(i),
       };
       for (final i in rebuiltVisibleIndices) {
         expect(
           registrationCountsAfterRebuild[i],
           greaterThan(registrationCountsBeforeRebuild[i]!),
-          reason: 'Index $i must show MORE registrations after the setState() rebuild '
+          reason:
+              'Index $i must show MORE registrations after the setState() rebuild '
               'than before it: the rebuild forces its keyed SizedBox to be recreated (a '
               'genuine performLayout() pass, not merely an update Flutter could elide). '
               'If the count did not grow, the rebuild did not actually re-measure the '
@@ -210,9 +220,11 @@ void main() {
       // clamped to the same rows) via the already-measured fast path
       // without moving the viewport far enough to mount/unmount anything.
       final registrationCountsBeforeProbe = {
-        for (final i in rebuiltVisibleIndices) i: controller.registrationCountFor(i),
+        for (final i in rebuiltVisibleIndices)
+          i: controller.registrationCountFor(i),
       };
-      unawaited(controller.scrollTo(5.01, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(5.01,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -220,7 +232,8 @@ void main() {
       expect(
         controller.position.pixels,
         closeTo(firstOffset, 2.0),
-        reason: 'scrollTo(5.01) must land within the same viewport window as scrollTo(5), '
+        reason:
+            'scrollTo(5.01) must land within the same viewport window as scrollTo(5), '
             'so indices 5-6 stay mounted throughout and the registration counts below '
             'are attributable only to this scrollTo call, not to an intervening '
             'mount/unmount.',
@@ -247,7 +260,8 @@ void main() {
         expect(
           controller.registrationCountFor(i),
           registrationCountsBeforeProbe[i],
-          reason: 'Equal fingerprints must not force index $i to be re-measured by '
+          reason:
+              'Equal fingerprints must not force index $i to be re-measured by '
               'scrollTo(5.01) alone -- index $i is the row this test\'s rebuild actually '
               'touched, and it stays mounted (never leaves the viewport) during this '
               'probing scroll, so any extra registration for it could only come from an '
@@ -259,7 +273,9 @@ void main() {
       }
     });
 
-    testWidgets('fingerprint change with the same resulting height still requires re-measurement', (
+    testWidgets(
+        'fingerprint change with the same resulting height still requires re-measurement',
+        (
       WidgetTester tester,
     ) async {
       // The contract (refactor.md) is explicit: a changed fingerprint marks
@@ -294,7 +310,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: rowHeight, child: Text('index=$index')),
+                    child: SizedBox(
+                        height: rowHeight, child: Text('index=$index')),
                   );
                 },
               ),
@@ -304,14 +321,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      unawaited(controller.scrollTo(5.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(5.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
       expect(controller.position.pixels, closeTo(5 * rowHeight, 1.0));
 
       calledForIndex.clear();
-      fingerprints[2] = 1; // identity/content changed, height happens to stay 100.0
+      fingerprints[2] =
+          1; // identity/content changed, height happens to stay 100.0
 
       final recovery = controller.scrollTo(
         5.0,
@@ -324,13 +343,16 @@ void main() {
       expect(
         calledForIndex.contains(2),
         isTrue,
-        reason: 'ISC-43 (red until ISC-46): scrollTo() must call contentFingerprint(2) '
+        reason:
+            'ISC-43 (red until ISC-46): scrollTo() must call contentFingerprint(2) '
             'while checking the 0..5 prefix before rejecting the old child '
             'version that was never rebuilt.',
       );
     });
 
-    testWidgets('off-screen insertion before the target is detected without invalidateMeasurements()', (
+    testWidgets(
+        'off-screen insertion before the target is detected without invalidateMeasurements()',
+        (
       WidgetTester tester,
     ) async {
       const viewportHeight = 600.0;
@@ -339,10 +361,12 @@ void main() {
       const insertedHeight = 400.0;
 
       var itemCountValue = 30;
-      List<String> contentIds = List<String>.generate(itemCountValue, (i) => 'orig$i');
+      List<String> contentIds =
+          List<String>.generate(itemCountValue, (i) => 'orig$i');
       final heights = <String, double>{};
 
-      double heightFor(String id) => id == 'INSERTED' ? insertedHeight : (heights[id] ?? defaultHeight);
+      double heightFor(String id) =>
+          id == 'INSERTED' ? insertedHeight : (heights[id] ?? defaultHeight);
 
       final controller = IndexedScrollController(
         scrollDuration: const Duration(milliseconds: 100),
@@ -365,7 +389,9 @@ void main() {
                     itemBuilder: (context, index) {
                       return controller.watch(
                         index: index,
-                        child: SizedBox(height: heightFor(contentIds[index]), child: Text('index=$index')),
+                        child: SizedBox(
+                            height: heightFor(contentIds[index]),
+                            child: Text('index=$index')),
                       );
                     },
                   );
@@ -377,11 +403,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      unawaited(controller.scrollTo(5.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(5.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
-      unawaited(controller.scrollTo(25.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(25.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -407,7 +435,8 @@ void main() {
       const correctOffset = insertAt * defaultHeight + insertedHeight;
 
       unawaited(
-        controller.scrollTo((insertAt + 1).toDouble(), duration: const Duration(milliseconds: 100)),
+        controller.scrollTo((insertAt + 1).toDouble(),
+            duration: const Duration(milliseconds: 100)),
       );
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
@@ -416,14 +445,17 @@ void main() {
       expect(
         controller.position.pixels,
         closeTo(correctOffset, 1.0),
-        reason: 'ISC-43 (red until ISC-46): an off-screen insertion changes the '
+        reason:
+            'ISC-43 (red until ISC-46): an off-screen insertion changes the '
             'fingerprint of every index at or after $insertAt, so scrollTo() must '
             'detect it without an explicit invalidateMeasurements() call and reach '
             '$correctOffset px.',
       );
     });
 
-    testWidgets('off-screen deletion before the target is detected without invalidateMeasurements()', (
+    testWidgets(
+        'off-screen deletion before the target is detected without invalidateMeasurements()',
+        (
       WidgetTester tester,
     ) async {
       const viewportHeight = 600.0;
@@ -441,7 +473,8 @@ void main() {
                 : 'orig$i',
       );
 
-      double heightFor(String id) => id == 'SURV' ? survivorHeight : defaultHeight;
+      double heightFor(String id) =>
+          id == 'SURV' ? survivorHeight : defaultHeight;
 
       final controller = IndexedScrollController(
         scrollDuration: const Duration(milliseconds: 100),
@@ -464,7 +497,9 @@ void main() {
                     itemBuilder: (context, index) {
                       return controller.watch(
                         index: index,
-                        child: SizedBox(height: heightFor(contentIds[index]), child: Text('index=$index')),
+                        child: SizedBox(
+                            height: heightFor(contentIds[index]),
+                            child: Text('index=$index')),
                       );
                     },
                   );
@@ -476,11 +511,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      unawaited(controller.scrollTo(5.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(5.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
-      unawaited(controller.scrollTo(25.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(25.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -503,7 +540,8 @@ void main() {
       const correctOffset = deleteAt * defaultHeight + survivorHeight;
 
       unawaited(
-        controller.scrollTo((deleteAt + 1).toDouble(), duration: const Duration(milliseconds: 100)),
+        controller.scrollTo((deleteAt + 1).toDouble(),
+            duration: const Duration(milliseconds: 100)),
       );
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
@@ -519,7 +557,9 @@ void main() {
       );
     });
 
-    testWidgets('same-index content replacement with a different height is detected', (WidgetTester tester) async {
+    testWidgets(
+        'same-index content replacement with a different height is detected',
+        (WidgetTester tester) async {
       const itemCount = 10;
       const viewportHeight = 200.0;
       const defaultHeight = 100.0;
@@ -546,7 +586,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: heights[index], child: Text('index=$index')),
+                    child: SizedBox(
+                        height: heights[index], child: Text('index=$index')),
                   );
                 },
               ),
@@ -556,17 +597,21 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      unawaited(controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(targetIndex.toDouble(),
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
-      expect(controller.measurementsSizes[targetIndex]?.height, closeTo(defaultHeight, 1.0));
+      expect(controller.measurementsSizes[targetIndex]?.height,
+          closeTo(defaultHeight, 1.0));
 
-      unawaited(controller.scrollTo(0.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(0.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
-      expect(controller.position.pixels, lessThan(viewportHeight), reason: 'Target row must now be off-screen.');
+      expect(controller.position.pixels, lessThan(viewportHeight),
+          reason: 'Target row must now be off-screen.');
 
       heights[targetIndex] = newHeight;
       fingerprints[targetIndex] = 1;
@@ -577,12 +622,16 @@ void main() {
       // targetIndex diverge numerically, unlike alignment: 0 on an integer
       // target, which never reads the target's own extent at all.
       const fraction = 0.5;
-      const staleOffset = targetIndex * defaultHeight + defaultHeight * fraction;
+      const staleOffset =
+          targetIndex * defaultHeight + defaultHeight * fraction;
       const correctOffset = targetIndex * defaultHeight + newHeight * fraction;
-      expect(correctOffset, isNot(closeTo(staleOffset, 1.0)), reason: 'Sanity check: the two candidate offsets must actually differ.');
+      expect(correctOffset, isNot(closeTo(staleOffset, 1.0)),
+          reason:
+              'Sanity check: the two candidate offsets must actually differ.');
 
       unawaited(
-        controller.scrollTo(targetIndex + fraction, duration: const Duration(milliseconds: 100)),
+        controller.scrollTo(targetIndex + fraction,
+            duration: const Duration(milliseconds: 100)),
       );
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
@@ -591,14 +640,17 @@ void main() {
       expect(
         controller.position.pixels,
         closeTo(correctOffset, 1.0),
-        reason: 'ISC-43 (red until ISC-46): the target itself changed size at the same '
+        reason:
+            'ISC-43 (red until ISC-46): the target itself changed size at the same '
             'logical index; scrollTo() must use the new height ($newHeight, not the '
             'stale $defaultHeight) when computing the fractional offset within the '
             'target row, landing at $correctOffset px, not the stale $staleOffset px.',
       );
     });
 
-    testWidgets('scrollTo(0, alignment: 1) after the first row changes uses the new size', (
+    testWidgets(
+        'scrollTo(0, alignment: 1) after the first row changes uses the new size',
+        (
       WidgetTester tester,
     ) async {
       const itemCount = 10;
@@ -636,7 +688,9 @@ void main() {
                     itemBuilder: (context, index) {
                       return controller.watch(
                         index: index,
-                        child: SizedBox(height: heights[index], child: Text('index=$index')),
+                        child: SizedBox(
+                            height: heights[index],
+                            child: Text('index=$index')),
                       );
                     },
                   );
@@ -648,7 +702,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      unawaited(controller.scrollTo(0.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(0.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -656,7 +711,8 @@ void main() {
 
       // Scroll away so row 0 is off-screen when its height changes, then
       // change it WITHOUT rebuilding it in between (no jumpTo(0) here).
-      unawaited(controller.scrollTo(8.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(8.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -682,7 +738,8 @@ void main() {
         reason: 'Sanity check: the two candidate offsets must actually differ.',
       );
 
-      unawaited(controller.scrollTo(0.0, alignment: 1.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(0.0,
+          alignment: 1.0, duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -690,14 +747,16 @@ void main() {
       expect(
         controller.position.pixels,
         closeTo(correctTargetPixels, 1.0),
-        reason: 'ISC-43 (red until ISC-46): scrollTo(0, alignment: 1) must check the '
+        reason:
+            'ISC-43 (red until ISC-46): scrollTo(0, alignment: 1) must check the '
             "target's OWN fingerprint and use its new height ($newHeight), landing at "
             '$correctTargetPixels px, not the stale cached height ($oldHeight) which '
             'would land at $staleTargetPixels px.',
       );
     });
 
-    testWidgets('changed index 20 with target 10 does not force a jump to 20', (WidgetTester tester) async {
+    testWidgets('changed index 20 with target 10 does not force a jump to 20',
+        (WidgetTester tester) async {
       const itemCount = 30;
       const viewportHeight = 600.0;
       const defaultHeight = 100.0;
@@ -726,7 +785,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: heights[index], child: Text('index=$index')),
+                    child: SizedBox(
+                        height: heights[index], child: Text('index=$index')),
                   );
                 },
               ),
@@ -738,11 +798,13 @@ void main() {
 
       // Measure through the whole list once so 0..29 are all cached, then
       // return to the top -- changedIndex ends up off-screen but measured.
-      unawaited(controller.scrollTo(29.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(29.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
-      unawaited(controller.scrollTo(0.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(0.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -750,12 +812,15 @@ void main() {
       heights[changedIndex] = newHeight;
       fingerprints[changedIndex] = 1;
 
-      const correctOffset = 10 * defaultHeight; // index 20's size is irrelevant to target 10
+      const correctOffset =
+          10 * defaultHeight; // index 20's size is irrelevant to target 10
 
       final generationBefore = controller.measurementGeneration;
 
       unawaited(
-        controller.scrollTo(10.0, duration: const Duration(milliseconds: 100)).then((_) {}),
+        controller
+            .scrollTo(10.0, duration: const Duration(milliseconds: 100))
+            .then((_) {}),
       );
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
@@ -765,25 +830,30 @@ void main() {
       expect(
         controller.position.pixels,
         closeTo(correctOffset, 1.0),
-        reason: 'Index $changedIndex is past target 10; its size must not be required to '
+        reason:
+            'Index $changedIndex is past target 10; its size must not be required to '
             'compute this target.',
       );
       expect(
         maxPixelsSeen.every((p) => p <= changedIndex * defaultHeight),
         isTrue,
-        reason: 'ISC-43: reaching target 10 must not involve a detour toward changed '
+        reason:
+            'ISC-43: reaching target 10 must not involve a detour toward changed '
             'index $changedIndex; every observed offset must stay well short of it.',
       );
       expect(
         controller.measurementGeneration,
         generationBefore,
-        reason: 'A fingerprint mismatch outside the 0..10 prefix must not trigger a '
+        reason:
+            'A fingerprint mismatch outside the 0..10 prefix must not trigger a '
             'cache reset at all -- scrollTo(10) never even scans index 20, so it has no '
             'way to notice that mismatch and must not reset the cache "just in case".',
       );
     });
 
-    testWidgets('changed index 10 with target 20 requires index 10 to be re-measured first', (
+    testWidgets(
+        'changed index 10 with target 20 requires index 10 to be re-measured first',
+        (
       WidgetTester tester,
     ) async {
       const itemCount = 30;
@@ -812,7 +882,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: heights[index], child: Text('index=$index')),
+                    child: SizedBox(
+                        height: heights[index], child: Text('index=$index')),
                   );
                 },
               ),
@@ -822,11 +893,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      unawaited(controller.scrollTo(29.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(29.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
-      unawaited(controller.scrollTo(0.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(0.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -836,9 +909,12 @@ void main() {
 
       // Indices 11..19 are unaffected and may be reused as-is.
       final generationBeforeRecovery = controller.measurementGeneration;
-      const correctOffset = changedIndex * defaultHeight + newHeight + (19 - changedIndex) * defaultHeight;
+      const correctOffset = changedIndex * defaultHeight +
+          newHeight +
+          (19 - changedIndex) * defaultHeight;
 
-      unawaited(controller.scrollTo(20.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(20.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
@@ -846,7 +922,8 @@ void main() {
       expect(
         controller.position.pixels,
         closeTo(correctOffset, 1.0),
-        reason: 'ISC-43 (red until ISC-46): index $changedIndex is below target 20, so its '
+        reason:
+            'ISC-43 (red until ISC-46): index $changedIndex is below target 20, so its '
             'new size ($newHeight) must be resolved via watch()/layout before computing '
             "target 20's offset; reusing the stale size would land short at "
             '${changedIndex * defaultHeight + defaultHeight + (19 - changedIndex) * defaultHeight} px instead.',
@@ -861,7 +938,9 @@ void main() {
       );
     });
 
-    testWidgets('an ordinary rebuild with unchanged fingerprints does not scan itemCount', (
+    testWidgets(
+        'an ordinary rebuild with unchanged fingerprints does not scan itemCount',
+        (
       WidgetTester tester,
     ) async {
       const itemCount = 1000;
@@ -891,7 +970,8 @@ void main() {
                   itemBuilder: (context, index) {
                     return controller.watch(
                       index: index,
-                      child: SizedBox(height: rowHeight, child: Text('index=$index')),
+                      child: SizedBox(
+                          height: rowHeight, child: Text('index=$index')),
                     );
                   },
                 );
@@ -910,12 +990,14 @@ void main() {
       expect(
         itemCountCalls,
         0,
-        reason: 'A plain rebuild with nothing changed must not invoke itemCount() at all; '
+        reason:
+            'A plain rebuild with nothing changed must not invoke itemCount() at all; '
             'only a scrollTo() call is documented to trigger the automatic check.',
       );
     });
 
-    testWidgets('a user drag does not scan itemCount', (WidgetTester tester) async {
+    testWidgets('a user drag does not scan itemCount',
+        (WidgetTester tester) async {
       const itemCount = 1000;
       const rowHeight = 100.0;
       final fingerprints = List<int>.filled(itemCount, 0);
@@ -939,7 +1021,8 @@ void main() {
               itemBuilder: (context, index) {
                 return controller.watch(
                   index: index,
-                  child: SizedBox(height: rowHeight, child: Text('index=$index')),
+                  child:
+                      SizedBox(height: rowHeight, child: Text('index=$index')),
                 );
               },
             ),
@@ -955,7 +1038,8 @@ void main() {
       expect(
         itemCountCalls,
         0,
-        reason: 'A user drag must not invoke itemCount(); only scrollTo() triggers the '
+        reason:
+            'A user drag must not invoke itemCount(); only scrollTo() triggers the '
             'automatic fingerprint check.',
       );
     });

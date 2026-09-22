@@ -25,17 +25,22 @@ void main() {
     if (renderObject == null || !renderObject.attached) return null;
     for (RenderObject? node = renderObject; node != null; node = node.parent) {
       final parentData = node.parentData;
-      if (parentData is SliverMultiBoxAdaptorParentData) return parentData.layoutOffset;
+      if (parentData is SliverMultiBoxAdaptorParentData) {
+        return parentData.layoutOffset;
+      }
     }
     return null;
   }
 
-  testWidgets('growing rows far behind the viewport, forward then all the way back to 0', (tester) async {
+  testWidgets(
+      'growing rows far behind the viewport, forward then all the way back to 0',
+      (tester) async {
     const itemCount = 100;
     const viewportHeight = 500.0;
     const duration = Duration(milliseconds: 300);
     // ~10 rows per screen to start with.
-    final rowHeights = List<double>.generate(itemCount, (i) => [40.0, 50.0, 60.0][i % 3]);
+    final rowHeights =
+        List<double>.generate(itemCount, (i) => [40.0, 50.0, 60.0][i % 3]);
     final revisions = List<int>.filled(itemCount, 0);
 
     final controller = IndexedScrollController(
@@ -69,7 +74,9 @@ void main() {
                         key: rowKeyFor(index),
                         height: rowHeights[index],
                         child: ColoredBox(
-                          color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
+                          color: index.isEven
+                              ? const Color(0xFFBBDEFB)
+                              : const Color(0xFFFFE0B2),
                           child: Center(child: Text('Row $index')),
                         ),
                       ),
@@ -108,9 +115,11 @@ void main() {
 
     double? onScreenDelta(int index) {
       final lb = listKey.currentContext!.findRenderObject()! as RenderBox;
-      final rb = rowKeys[index]?.currentContext?.findRenderObject() as RenderBox?;
+      final rb =
+          rowKeys[index]?.currentContext?.findRenderObject() as RenderBox?;
       if (rb == null || !rb.attached) return null;
-      return rb.localToGlobal(Offset.zero).dy - lb.localToGlobal(Offset.zero).dy;
+      return rb.localToGlobal(Offset.zero).dy -
+          lb.localToGlobal(Offset.zero).dy;
     }
 
     // Build up measurements on the way out to the middle of the list.
@@ -133,15 +142,18 @@ void main() {
     expect(
       onScreenDelta(80),
       isNotNull,
-      reason: 'row 80 must mount -- this is what ISC-88 fixed; it used to clamp short of the target '
+      reason:
+          'row 80 must mount -- this is what ISC-88 fixed; it used to clamp short of the target '
           'and never mount at all',
     );
     final layoutOffsetAt80 = sliverLayoutOffsetOf(rowKeys[80]);
-    expect(layoutOffsetAt80, isNotNull, reason: 'target row must be materialized once scrollTo completes');
+    expect(layoutOffsetAt80, isNotNull,
+        reason: 'target row must be materialized once scrollTo completes');
     expect(
       controller.offset,
       closeTo(layoutOffsetAt80!, 0.5),
-      reason: 'the computed offset must equal row 80\'s own live layoutOffset ($layoutOffsetAt80) -- '
+      reason:
+          'the computed offset must equal row 80\'s own live layoutOffset ($layoutOffsetAt80) -- '
           'ISC-98 sources the final coordinate from the sliver\'s own paint, closing the ISC-94 gap this '
           'file used to only tolerate',
     );
@@ -161,7 +173,8 @@ void main() {
     expect(
       controller.offset,
       closeTo(controller.position.minScrollExtent, 0.5),
-      reason: 'index 0 is the start of the content, so its aligned offset is minScrollExtent -- '
+      reason:
+          'index 0 is the start of the content, so its aligned offset is minScrollExtent -- '
           'self-proving, no external reference needed',
     );
     expect(
@@ -176,7 +189,8 @@ void main() {
       expect(
         controller.measurementsSizes[i]?.height,
         rowHeights[i],
-        reason: 'cache for grown row $i must match its current height after the walk back to 0',
+        reason:
+            'cache for grown row $i must match its current height after the walk back to 0',
       );
     }
   });

@@ -15,91 +15,149 @@ import 'support/scroll_harness.dart';
 /// nested-marker misuse (conflict 2's resolution).
 void main() {
   group('ISC-79: separator() basic registration', () {
-    testWidgets('separator(index: i) registers a size independent of watch(index: i)', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+    testWidgets(
+        'separator(index: i) registers a size independent of watch(index: i)',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(_SeparatedHarness(controller: controller, itemCount: 5, itemExtent: 80.0, separatorExtent: 20.0));
+      await tester.pumpWidget(_SeparatedHarness(
+          controller: controller,
+          itemCount: 5,
+          itemExtent: 80.0,
+          separatorExtent: 20.0));
       await tester.pumpAndSettle();
 
       expect(controller.measurementsSizes[0]?.height, closeTo(80.0, 0.5),
-          reason: 'watch(index: 0) must register only the item, not the item+separator.');
+          reason:
+              'watch(index: 0) must register only the item, not the item+separator.');
       expect(controller.hasSeparatorFor(0), isTrue);
       expect(controller.separatorSizes[0]?.height, closeTo(20.0, 0.5));
     });
 
-    testWidgets('last item has no separator, and that is legitimate (no StateError from registration)', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+    testWidgets(
+        'last item has no separator, and that is legitimate (no StateError from registration)',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(_SeparatedHarness(controller: controller, itemCount: 5, itemExtent: 80.0, separatorExtent: 20.0));
+      await tester.pumpWidget(_SeparatedHarness(
+          controller: controller,
+          itemCount: 5,
+          itemExtent: 80.0,
+          separatorExtent: 20.0));
       await tester.pumpAndSettle();
 
-      expect(controller.hasSeparatorFor(4), isFalse, reason: 'ListView.separated never builds a trailing separator after the last item.');
+      expect(controller.hasSeparatorFor(4), isFalse,
+          reason:
+              'ListView.separated never builds a trailing separator after the last item.');
     });
 
-    testWidgets('a marker with an empty child registers a legitimate zero-size separator, distinct from no marker at all', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+    testWidgets(
+        'a marker with an empty child registers a legitimate zero-size separator, distinct from no marker at all',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        _SeparatedHarness(controller: controller, itemCount: 5, itemExtent: 80.0, separatorExtent: 0.0),
+        _SeparatedHarness(
+            controller: controller,
+            itemCount: 5,
+            itemExtent: 80.0,
+            separatorExtent: 0.0),
       );
       await tester.pumpAndSettle();
 
-      expect(controller.hasSeparatorFor(0), isTrue, reason: 'The marker reported, even though its child was zero-size.');
+      expect(controller.hasSeparatorFor(0), isTrue,
+          reason: 'The marker reported, even though its child was zero-size.');
       expect(controller.separatorSizes[0]?.height, closeTo(0.0, 0.5));
     });
   });
 
-  group('ISC-79: prefix sum includes separators regardless of alignmentTarget', () {
-    testWidgets('scrollTo(itemIndex) with the sibling-slot form reaches the offset that includes preceding separators', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+  group('ISC-79: prefix sum includes separators regardless of alignmentTarget',
+      () {
+    testWidgets(
+        'scrollTo(itemIndex) with the sibling-slot form reaches the offset that includes preceding separators',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       const itemExtent = 80.0;
       const separatorExtent = 20.0;
       await tester.pumpWidget(
-        _SeparatedHarness(controller: controller, itemCount: 20, itemExtent: itemExtent, separatorExtent: separatorExtent),
+        _SeparatedHarness(
+            controller: controller,
+            itemCount: 20,
+            itemExtent: itemExtent,
+            separatorExtent: separatorExtent),
       );
       await tester.pumpAndSettle();
 
-      await pumpUntilComplete(tester, controller.scrollTo(10.0, duration: const Duration(milliseconds: 100)));
+      await pumpUntilComplete(
+          tester,
+          controller.scrollTo(10.0,
+              duration: const Duration(milliseconds: 100)));
 
       // 10 preceding items (80px) + 10 preceding separators (20px) = 1000.0,
       // matching the number the architect's decision measured for this form.
       expect(controller.position.pixels, closeTo(1000.0, 1.0));
     });
 
-    testWidgets('alignmentTarget: item and alignmentTarget: row agree in the sibling-slot form', (tester) async {
-      final controllerRow = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
-      final controllerItem = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+    testWidgets(
+        'alignmentTarget: item and alignmentTarget: row agree in the sibling-slot form',
+        (tester) async {
+      final controllerRow = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
+      final controllerItem = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controllerRow.dispose);
       addTearDown(controllerItem.dispose);
 
       const itemExtent = 80.0;
       const separatorExtent = 20.0;
-      await tester.pumpWidget(_SeparatedHarness(controller: controllerRow, itemCount: 20, itemExtent: itemExtent, separatorExtent: separatorExtent));
+      await tester.pumpWidget(_SeparatedHarness(
+          controller: controllerRow,
+          itemCount: 20,
+          itemExtent: itemExtent,
+          separatorExtent: separatorExtent));
       await tester.pumpAndSettle();
-      await pumpUntilComplete(tester, controllerRow.scrollTo(10.0, alignment: 1.0, duration: const Duration(milliseconds: 100)));
+      await pumpUntilComplete(
+          tester,
+          controllerRow.scrollTo(10.0,
+              alignment: 1.0, duration: const Duration(milliseconds: 100)));
       final rowOffset = controllerRow.position.pixels;
 
-      await tester.pumpWidget(_SeparatedHarness(controller: controllerItem, itemCount: 20, itemExtent: itemExtent, separatorExtent: separatorExtent));
+      await tester.pumpWidget(_SeparatedHarness(
+          controller: controllerItem,
+          itemCount: 20,
+          itemExtent: itemExtent,
+          separatorExtent: separatorExtent));
       await tester.pumpAndSettle();
       await pumpUntilComplete(
         tester,
-        controllerItem.scrollTo(10.0, alignment: 1.0, alignmentTarget: ScrollAlignmentTarget.item, duration: const Duration(milliseconds: 100)),
+        controllerItem.scrollTo(10.0,
+            alignment: 1.0,
+            alignmentTarget: ScrollAlignmentTarget.item,
+            duration: const Duration(milliseconds: 100)),
       );
       final itemOffset = controllerItem.position.pixels;
 
       expect(itemOffset, closeTo(rowOffset, 0.5),
-          reason: 'In the sibling-slot form, a row\'s own _sizes entry never includes its separator, so both targets read the same extent.');
+          reason:
+              'In the sibling-slot form, a row\'s own _sizes entry never includes its separator, so both targets read the same extent.');
     });
   });
 
   group('ISC-79: conflict 1 — physical slot mismatch under separator mode', () {
-    testWidgets('a row that passes its physical slot instead of its logical index still trips the mismatch check', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+    testWidgets(
+        'a row that passes its physical slot instead of its logical index still trips the mismatch check',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       // A derangement of logical indices 0..2 across physical item slots
@@ -121,10 +179,16 @@ void main() {
             body: ListView.separated(
               controller: controller,
               itemCount: 3,
-              separatorBuilder: (context, i) => controller.separator(index: i, child: const SizedBox(height: 20.0)),
+              separatorBuilder: (context, i) => controller.separator(
+                  index: i, child: const SizedBox(height: 20.0)),
               itemBuilder: (context, slotPosition) {
                 final logicalIndex = slotItemToLogical[slotPosition];
-                return controller.watch(index: logicalIndex, child: SizedBox(height: 80.0, child: Text('slot=$slotPosition logical=$logicalIndex')));
+                return controller.watch(
+                    index: logicalIndex,
+                    child: SizedBox(
+                        height: 80.0,
+                        child:
+                            Text('slot=$slotPosition logical=$logicalIndex')));
               },
             ),
           ),
@@ -137,14 +201,20 @@ void main() {
       // resolves on the fast path -- scrollTo(1.0) alone is enough to force
       // _checkNoWatchIndexMismatch to inspect both.
       Object? error;
-      await controller.scrollTo(1.0, duration: const Duration(milliseconds: 100)).catchError((Object e) {
+      await controller
+          .scrollTo(1.0, duration: const Duration(milliseconds: 100))
+          .catchError((Object e) {
         error = e;
       });
 
-      expect(error, isA<StateError>(), reason: 'A full permutation of logical indices across separated-mode item slots must still be caught.');
+      expect(error, isA<StateError>(),
+          reason:
+              'A full permutation of logical indices across separated-mode item slots must still be caught.');
     });
 
-    testWidgets('an ordinary (non-separated) list is unaffected by the 2*index slot check', (tester) async {
+    testWidgets(
+        'an ordinary (non-separated) list is unaffected by the 2*index slot check',
+        (tester) async {
       // Guards against the slot-comparison change accidentally weakening the
       // plain ListView.builder case: no separator ever registers here, so
       // _separatorModeActive stays false and physical must equal logical,
@@ -152,17 +222,25 @@ void main() {
       await tester.pumpWidget(
         ScrollHarness(itemCount: 30, itemHeightBuilder: (_) => 50.0),
       );
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
-      await pumpUntilComplete(tester, state.controller.scrollTo(10.0, duration: const Duration(milliseconds: 100)));
+      await pumpUntilComplete(
+          tester,
+          state.controller
+              .scrollTo(10.0, duration: const Duration(milliseconds: 100)));
       expect(state.controller.position.pixels, closeTo(500.0, 1.0));
     });
   });
 
-  group('ISC-79: conflict 2 — nested separator is rejected, not double-counted', () {
-    testWidgets('separator(index: i) nested inside watch(index: i)\'s own subtree throws StateError instead of double-counting', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+  group('ISC-79: conflict 2 — nested separator is rejected, not double-counted',
+      () {
+    testWidgets(
+        'separator(index: i) nested inside watch(index: i)\'s own subtree throws StateError instead of double-counting',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       // A single row: performLayout() throws once per offending row, and
@@ -184,7 +262,8 @@ void main() {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const SizedBox(height: 80.0, child: Text('Item')),
-                    controller.separator(index: i, child: const SizedBox(height: 20.0)),
+                    controller.separator(
+                        index: i, child: const SizedBox(height: 20.0)),
                   ],
                 ),
               ),
@@ -200,11 +279,18 @@ void main() {
   });
 
   group('ISC-79: invalidateMeasurements clears the separator cache', () {
-    testWidgets('separator sizes and separator mode reset on invalidateMeasurements', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+    testWidgets(
+        'separator sizes and separator mode reset on invalidateMeasurements',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
-      await tester.pumpWidget(_SeparatedHarness(controller: controller, itemCount: 5, itemExtent: 80.0, separatorExtent: 20.0));
+      await tester.pumpWidget(_SeparatedHarness(
+          controller: controller,
+          itemCount: 5,
+          itemExtent: 80.0,
+          separatorExtent: 20.0));
       await tester.pumpAndSettle();
       expect(controller.hasSeparatorFor(0), isTrue);
 
@@ -215,13 +301,20 @@ void main() {
 
       // A live separator still on screen re-registers on its next layout.
       await tester.pump();
-      expect(controller.hasSeparatorFor(0), isTrue, reason: 'The still-live separator relays out and re-registers after invalidation.');
+      expect(controller.hasSeparatorFor(0), isTrue,
+          reason:
+              'The still-live separator relays out and re-registers after invalidation.');
     });
   });
 
-  group('ISC-79: a missing separator between existing rows is an error, not a silent zero', () {
-    testWidgets('separatorBuilder that forgets separator() for one index throws StateError, not offset 0', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+  group(
+      'ISC-79: a missing separator between existing rows is an error, not a silent zero',
+      () {
+    testWidgets(
+        'separatorBuilder that forgets separator() for one index throws StateError, not offset 0',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       const itemCount = 5;
@@ -238,32 +331,43 @@ void main() {
             body: ListView.separated(
               controller: controller,
               itemCount: itemCount,
-              separatorBuilder: (context, i) =>
-                  i == 1 ? const SizedBox(height: separatorExtent) : controller.separator(index: i, child: const SizedBox(height: separatorExtent)),
-              itemBuilder: (context, i) => controller.watch(index: i, child: const SizedBox(height: itemExtent)),
+              separatorBuilder: (context, i) => i == 1
+                  ? const SizedBox(height: separatorExtent)
+                  : controller.separator(
+                      index: i, child: const SizedBox(height: separatorExtent)),
+              itemBuilder: (context, i) => controller.watch(
+                  index: i, child: const SizedBox(height: itemExtent)),
             ),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(controller.hasSeparatorFor(1), isFalse, reason: 'Sanity check: index 1 truly has no registered separator.');
-      expect(controller.measurementsSizes.containsKey(2), isTrue, reason: 'Sanity check: item 2 (the next row) is known to exist.');
+      expect(controller.hasSeparatorFor(1), isFalse,
+          reason: 'Sanity check: index 1 truly has no registered separator.');
+      expect(controller.measurementsSizes.containsKey(2), isTrue,
+          reason: 'Sanity check: item 2 (the next row) is known to exist.');
 
       Object? error;
-      await controller.scrollTo(3.0, duration: const Duration(milliseconds: 100)).catchError((Object e) {
+      await controller
+          .scrollTo(3.0, duration: const Duration(milliseconds: 100))
+          .catchError((Object e) {
         error = e;
       });
 
       expect(error, isA<StateError>(),
-          reason: 'A separator missing between two rows that both exist must throw, not silently contribute zero to the prefix sum.');
+          reason:
+              'A separator missing between two rows that both exist must throw, not silently contribute zero to the prefix sum.');
       expect((error as StateError).message, contains('index 1'));
     });
   });
 
   group('ISC-79: separator() with no matching watch() is rejected', () {
-    testWidgets('separator(index: i) for an index this list never builds throws StateError on the next scrollTo', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+    testWidgets(
+        'separator(index: i) for an index this list never builds throws StateError on the next scrollTo',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       // itemBuilder only ever calls watch() for indices 0..2 (itemCount: 3),
@@ -286,11 +390,14 @@ void main() {
                   child: ListView.separated(
                     controller: controller,
                     itemCount: 3,
-                    separatorBuilder: (context, i) => controller.separator(index: i, child: const SizedBox(height: 20.0)),
-                    itemBuilder: (context, i) => controller.watch(index: i, child: const SizedBox(height: 80.0)),
+                    separatorBuilder: (context, i) => controller.separator(
+                        index: i, child: const SizedBox(height: 20.0)),
+                    itemBuilder: (context, i) => controller.watch(
+                        index: i, child: const SizedBox(height: 80.0)),
                   ),
                 ),
-                controller.separator(index: 50, child: const SizedBox(height: 20.0)),
+                controller.separator(
+                    index: 50, child: const SizedBox(height: 20.0)),
               ],
             ),
           ),
@@ -298,23 +405,32 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(controller.hasSeparatorFor(50), isTrue, reason: 'Sanity check: the orphaned separator did register.');
-      expect(controller.measurementsSizes.containsKey(50), isFalse, reason: 'Sanity check: no row exists at index 50.');
+      expect(controller.hasSeparatorFor(50), isTrue,
+          reason: 'Sanity check: the orphaned separator did register.');
+      expect(controller.measurementsSizes.containsKey(50), isFalse,
+          reason: 'Sanity check: no row exists at index 50.');
 
       Object? error;
-      await controller.scrollTo(0.0, duration: const Duration(milliseconds: 100)).catchError((Object e) {
+      await controller
+          .scrollTo(0.0, duration: const Duration(milliseconds: 100))
+          .catchError((Object e) {
         error = e;
       });
 
       expect(error, isA<StateError>(),
-          reason: 'A separator registered for an index with no matching watch() must be rejected, not silently ignored.');
+          reason:
+              'A separator registered for an index with no matching watch() must be rejected, not silently ignored.');
       expect((error as StateError).message, contains('index 50'));
     });
   });
 
-  group('ISC-79: two separator() registrations for the same index are rejected', () {
-    testWidgets('a second, different separator render object under the same index throws StateError', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 100));
+  group('ISC-79: two separator() registrations for the same index are rejected',
+      () {
+    testWidgets(
+        'a second, different separator render object under the same index throws StateError',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 100));
       addTearDown(controller.dispose);
 
       // Two independent separator() markers, both claiming index 0, built as
@@ -327,14 +443,19 @@ void main() {
           home: Scaffold(
             body: Column(
               children: [
-                SizedBox(height: 80.0, child: controller.watch(index: 0, child: const SizedBox(height: 80.0))),
+                SizedBox(
+                    height: 80.0,
+                    child: controller.watch(
+                        index: 0, child: const SizedBox(height: 80.0))),
                 KeyedSubtree(
                   key: const ValueKey('sep-a'),
-                  child: controller.separator(index: 0, child: const SizedBox(height: 20.0)),
+                  child: controller.separator(
+                      index: 0, child: const SizedBox(height: 20.0)),
                 ),
                 KeyedSubtree(
                   key: const ValueKey('sep-b'),
-                  child: controller.separator(index: 0, child: const SizedBox(height: 30.0)),
+                  child: controller.separator(
+                      index: 0, child: const SizedBox(height: 30.0)),
                 ),
               ],
             ),
@@ -344,21 +465,28 @@ void main() {
 
       final exception = tester.takeException();
       expect(exception, isA<StateError>());
-      expect((exception as StateError).message, contains('Two different separator'));
+      expect((exception as StateError).message,
+          contains('Two different separator'));
     });
   });
 
-  group('ISC-79: alignmentTarget: item is unavailable without separator mode', () {
-    testWidgets('requesting item alignment on a list that never used separator() throws StateError', (tester) async {
+  group('ISC-79: alignmentTarget: item is unavailable without separator mode',
+      () {
+    testWidgets(
+        'requesting item alignment on a list that never used separator() throws StateError',
+        (tester) async {
       await tester.pumpWidget(
         ScrollHarness(itemCount: 20, itemHeightBuilder: (_) => 100.0),
       );
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       Object? error;
       await state.controller
-          .scrollTo(5.0, alignmentTarget: ScrollAlignmentTarget.item, duration: const Duration(milliseconds: 100))
+          .scrollTo(5.0,
+              alignmentTarget: ScrollAlignmentTarget.item,
+              duration: const Duration(milliseconds: 100))
           .catchError((Object e) {
         error = e;
       });

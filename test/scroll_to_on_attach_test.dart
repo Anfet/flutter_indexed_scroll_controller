@@ -39,7 +39,8 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// — so `scrollTo()` "returns" cleanly from `onAttach`'s point of view, but
 /// the `Future` it handed back completes with the `StateError`.
 void main() {
-  group('ISC-32/ISC-33: scrollTo() called from onAttach, before first layout', () {
+  group('ISC-32/ISC-33: scrollTo() called from onAttach, before first layout',
+      () {
     testWidgets(
       'scrollTo() called synchronously inside onAttach does not throw '
       'synchronously (it is an async function), but its Future completes '
@@ -101,7 +102,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: rowHeight, child: Text('Item $index')),
+                    child:
+                        SizedBox(height: rowHeight, child: Text('Item $index')),
                   );
                 },
               ),
@@ -239,7 +241,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: rowHeight, child: Text('Item $index')),
+                    child:
+                        SizedBox(height: rowHeight, child: Text('Item $index')),
                   );
                 },
               ),
@@ -314,7 +317,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: rowHeight, child: Text('Item $index')),
+                    child:
+                        SizedBox(height: rowHeight, child: Text('Item $index')),
                   );
                 },
               ),

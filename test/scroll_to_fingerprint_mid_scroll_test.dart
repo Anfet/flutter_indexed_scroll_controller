@@ -5,7 +5,9 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// ISC-47: an automatic-mode operation must not keep moving toward a target
 /// computed from the data version that existed when it began.
 void main() {
-  testWidgets('a fingerprint change during an animated search cancels and stops at the current offset', (
+  testWidgets(
+      'a fingerprint change during an animated search cancels and stops at the current offset',
+      (
     WidgetTester tester,
   ) async {
     const itemCount = 100;
@@ -35,7 +37,8 @@ void main() {
                 itemBuilder: (context, index) {
                   return controller.watch(
                     index: index,
-                    child: SizedBox(height: heights[index], child: Text('row $index')),
+                    child: SizedBox(
+                        height: heights[index], child: Text('row $index')),
                   );
                 },
               );
@@ -46,7 +49,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final scroll = controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100));
+    final scroll = controller.scrollTo(targetIndex.toDouble(),
+        duration: const Duration(milliseconds: 100));
     final cancellation = expectLater(
       scroll,
       throwsA(
@@ -76,14 +80,16 @@ void main() {
     expect(
       offsetAtCancellation,
       lessThan(targetIndex * rowHeight),
-      reason: 'The in-flight operation must stop before it reaches its old target.',
+      reason:
+          'The in-flight operation must stop before it reaches its old target.',
     );
 
     await tester.pump(const Duration(milliseconds: 500));
     expect(
       controller.position.pixels,
       closeTo(offsetAtCancellation, 0.1),
-      reason: 'Stopping the Future alone is insufficient: no old animateTo activity may keep moving the viewport.',
+      reason:
+          'Stopping the Future alone is insufficient: no old animateTo activity may keep moving the viewport.',
     );
   });
 }

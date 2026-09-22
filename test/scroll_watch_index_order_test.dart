@@ -30,7 +30,8 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// `invalidateMeasurements()` does NOT fix a permutation by itself: the
 /// caller must pass the corrected physical positions to `watch(index:)`.
 void main() {
-  group('ISC-26: watch() index permutation of 0..n-1 (full set, wrong order)', () {
+  group('ISC-26: watch() index permutation of 0..n-1 (full set, wrong order)',
+      () {
     // Five rows, distinct non-uniform heights so a scrambled order produces a
     // numerically obvious discrepancy between "sum by logical index" (what
     // the current code does) and "sum by physical slot" (the true on-screen
@@ -65,7 +66,8 @@ void main() {
                 child: Container(
                   height: heights[logicalIndex],
                   color: Colors.blue,
-                  child: Center(child: Text('slot=$slotPosition logical=$logicalIndex')),
+                  child: Center(
+                      child: Text('slot=$slotPosition logical=$logicalIndex')),
                 ),
               );
             },
@@ -212,7 +214,9 @@ void main() {
                     index: logicalIndex,
                     child: SizedBox(
                       height: heightForSlot(slotPosition),
-                      child: Center(child: Text('slot=$slotPosition logical=$logicalIndex')),
+                      child: Center(
+                          child:
+                              Text('slot=$slotPosition logical=$logicalIndex')),
                     ),
                   );
                 },
@@ -244,7 +248,10 @@ void main() {
         Object? scrollError;
         bool scrollCompleted = false;
         unawaited(
-          controller.scrollTo(beforeSwapTarget, duration: const Duration(milliseconds: 100)).then(
+          controller
+              .scrollTo(beforeSwapTarget,
+                  duration: const Duration(milliseconds: 100))
+              .then(
             (_) => scrollCompleted = true,
             onError: (Object e) {
               scrollError = e;
@@ -259,7 +266,8 @@ void main() {
         expect(
           scrollCompleted,
           isTrue,
-          reason: 'scrollTo() must settle (success or error) within the frame budget.',
+          reason:
+              'scrollTo() must settle (success or error) within the frame budget.',
         );
         expect(
           scrollError,
@@ -287,7 +295,8 @@ void main() {
         final offsetBeforeSecondAttempt = controller.position.pixels;
 
         await expectLater(
-          controller.scrollTo(targetLogicalIndex, duration: const Duration(milliseconds: 100)),
+          controller.scrollTo(targetLogicalIndex,
+              duration: const Duration(milliseconds: 100)),
           throwsA(
             isA<StateError>().having(
               (e) => e.message,
@@ -295,7 +304,8 @@ void main() {
               contains('watch(index: 5)'),
             ),
           ),
-          reason: 'Index $targetLogicalIndex was already measured by the earlier '
+          reason:
+              'Index $targetLogicalIndex was already measured by the earlier '
               'search pass, so this call takes the already-measured fast '
               'path -- and it must still reject rather than complete at the '
               'buggy 800.0px (which would have included the tall 300px row '
@@ -355,7 +365,8 @@ void main() {
         expect(
           measurementsAfterInvalidate.keys.toSet(),
           equals({0, 1, 2, 3, 4}),
-          reason: 'invalidateMeasurements() re-registers the full live set immediately.',
+          reason:
+              'invalidateMeasurements() re-registers the full live set immediately.',
         );
         expect(measurementsAfterInvalidate[0]?.height, closeTo(100.0, 1.0));
         expect(measurementsAfterInvalidate[1]?.height, closeTo(200.0, 1.0));
@@ -384,7 +395,8 @@ void main() {
         expect(
           controller.position.pixels,
           equals(offsetBeforeSecondAttempt),
-          reason: 'The rejected post-invalidation call must not move the position either.',
+          reason:
+              'The rejected post-invalidation call must not move the position either.',
         );
       },
     );

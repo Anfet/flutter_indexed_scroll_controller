@@ -1,0 +1,178 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+# A newer push on the same PR/branch cancels the previous run instead of
+# queuing behind it.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Proven passing in ISC-101/ISC-102: first stable Flutter shipping the
+  # RenderViewportBase.scrollCacheExtent API this package requires.
+  FLUTTER_MIN_VERSION: '3.44.0'
+  # Proven passing in ISC-107 (DartDoc regression) and ISC-102/106; keep in
+  # sync with the version validated locally when bumping.
+  FLUTTER_CURRENT_VERSION: '3.44.9'
+  # Fixes a RangeError (upstream dartdoc bug, string offset drift on
+  # @docImport with \r\n line endings) present in the dartdoc bundled with
+  # Flutter 3.44.x's Dart SDK snapshot (9.0.4). See ISC-107.
+  DARTDOC_VERSION: '9.0.8'
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
+          channel: stable
+      - run: dart format --output=none --set-exit-if-changed .
+
+  analyze:
+    name: Analyze (root + example)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter pub get
+        working-directory: example
+      - run: flutter analyze --fatal-infos
+        working-directory: example
+
+  test-root:
+    name: Test (root package)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      - run: flutter test
+
+  test-example:
+    name: Test (example)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
+          channel: stable
+      - run: flutter pub get
+        working-directory: example
+      - run: flutter test
+        working-directory: example
+
+  dartdoc:
+    name: DartDoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      # `dart doc` always runs the dartdoc snapshot bundled with the SDK
+      # (9.0.4 for Flutter 3.44.x), which hits a known upstream RangeError
+      # (ISC-107) -- pin a fixed dartdoc via pub global instead.
+      - run: dart pub global activate dartdoc ${{ env.DARTDOC_VERSION }}
+      - run: dart pub global run dartdoc .
+
+  publish-dry-run:
+    name: Publish dry-run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      - run: flutter pub publish --dry-run
+
+  minimum-sdk-smoke:
+    name: Minimum-SDK consumer smoke (${{ env.FLUTTER_MIN_VERSION }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_MIN_VERSION }}
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+      # The example is a real consumer of the root package via a path
+      # dependency -- resolving, analyzing and compiling it on the minimum
+      # Flutter version is the actual compatibility contract (ISC-102).
+      - run: flutter pub get
+        working-directory: example
+      - run: flutter analyze --fatal-infos
+        working-directory: example
+      - run: flutter build apk --debug
+        working-directory: example
+
+  android-release:
+    name: Android release build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
+          channel: stable
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: flutter pub get
+        working-directory: example
+      - run: flutter build apk --release
+        working-directory: example
+
+  windows-release:
+    name: Windows release build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
+          channel: stable
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+        working-directory: example
+      - run: flutter build windows --release
+        working-directory: example
+
+  ios-simulator:
+    name: iOS simulator build (no codesign)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
+          channel: stable
+      - run: flutter pub get
+        working-directory: example
+      - run: flutter test
+        working-directory: example
+      - run: flutter build ios --no-codesign --simulator
+        working-directory: example

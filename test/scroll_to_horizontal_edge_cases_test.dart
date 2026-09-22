@@ -19,13 +19,15 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         const targetIndex = 60;
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero),
+          state.controller
+              .scrollTo(targetIndex.toDouble(), duration: Duration.zero),
         );
 
         double expectedSum = 0;
@@ -59,7 +61,8 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         Object? scrollError;
@@ -98,7 +101,8 @@ void main() {
 
         await tester.pumpWidget(buildHarness(currentWidthOf));
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         // Measure the initial prefix, then return to the start of the axis
@@ -106,7 +110,8 @@ void main() {
         // 0 rather than needing a multi-frame jump-back-to-0 recovery pass.
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(20.0, duration: const Duration(milliseconds: 100)),
+          state.controller
+              .scrollTo(20.0, duration: const Duration(milliseconds: 100)),
         );
         state.controller.jumpTo(0);
         await tester.pumpAndSettle();
@@ -120,7 +125,8 @@ void main() {
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(20.0, duration: const Duration(milliseconds: 100)),
+          state.controller
+              .scrollTo(20.0, duration: const Duration(milliseconds: 100)),
         );
 
         double expectedSum = 0;
@@ -154,12 +160,14 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(15.0, duration: const Duration(milliseconds: 100)),
+          state.controller
+              .scrollTo(15.0, duration: const Duration(milliseconds: 100)),
         );
 
         double expectedVerticalSum = 0;
@@ -192,7 +200,8 @@ void main() {
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(15.0, duration: const Duration(milliseconds: 100)),
+          state.controller
+              .scrollTo(15.0, duration: const Duration(milliseconds: 100)),
         );
 
         double expectedHorizontalSum = 0;
@@ -251,14 +260,16 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
         final viewportWidth = state.controller.position.viewportDimension;
 
         const targetIndex = 10;
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+          state.controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100)),
         );
 
         double priorItemsSum = 0;
@@ -268,7 +279,8 @@ void main() {
         final targetExtent = widthOf(targetIndex);
         // effectiveAlignment = 1.0 - alignment = 1.0 - 0.0 = 1.0, since this
         // RTL-without-reverse case resolves _isReversed to true (see above).
-        final expectedOffset = priorItemsSum - (viewportWidth - targetExtent) * 1.0;
+        final expectedOffset =
+            priorItemsSum - (viewportWidth - targetExtent) * 1.0;
 
         final finalOffset = state.controller.position.pixels;
         expect(

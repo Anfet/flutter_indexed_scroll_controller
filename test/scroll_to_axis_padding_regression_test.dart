@@ -22,12 +22,14 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+          state.controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100)),
         );
 
         // Symmetric padding contributes only via its leading (top) side;
@@ -59,12 +61,14 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+          state.controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100)),
         );
 
         const expected = targetIndex * itemHeight;
@@ -94,7 +98,8 @@ void main() {
             ),
           );
 
-          final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+          final state =
+              tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
           await tester.pumpAndSettle();
           final viewportHeight = state.controller.position.viewportDimension;
 
@@ -108,7 +113,10 @@ void main() {
             ),
           );
 
-          final expected = paddingTop + 12 * itemHeight + itemHeight * 0.5 - (viewportHeight - itemHeight) * alignment;
+          final expected = paddingTop +
+              12 * itemHeight +
+              itemHeight * 0.5 -
+              (viewportHeight - itemHeight) * alignment;
           expect(
             state.controller.position.pixels,
             closeTo(expected, 1.0),
@@ -137,10 +145,12 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
-        final future = state.controller.scrollTo(targetIndex.toDouble(), duration: Duration.zero);
+        final future = state.controller
+            .scrollTo(targetIndex.toDouble(), duration: Duration.zero);
         await tester.pump();
         await future;
 
@@ -186,8 +196,10 @@ void main() {
         const lastIndex = itemCount - 1;
 
         const buggyUnclampedTarget = lastIndex * itemHeight; // 900.0
-        const correctUnclampedTarget = paddingTop + lastIndex * itemHeight; // 1000.0
-        const expectedMaxScrollExtent = paddingTop + itemCount * itemHeight - viewportHeight; // 950.0
+        const correctUnclampedTarget =
+            paddingTop + lastIndex * itemHeight; // 1000.0
+        const expectedMaxScrollExtent =
+            paddingTop + itemCount * itemHeight - viewportHeight; // 950.0
         // Sanity-check the constants themselves so a future edit to them
         // cannot silently collapse the scenario back into the tautological
         // case this test was written to replace.
@@ -212,7 +224,8 @@ void main() {
                   itemCount: itemCount,
                   itemBuilder: (context, index) => controller.watch(
                     index: index,
-                    child: SizedBox(height: itemHeight, child: Text('Item $index')),
+                    child: SizedBox(
+                        height: itemHeight, child: Text('Item $index')),
                   ),
                 ),
               ),
@@ -225,7 +238,8 @@ void main() {
 
         await pumpUntilComplete(
           tester,
-          controller.scrollTo(lastIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+          controller.scrollTo(lastIndex.toDouble(),
+              duration: const Duration(milliseconds: 100)),
         );
 
         expect(
@@ -262,16 +276,21 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
         final viewportWidth = state.controller.position.viewportDimension;
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(15.5, duration: const Duration(milliseconds: 100), alignment: 0.5),
+          state.controller.scrollTo(15.5,
+              duration: const Duration(milliseconds: 100), alignment: 0.5),
         );
 
-        final expected = paddingLeft + 15 * itemWidth + itemWidth * 0.5 - (viewportWidth - itemWidth) * 0.5;
+        final expected = paddingLeft +
+            15 * itemWidth +
+            itemWidth * 0.5 -
+            (viewportWidth - itemWidth) * 0.5;
         expect(
           state.controller.position.pixels,
           closeTo(expected, 1.0),

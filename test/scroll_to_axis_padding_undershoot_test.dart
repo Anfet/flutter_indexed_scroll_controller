@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/scroll_harness.dart';
 
 void main() {
-  group('ISC-60: scrollTo undershoots by leading padding along the scroll axis', () {
+  group('ISC-60: scrollTo undershoots by leading padding along the scroll axis',
+      () {
     testWidgets(
       'vertical list with padding.top undershoots by exactly padding.top',
       (WidgetTester tester) async {
@@ -20,12 +21,14 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+          state.controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100)),
         );
 
         // ListView.builder wraps its SliverList in a SliverPadding when
@@ -69,12 +72,14 @@ void main() {
           ),
         );
 
-        final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+        final state =
+            tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
         await tester.pumpAndSettle();
 
         await pumpUntilComplete(
           tester,
-          state.controller.scrollTo(targetIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+          state.controller.scrollTo(targetIndex.toDouble(),
+              duration: const Duration(milliseconds: 100)),
         );
 
         // Correct target = leadingPadding + sum(widths 0..7)

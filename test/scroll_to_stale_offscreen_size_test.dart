@@ -67,7 +67,8 @@ void main() {
 
       // Step 1: measure `mutatedIndex` at its original height by scrolling to it.
       unawaited(
-        controller.scrollTo(mutatedIndex.toDouble(), duration: const Duration(milliseconds: 100)),
+        controller.scrollTo(mutatedIndex.toDouble(),
+            duration: const Duration(milliseconds: 100)),
       );
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
@@ -75,18 +76,21 @@ void main() {
       expect(
         controller.measurementsSizes[mutatedIndex]?.height,
         closeTo(oldHeight, 1.0),
-        reason: 'Index $mutatedIndex must be measured at its original height before mutation.',
+        reason:
+            'Index $mutatedIndex must be measured at its original height before mutation.',
       );
 
       // Step 2: scroll far away so `mutatedIndex` is off-screen and unbuilt.
-      unawaited(controller.scrollTo(25.0, duration: const Duration(milliseconds: 100)));
+      unawaited(controller.scrollTo(25.0,
+          duration: const Duration(milliseconds: 100)));
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));
       }
       expect(
         controller.position.pixels,
         greaterThan(viewportHeight),
-        reason: 'Must have scrolled far enough that index $mutatedIndex is off-screen.',
+        reason:
+            'Must have scrolled far enough that index $mutatedIndex is off-screen.',
       );
 
       // Step 3: mutate the off-screen row's height AND its fingerprint, with no
@@ -99,7 +103,8 @@ void main() {
       expect(
         controller.measurementsSizes[mutatedIndex]?.height,
         closeTo(oldHeight, 1.0),
-        reason: 'Directly observed: _sizes[$mutatedIndex] still holds the stale '
+        reason:
+            'Directly observed: _sizes[$mutatedIndex] still holds the stale '
             'height $oldHeight immediately after the off-screen mutation, since '
             'nothing rebuilt that row.',
       );
@@ -112,7 +117,8 @@ void main() {
       const correctOffset = mutatedIndex * defaultHeight + newHeight;
 
       unawaited(
-        controller.scrollTo((mutatedIndex + 1).toDouble(), duration: const Duration(milliseconds: 100)),
+        controller.scrollTo((mutatedIndex + 1).toDouble(),
+            duration: const Duration(milliseconds: 100)),
       );
       for (int i = 0; i < 300; i++) {
         await tester.pump(const Duration(milliseconds: 16));

@@ -104,7 +104,8 @@ void main() {
           //              = targetIndex * itemHeight
           //                - (viewportHeight - itemHeight) * (1.0 - alignment)
           final effectiveAlignment = 1.0 - alignment;
-          final expected = targetIndex * itemHeight - (viewportHeight - itemHeight) * effectiveAlignment;
+          final expected = targetIndex * itemHeight -
+              (viewportHeight - itemHeight) * effectiveAlignment;
           expect(
             controller.position.pixels,
             closeTo(expected, 1.0),
@@ -142,7 +143,8 @@ void main() {
           );
 
           final effectiveAlignment = 1.0 - alignment;
-          final expected = targetIndex * itemWidth - (viewportWidth - itemWidth) * effectiveAlignment;
+          final expected = targetIndex * itemWidth -
+              (viewportWidth - itemWidth) * effectiveAlignment;
           expect(
             controller.position.pixels,
             closeTo(expected, 1.0),
@@ -172,7 +174,8 @@ void main() {
         // scrollTo's fast-path formula rather than the search loop.
         await pumpUntilComplete(
           tester,
-          controller.scrollTo(20.0, duration: const Duration(milliseconds: 100)),
+          controller.scrollTo(20.0,
+              duration: const Duration(milliseconds: 100)),
         );
         expect(controller.measurementsSizes.containsKey(20), isTrue);
 
@@ -187,7 +190,9 @@ void main() {
         );
 
         const effectiveAlignment = 1.0 - alignment; // 0.5, self-symmetric
-        final expected = 12 * itemHeight + itemHeight * 0.5 - (viewportHeight - itemHeight) * effectiveAlignment;
+        final expected = 12 * itemHeight +
+            itemHeight * 0.5 -
+            (viewportHeight - itemHeight) * effectiveAlignment;
         expect(
           controller.position.pixels,
           closeTo(expected, 1.0),

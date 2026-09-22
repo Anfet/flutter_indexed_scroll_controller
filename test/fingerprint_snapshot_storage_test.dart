@@ -11,7 +11,9 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// every scenario here is independent of ISC-46 and expected to be GREEN.
 void main() {
   group('ISC-45: fingerprint snapshot storage', () {
-    testWidgets('manual mode (no contentFingerprint) never records a fingerprint entry', (
+    testWidgets(
+        'manual mode (no contentFingerprint) never records a fingerprint entry',
+        (
       WidgetTester tester,
     ) async {
       final controller = IndexedScrollController(
@@ -36,16 +38,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(controller.measurementsSizes[0], isNotNull, reason: 'Size registration is unaffected by the manual mode.');
+      expect(controller.measurementsSizes[0], isNotNull,
+          reason: 'Size registration is unaffected by the manual mode.');
       expect(
         controller.hasFingerprintFor(0),
         isFalse,
-        reason: 'A controller built without contentFingerprint must never record a '
+        reason:
+            'A controller built without contentFingerprint must never record a '
             'fingerprint entry, even though its rows still register sizes normally.',
       );
     });
 
-    testWidgets('build/layout registers the fingerprint captured at build time alongside the Size', (
+    testWidgets(
+        'build/layout registers the fingerprint captured at build time alongside the Size',
+        (
       WidgetTester tester,
     ) async {
       const itemCount = 5;
@@ -80,7 +86,9 @@ void main() {
       expect(controller.fingerprintFor(0), 'v0');
     });
 
-    testWidgets('contentFingerprint returning null is stored as a present entry with value null', (
+    testWidgets(
+        'contentFingerprint returning null is stored as a present entry with value null',
+        (
       WidgetTester tester,
     ) async {
       const itemCount = 3;
@@ -117,7 +125,8 @@ void main() {
       expect(
         controller.hasFingerprintFor(0),
         isTrue,
-        reason: 'A row whose fingerprint genuinely IS null must still show a present '
+        reason:
+            'A row whose fingerprint genuinely IS null must still show a present '
             'entry, distinguishing it from an index that was never measured at all.',
       );
       expect(controller.fingerprintFor(0), isNull);
@@ -125,13 +134,16 @@ void main() {
       expect(
         controller.hasFingerprintFor(999),
         isFalse,
-        reason: 'An index that was never registered must show no entry at all -- the '
+        reason:
+            'An index that was never registered must show no entry at all -- the '
             'same "no entry" state as a null-valued entry would produce if presence '
             'were checked via value nullability instead of containsKey.',
       );
     });
 
-    testWidgets('invalidateMeasurements() clears both the size and its fingerprint together', (
+    testWidgets(
+        'invalidateMeasurements() clears both the size and its fingerprint together',
+        (
       WidgetTester tester,
     ) async {
       const itemCount = 5;
@@ -173,14 +185,17 @@ void main() {
       expect(
         controller.hasFingerprintFor(0),
         isFalse,
-        reason: 'invalidateMeasurements() must clear _fingerprints in the same step, so '
+        reason:
+            'invalidateMeasurements() must clear _fingerprints in the same step, so '
             'no fingerprint entry outlives the Size it was paired with -- a stale '
             'fingerprint surviving here could later appear to validate a size registered '
             'by an unrelated, future performLayout() pass.',
       );
     });
 
-    testWidgets('re-measuring a corrected index after invalidateMeasurements() registers the new fingerprint', (
+    testWidgets(
+        're-measuring a corrected index after invalidateMeasurements() registers the new fingerprint',
+        (
       WidgetTester tester,
     ) async {
       const itemCount = 5;
@@ -232,19 +247,23 @@ void main() {
       expect(
         controller.hasFingerprintFor(0),
         isTrue,
-        reason: 'The corrected index must have a fresh fingerprint entry after being '
+        reason:
+            'The corrected index must have a fresh fingerprint entry after being '
             're-measured, not remain in the "cleared, never re-registered" state.',
       );
       expect(
         controller.fingerprintFor(0),
         'v1',
-        reason: 'The re-registered fingerprint must be the NEW value captured at the '
+        reason:
+            'The re-registered fingerprint must be the NEW value captured at the '
             'rebuild that produced the child actually laid out, not the old v0 snapshot '
             'invalidateMeasurements() discarded.',
       );
     });
 
-    testWidgets('a fingerprint change alone, with no relayout, does not update the stored snapshot', (
+    testWidgets(
+        'a fingerprint change alone, with no relayout, does not update the stored snapshot',
+        (
       WidgetTester tester,
     ) async {
       // Per the ISC-41 contract: reading contentFingerprint fresh inside
@@ -293,7 +312,8 @@ void main() {
       expect(
         controller.fingerprintFor(0),
         'v0',
-        reason: 'With no rebuild and no invalidateMeasurements(), the stored fingerprint '
+        reason:
+            'With no rebuild and no invalidateMeasurements(), the stored fingerprint '
             'must remain the old build-time snapshot -- it must never be refreshed by '
             'silently re-reading contentFingerprint() outside of a real build+layout '
             'pass, or the stored pair could end up mixing an old Size with a fingerprint '

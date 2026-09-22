@@ -12,7 +12,14 @@ All notable changes to this package are documented here. This project follows [S
 
 ### Breaking changes
 
-- None.
+- Raised minimum Flutter requirement from `>=3.19.0` to `>=3.44.0`. The
+  previous constraint was unproven: the package already required the stable
+  `ScrollCacheExtent` API introduced in Flutter 3.44 and failed to compile
+  below it.
+- `IndexedScrollItem`, `IndexedScrollSeparator`, and
+  `targetPixelsEstimateForStallCheck` are no longer public. They were
+  internal implementation details with no supported consumer use case; use
+  `IndexedScrollController.watch`/`.separator()` instead.
 
 ### Fixed
 

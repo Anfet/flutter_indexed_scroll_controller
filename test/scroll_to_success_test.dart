@@ -5,7 +5,8 @@ import 'support/scroll_harness.dart';
 
 void main() {
   group('IndexedScrollController scrollTo success scenarios', () {
-    testWidgets('scrollTo reaches far distant index (near-last element)', (WidgetTester tester) async {
+    testWidgets('scrollTo reaches far distant index (near-last element)',
+        (WidgetTester tester) async {
       // Test scrolling to a distant index in a list with varied heights.
       // The early-exit bug (ISC-02A/ISC-02B) only triggers when maxVisibleIndex
       // exactly equals the target scrollToIndex at the moment of the call, not
@@ -21,7 +22,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
 
       // Start at top
       await tester.pumpAndSettle();
@@ -50,7 +52,8 @@ void main() {
       expect(
         state.controller.measurementsSizes.length,
         greaterThan(120),
-        reason: 'Distant scroll should measure a continuous prefix of items (at least to near-target)',
+        reason:
+            'Distant scroll should measure a continuous prefix of items (at least to near-target)',
       );
 
       // Get final position and verify it's reasonable for the target index
@@ -69,11 +72,13 @@ void main() {
       expect(
         finalOffset,
         greaterThan(expectedSum - 500),
-        reason: 'Final offset should be significantly greater than sum of initial items (~$expectedSum)',
+        reason:
+            'Final offset should be significantly greater than sum of initial items (~$expectedSum)',
       );
     });
 
-    testWidgets('jumpTo forward to distant index and return with scrollTo', (WidgetTester tester) async {
+    testWidgets('jumpTo forward to distant index and return with scrollTo',
+        (WidgetTester tester) async {
       // Test the pattern: jumpTo forward, then scrollTo back
       // Confirms measurements are maintained across different scroll patterns
       await tester.pumpWidget(
@@ -86,7 +91,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
 
       await tester.pumpAndSettle();
 
@@ -117,7 +123,8 @@ void main() {
       );
     });
 
-    testWidgets('scrollTo with fractional index and alignment = 0', (WidgetTester tester) async {
+    testWidgets('scrollTo with fractional index and alignment = 0',
+        (WidgetTester tester) async {
       // Test fractional indices with alignment=0 (top-align the row)
       // Formula: target = sum(heights 0..k-1) + height[k] * fraction
       //          - (viewport - height[k]) * alignment
@@ -133,7 +140,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       // Scroll to index 12.5 with alignment=0
@@ -156,11 +164,13 @@ void main() {
       expect(
         finalOffset,
         inInclusiveRange(1200, 1300),
-        reason: 'Fractional index 12.5 with alignment=0 should give offset ~1250 (± tolerance)',
+        reason:
+            'Fractional index 12.5 with alignment=0 should give offset ~1250 (± tolerance)',
       );
     });
 
-    testWidgets('scrollTo with fractional index and alignment = 0.5', (WidgetTester tester) async {
+    testWidgets('scrollTo with fractional index and alignment = 0.5',
+        (WidgetTester tester) async {
       // Test fractional indices with alignment=0.5 (center the row in viewport)
       // Formula: target = sum(heights 0..k-1) + height[k] * fraction
       //          - (viewport - height[k]) * 0.5
@@ -174,7 +184,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       // Scroll to index 12.5 with alignment=0.5
@@ -197,11 +208,13 @@ void main() {
       expect(
         finalOffset,
         inInclusiveRange(950, 1050),
-        reason: 'Fractional index 12.5 with alignment=0.5 should give offset ~1000 (± tolerance)',
+        reason:
+            'Fractional index 12.5 with alignment=0.5 should give offset ~1000 (± tolerance)',
       );
     });
 
-    testWidgets('scrollTo with fractional index and alignment = 1', (WidgetTester tester) async {
+    testWidgets('scrollTo with fractional index and alignment = 1',
+        (WidgetTester tester) async {
       // Test fractional indices with alignment=1 (bottom-align the row)
       // Formula: target = sum(heights 0..k-1) + height[k] * fraction
       //          - (viewport - height[k]) * 1
@@ -215,7 +228,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       // Scroll to index 12.5 with alignment=1
@@ -238,11 +252,13 @@ void main() {
       expect(
         finalOffset,
         inInclusiveRange(700, 800),
-        reason: 'Fractional index 12.5 with alignment=1 should give offset ~750 (± tolerance)',
+        reason:
+            'Fractional index 12.5 with alignment=1 should give offset ~750 (± tolerance)',
       );
     });
 
-    testWidgets('scrollTo reaches last element in large list', (WidgetTester tester) async {
+    testWidgets('scrollTo reaches last element in large list',
+        (WidgetTester tester) async {
       // Test scrolling to the very last item in a large list
       // Confirms the end boundary is handled correctly
       await tester.pumpWidget(
@@ -255,7 +271,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       // Scroll to the last item (index 199)
@@ -277,7 +294,8 @@ void main() {
       expect(
         state.controller.measurementsSizes.length,
         greaterThanOrEqualTo(lastIndex),
-        reason: 'Scroll to last item should measure a full continuous prefix of items',
+        reason:
+            'Scroll to last item should measure a full continuous prefix of items',
       );
 
       // Verify we reached a position that makes sense for the last item
@@ -285,11 +303,13 @@ void main() {
       expect(
         finalOffset,
         greaterThan(10000),
-        reason: 'Scroll to last item (199) should reach significant offset > 10000',
+        reason:
+            'Scroll to last item (199) should reach significant offset > 10000',
       );
     });
 
-    testWidgets('Multiple sequential scrolls accumulate measurements', (WidgetTester tester) async {
+    testWidgets('Multiple sequential scrolls accumulate measurements',
+        (WidgetTester tester) async {
       // Test that the controller maintains and accumulates measurements across multiple
       // sequential scroll operations forward. This validates that the measurement dict
       // persists across multiple operations and that forward scrolling is reliable.
@@ -303,7 +323,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       // First scroll: to index 25
@@ -377,7 +398,8 @@ void main() {
       );
     });
 
-    testWidgets('Long valid scroll pass (250 indices, ~300 rows, ~120+ frames)', (WidgetTester tester) async {
+    testWidgets('Long valid scroll pass (250 indices, ~300 rows, ~120+ frames)',
+        (WidgetTester tester) async {
       // Mirrors the QA scenario: scrollTo(250) on a 300-row list took about
       // 120 frames to complete but did finish successfully. Starting from
       // offset=0 keeps the initial maxVisibleIndex (~5-8) far from the
@@ -394,7 +416,8 @@ void main() {
         ),
       );
 
-      final state = tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
+      final state =
+          tester.state<ScrollHarnessState>(find.byType(ScrollHarness));
       await tester.pumpAndSettle();
 
       var scrollCompleted = false;
@@ -428,7 +451,8 @@ void main() {
       expect(
         finalOffset,
         greaterThan(10000),
-        reason: 'A successful long pass to index 250 should reach a large offset',
+        reason:
+            'A successful long pass to index 250 should reach a large offset',
       );
       expect(
         state.controller.measurementsSizes.length,

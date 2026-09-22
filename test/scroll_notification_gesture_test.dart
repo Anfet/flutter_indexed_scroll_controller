@@ -196,7 +196,8 @@ void main() {
         // ScrollStartNotification.
         await tester.drag(find.byType(ListView), const Offset(0, -150));
 
-        final dragNotifications = receivedNotifications.skip(notificationsBeforeDrag).toList();
+        final dragNotifications =
+            receivedNotifications.skip(notificationsBeforeDrag).toList();
         expect(
           dragNotifications.any((n) => n.dragDetails != null),
           isTrue,

@@ -46,10 +46,12 @@ Widget _list({
   );
 }
 
-Future<void> _pumpAtSurfaceSize(WidgetTester tester, Widget widget, Size size) async {
+Future<void> _pumpAtSurfaceSize(
+    WidgetTester tester, Widget widget, Size size) async {
   await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.pumpWidget(MediaQuery(data: MediaQueryData(size: size), child: widget));
+  await tester
+      .pumpWidget(MediaQuery(data: MediaQueryData(size: size), child: widget));
 }
 
 /// Whether [actual] falls within a small, frame-quantized margin above
@@ -87,7 +89,8 @@ Future<void> _pumpAtSurfaceSize(WidgetTester tester, Widget widget, Size size) a
 /// `duration` measures still holds -- it is a single confirmation frame the
 /// materialization guarantee (ISC-96 point 4) requires before the animated
 /// leg may start.
-bool _withinFrameQuantizedMargin(Duration actual, Duration expected, {Duration frameStride = const Duration(milliseconds: 16)}) {
+bool _withinFrameQuantizedMargin(Duration actual, Duration expected,
+    {Duration frameStride = const Duration(milliseconds: 16)}) {
   return actual >= expected && actual <= expected + frameStride * 5;
 }
 
@@ -116,15 +119,20 @@ Future<({Duration modelTime, int frames})> _pumpUntilComplete(
   }
   final elapsed = tester.binding.clock.now().difference(start);
 
-  expect(settled, isTrue, reason: 'scrollTo() did not complete within $maxPumps pumps');
+  expect(settled, isTrue,
+      reason: 'scrollTo() did not complete within $maxPumps pumps');
   await future;
   return (modelTime: elapsed, frames: frames);
 }
 
 void main() {
-  group('ISC-82d: Mode A (measured path) -- duration honored within a small margin, any list size', () {
+  group(
+      'ISC-82d: Mode A (measured path) -- duration honored within a small margin, any list size',
+      () {
     for (final itemCount in [100, 1000]) {
-      testWidgets('scrollTo on a fully-measured $itemCount-row list completes within a frame-quantized margin of duration', (tester) async {
+      testWidgets(
+          'scrollTo on a fully-measured $itemCount-row list completes within a frame-quantized margin of duration',
+          (tester) async {
         const rowHeight = 20.0;
         const duration = Duration(milliseconds: 300);
 
@@ -133,7 +141,10 @@ void main() {
 
         await _pumpAtSurfaceSize(
           tester,
-          _list(controller: controller, itemCount: itemCount, rowHeight: rowHeight),
+          _list(
+              controller: controller,
+              itemCount: itemCount,
+              rowHeight: rowHeight),
           const Size(400.0, 600.0),
         );
         await tester.pump();
@@ -144,8 +155,12 @@ void main() {
         // still needs pumping alongside it (its search loop awaits
         // WidgetsBinding.instance.endOfFrame internally); a bare `await`
         // with no interleaved pump() never resolves.
-        await _pumpUntilComplete(tester, controller.scrollTo((itemCount - 1).toDouble(), duration: Duration.zero));
-        expect(controller.measurementsSizes.length, itemCount, reason: 'Setup must fully measure the list before the timed call');
+        await _pumpUntilComplete(
+            tester,
+            controller.scrollTo((itemCount - 1).toDouble(),
+                duration: Duration.zero));
+        expect(controller.measurementsSizes.length, itemCount,
+            reason: 'Setup must fully measure the list before the timed call');
 
         // Now scroll back to a target far from the current position (near
         // the start), on a list where every row's size is already known.
@@ -158,7 +173,8 @@ void main() {
         expect(
           _withinFrameQuantizedMargin(result.modelTime, duration),
           isTrue,
-          reason: 'On a fully-measured $itemCount-row list, scrollTo must complete within a '
+          reason:
+              'On a fully-measured $itemCount-row list, scrollTo must complete within a '
               'small, frame-quantized margin of the requested $duration -- got '
               '${result.modelTime} (${result.frames} frames). List size must not matter here: '
               'nothing needs building, only the final animateTo runs.',
@@ -166,7 +182,9 @@ void main() {
       });
     }
 
-    testWidgets('the two list sizes above cost the same model time (this is what "any size" means)', (tester) async {
+    testWidgets(
+        'the two list sizes above cost the same model time (this is what "any size" means)',
+        (tester) async {
       // Re-derives both durations independently so this test does not
       // depend on execution order of the parameterized group above, then
       // asserts they match -- the loop above only proves each one
@@ -181,14 +199,21 @@ void main() {
 
         await _pumpAtSurfaceSize(
           tester,
-          _list(controller: controller, itemCount: itemCount, rowHeight: rowHeight),
+          _list(
+              controller: controller,
+              itemCount: itemCount,
+              rowHeight: rowHeight),
           const Size(400.0, 600.0),
         );
         await tester.pump();
 
-        await _pumpUntilComplete(tester, controller.scrollTo((itemCount - 1).toDouble(), duration: Duration.zero));
+        await _pumpUntilComplete(
+            tester,
+            controller.scrollTo((itemCount - 1).toDouble(),
+                duration: Duration.zero));
 
-        final result = await _pumpUntilComplete(tester, controller.scrollTo(0.0, duration: duration));
+        final result = await _pumpUntilComplete(
+            tester, controller.scrollTo(0.0, duration: duration));
         return result.modelTime;
       }
 
@@ -198,13 +223,16 @@ void main() {
       expect(
         (time1000 - time100).abs(),
         lessThanOrEqualTo(const Duration(milliseconds: 16)),
-        reason: 'A fully-measured 100-row list and a fully-measured 1000-row list must cost the '
+        reason:
+            'A fully-measured 100-row list and a fully-measured 1000-row list must cost the '
             'same model time ($time100 vs $time1000) -- Mode A\'s guarantee is "any size", not '
             '"small enough sizes"',
       );
     });
 
-    testWidgets('scrolling back to a far, already-measured target does not double duration', (tester) async {
+    testWidgets(
+        'scrolling back to a far, already-measured target does not double duration',
+        (tester) async {
       // Regresses the exact defect ISC-82a fixed: before it, the
       // "jumpingPosition" approach step (getting within one viewport of an
       // already-known target) animated with the full duration whenever the
@@ -222,17 +250,22 @@ void main() {
 
       await _pumpAtSurfaceSize(
         tester,
-        _list(controller: controller, itemCount: itemCount, rowHeight: rowHeight),
+        _list(
+            controller: controller, itemCount: itemCount, rowHeight: rowHeight),
         const Size(400.0, 600.0),
       );
       await tester.pump();
 
       // Scroll to the end first (Mode B, discarded), fully measuring the
       // list and leaving the position far from 0.
-      await _pumpUntilComplete(tester, controller.scrollTo((itemCount - 1).toDouble(), duration: Duration.zero));
+      await _pumpUntilComplete(
+          tester,
+          controller.scrollTo((itemCount - 1).toDouble(),
+              duration: Duration.zero));
       expect(controller.measurementsSizes.length, itemCount);
       expect(controller.position.pixels, greaterThan(600.0 * 2),
-          reason: 'Setup must land far enough from 0 that the return trip exceeds one viewport');
+          reason:
+              'Setup must land far enough from 0 that the return trip exceeds one viewport');
 
       // Scroll back to 0 -- a fully-measured target, more than one
       // viewport away. Mode A's tight guarantee applies here exactly as it
@@ -245,7 +278,8 @@ void main() {
       expect(
         _withinFrameQuantizedMargin(result.modelTime, duration),
         isTrue,
-        reason: 'A backward scrollTo() to an already-measured target more than one viewport '
+        reason:
+            'A backward scrollTo() to an already-measured target more than one viewport '
             'away must still cost only ~$duration, not 2x it -- got ${result.modelTime} '
             '(${result.frames} frames)',
       );
@@ -253,7 +287,9 @@ void main() {
   });
 
   group('ISC-82d: Mode B (unmeasured path) -- bounded, honest deviation', () {
-    testWidgets('search frames stay within ceil(distance / step) of the theoretical bound, and the offset matches Mode A', (tester) async {
+    testWidgets(
+        'search frames stay within ceil(distance / step) of the theoretical bound, and the offset matches Mode A',
+        (tester) async {
       const rowHeight = 20.0;
       const viewportHeight = 600.0;
       const itemCount = 2000;
@@ -262,16 +298,26 @@ void main() {
 
       // Reference offset: what a fully-measured pass to the same target
       // resolves to, taken independently of the timed Mode B call below.
-      final referenceController = IndexedScrollController(scrollDuration: Duration.zero);
+      final referenceController =
+          IndexedScrollController(scrollDuration: Duration.zero);
       addTearDown(referenceController.dispose);
       await _pumpAtSurfaceSize(
         tester,
-        _list(controller: referenceController, itemCount: itemCount, rowHeight: rowHeight),
+        _list(
+            controller: referenceController,
+            itemCount: itemCount,
+            rowHeight: rowHeight),
         const Size(400.0, viewportHeight),
       );
       await tester.pump();
-      await _pumpUntilComplete(tester, referenceController.scrollTo((itemCount - 1).toDouble(), duration: Duration.zero));
-      await _pumpUntilComplete(tester, referenceController.scrollTo(targetIndex.toDouble(), duration: Duration.zero));
+      await _pumpUntilComplete(
+          tester,
+          referenceController.scrollTo((itemCount - 1).toDouble(),
+              duration: Duration.zero));
+      await _pumpUntilComplete(
+          tester,
+          referenceController.scrollTo(targetIndex.toDouble(),
+              duration: Duration.zero));
       final referenceOffset = referenceController.position.pixels;
 
       // Timed Mode B call: same target, fresh (unmeasured) controller.
@@ -279,7 +325,8 @@ void main() {
       addTearDown(controller.dispose);
       await _pumpAtSurfaceSize(
         tester,
-        _list(controller: controller, itemCount: itemCount, rowHeight: rowHeight),
+        _list(
+            controller: controller, itemCount: itemCount, rowHeight: rowHeight),
         const Size(400.0, viewportHeight),
       );
       await tester.pump();
@@ -303,7 +350,8 @@ void main() {
       expect(
         result.frames,
         lessThanOrEqualTo(maxExpectedFrames),
-        reason: 'Search frames (${result.frames}) must stay within a small constant of the '
+        reason:
+            'Search frames (${result.frames}) must stay within a small constant of the '
             'theoretical bound ($theoreticalSteps steps for ${distancePx}px at $viewportHeight'
             'px steps) -- a much higher count would mean the search regressed to something '
             'other than linear-in-distance',
@@ -312,7 +360,8 @@ void main() {
       expect(
         controller.position.pixels,
         closeTo(referenceOffset, 0.5),
-        reason: 'Mode B must resolve to the exact same offset as Mode A for the same target -- '
+        reason:
+            'Mode B must resolve to the exact same offset as Mode A for the same target -- '
             'a faster-but-wrong implementation (e.g. skipping the endOfFrame wait) would show up '
             'here as a mismatched offset, not just as suspiciously few frames',
       );

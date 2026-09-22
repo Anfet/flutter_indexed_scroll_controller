@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
 void main() {
-  testWidgets('changed last item as the target uses its recovered extent', (tester) async {
+  testWidgets('changed last item as the target uses its recovered extent',
+      (tester) async {
     const count = 20;
     final heights = List<double>.filled(count, 100);
     final fingerprints = List<int>.filled(count, 0);
@@ -43,13 +44,15 @@ void main() {
       fingerprints[19] = 1;
     });
     await tester.pumpAndSettle();
-    final recovery = controller.scrollTo(19, alignment: 1, duration: Duration.zero);
+    final recovery =
+        controller.scrollTo(19, alignment: 1, duration: Duration.zero);
     await tester.pumpAndSettle();
     await recovery;
     expect(controller.position.pixels, closeTo(2000, 1));
   });
 
-  testWidgets('automatic mode rejects watch index differing from physical slot', (tester) async {
+  testWidgets('automatic mode rejects watch index differing from physical slot',
+      (tester) async {
     const count = 10;
     final controller = IndexedScrollController(
       scrollDuration: Duration.zero,

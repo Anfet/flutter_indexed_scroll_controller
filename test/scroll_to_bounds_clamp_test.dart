@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
-Widget _list(IndexedScrollController controller, {int count = 60, double height = 100.0}) {
+Widget _list(IndexedScrollController controller,
+    {int count = 60, double height = 100.0}) {
   return MaterialApp(
     home: Scaffold(
       body: ListView.builder(
@@ -19,7 +20,8 @@ Widget _list(IndexedScrollController controller, {int count = 60, double height 
 
 void main() {
   group('scrollTo() resolves with an in-bounds offset', () {
-    testWidgets('alignment 1.0 at index 0 does not resolve negative', (tester) async {
+    testWidgets('alignment 1.0 at index 0 does not resolve negative',
+        (tester) async {
       final controller = IndexedScrollController(scrollDuration: Duration.zero);
       addTearDown(controller.dispose);
       await tester.pumpWidget(_list(controller));
@@ -50,7 +52,8 @@ void main() {
       expect(offsetAtResolve, closeTo(0.0, 1.0));
     });
 
-    testWidgets('alignment 0.0 at the last index does not resolve past the end', (tester) async {
+    testWidgets('alignment 0.0 at the last index does not resolve past the end',
+        (tester) async {
       final controller = IndexedScrollController(scrollDuration: Duration.zero);
       addTearDown(controller.dispose);
       await tester.pumpWidget(_list(controller, count: 200));
@@ -72,11 +75,14 @@ void main() {
         reason: 'Before the fix a scroll to the final index resolved at '
             '9940.0 against a maxScrollExtent of 9390.0.',
       );
-      expect(offsetAtResolve, closeTo(controller.position.maxScrollExtent, 1.0));
+      expect(
+          offsetAtResolve, closeTo(controller.position.maxScrollExtent, 1.0));
     });
 
-    testWidgets('animated (non-zero duration) also resolves in bounds', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 20));
+    testWidgets('animated (non-zero duration) also resolves in bounds',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 20));
       addTearDown(controller.dispose);
       await tester.pumpWidget(_list(controller));
       await tester.pumpAndSettle();
@@ -91,10 +97,12 @@ void main() {
       await future;
 
       expect(offsetAtResolve, isNotNull);
-      expect(offsetAtResolve, greaterThanOrEqualTo(controller.position.minScrollExtent));
+      expect(offsetAtResolve,
+          greaterThanOrEqualTo(controller.position.minScrollExtent));
     });
 
-    testWidgets('a reachable mid-list target is unaffected by clamping', (tester) async {
+    testWidgets('a reachable mid-list target is unaffected by clamping',
+        (tester) async {
       // Guards against the clamp being overzealous: an ordinary in-range
       // target must still land exactly where the offset formula says.
       final controller = IndexedScrollController(scrollDuration: Duration.zero);
@@ -119,7 +127,8 @@ void main() {
       );
     });
 
-    testWidgets('fractional index near the end resolves in bounds', (tester) async {
+    testWidgets('fractional index near the end resolves in bounds',
+        (tester) async {
       final controller = IndexedScrollController(scrollDuration: Duration.zero);
       addTearDown(controller.dispose);
       await tester.pumpWidget(_list(controller, count: 60));
@@ -135,8 +144,10 @@ void main() {
       await future;
 
       expect(offsetAtResolve, isNotNull);
-      expect(offsetAtResolve, lessThanOrEqualTo(controller.position.maxScrollExtent));
-      expect(offsetAtResolve, greaterThanOrEqualTo(controller.position.minScrollExtent));
+      expect(offsetAtResolve,
+          lessThanOrEqualTo(controller.position.maxScrollExtent));
+      expect(offsetAtResolve,
+          greaterThanOrEqualTo(controller.position.minScrollExtent));
     });
   });
 }

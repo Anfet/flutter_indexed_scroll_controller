@@ -5,7 +5,8 @@ import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 /// ISC-51: a row after the target can change maxScrollExtent even though its
 /// fingerprint is outside the target prefix and is not selectively recovered.
 void main() {
-  testWidgets('near-end fractional target clamps against rebuilt final extent', (tester) async {
+  testWidgets('near-end fractional target clamps against rebuilt final extent',
+      (tester) async {
     const count = 30;
     final heights = List<double>.filled(count, 100);
     final fingerprints = List<int>.filled(count, 0);

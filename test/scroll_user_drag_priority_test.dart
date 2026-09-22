@@ -42,14 +42,18 @@ Future<double> _dragDistance(
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: wrapped ? IndexedScrollGestureDetector(controller: controller, child: list) : list,
+        body: wrapped
+            ? IndexedScrollGestureDetector(controller: controller, child: list)
+            : list,
       ),
     ),
   );
   await tester.pumpAndSettle();
 
   if (programmaticScroll) {
-    unawaited(controller.scrollTo(targetIndex).catchError((Object e) => onScrollError?.call(e)));
+    unawaited(controller
+        .scrollTo(targetIndex)
+        .catchError((Object e) => onScrollError?.call(e)));
     await tester.pump(const Duration(milliseconds: 16));
   }
 
@@ -70,7 +74,8 @@ void unawaited(Future<void> f) {}
 
 void main() {
   group('user drag takes priority over an in-flight scrollTo', () {
-    testWidgets('baseline: drag moves the list with no scroll in flight', (tester) async {
+    testWidgets('baseline: drag moves the list with no scroll in flight',
+        (tester) async {
       expect(
         await _dragDistance(tester, wrapped: false, programmaticScroll: false),
         closeTo(200.0, 1.0),
@@ -79,7 +84,8 @@ void main() {
       );
     });
 
-    testWidgets('wrapped: drag still moves the list during a scrollTo', (tester) async {
+    testWidgets('wrapped: drag still moves the list during a scrollTo',
+        (tester) async {
       Object? error;
       final moved = await _dragDistance(
         tester,
@@ -106,7 +112,9 @@ void main() {
       );
     });
 
-    testWidgets('unwrapped: a bare controller still loses the drag (documents the limit)', (tester) async {
+    testWidgets(
+        'unwrapped: a bare controller still loses the drag (documents the limit)',
+        (tester) async {
       // The original defect reproduced WITHOUT any gesture wiring, which is
       // why this case is covered separately from the wrapped one above.
       //
@@ -137,15 +145,19 @@ void main() {
       expect(
         moved,
         isNot(closeTo(200.0, 1.0)),
-        reason: 'Without IndexedScrollGestureDetector the drag\'s own -200px motion never lands '
+        reason:
+            'Without IndexedScrollGestureDetector the drag\'s own -200px motion never lands '
             '-- the search\'s jumpTo keeps overwriting position.pixels every frame, so the '
             'gesture never gets to move the list on its own. This is why the wrapper exists and '
             'why the README documents it as required for gesture priority.',
       );
     });
 
-    testWidgets('scrollTo() started mid-drag yields instead of killing the gesture', (tester) async {
-      final controller = IndexedScrollController(scrollDuration: const Duration(milliseconds: 300));
+    testWidgets(
+        'scrollTo() started mid-drag yields instead of killing the gesture',
+        (tester) async {
+      final controller = IndexedScrollController(
+          scrollDuration: const Duration(milliseconds: 300));
       addTearDown(controller.dispose);
 
       await tester.pumpWidget(
@@ -193,7 +205,8 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('a scrollTo issued after the drag ends works normally', (tester) async {
+    testWidgets('a scrollTo issued after the drag ends works normally',
+        (tester) async {
       final controller = IndexedScrollController(scrollDuration: Duration.zero);
       addTearDown(controller.dispose);
 

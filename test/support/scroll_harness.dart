@@ -23,7 +23,8 @@ Future<void> pumpUntilComplete(
     await tester.pump(const Duration(milliseconds: 16));
   }
 
-  expect(settled, isTrue, reason: 'scrollTo() did not complete within $maxPumps pumps');
+  expect(settled, isTrue,
+      reason: 'scrollTo() did not complete within $maxPumps pumps');
   await future;
 }
 
@@ -60,7 +61,8 @@ class ScrollObservationResult {
   final List<ScrollFrameSnapshot> snapshots;
 
   /// Error message if the loop hit guard limit, null otherwise.
-  String? get guardLimitExceededMessage => completed ? null : 'Guard limit of $frameCount frames exceeded';
+  String? get guardLimitExceededMessage =>
+      completed ? null : 'Guard limit of $frameCount frames exceeded';
 
   ScrollObservationResult({
     required this.completed,
