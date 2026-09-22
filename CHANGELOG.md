@@ -2,12 +2,6 @@
 
 All notable changes to this package are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
-
-### Breaking changes
-
-- None.
-
 ## 0.3.2
 
 ### Fixed
