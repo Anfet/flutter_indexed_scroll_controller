@@ -58,8 +58,12 @@ class _VerticalScreenState extends State<VerticalScreen> {
   @override
   void initState() {
     super.initState();
-    _loremRows = List.generate(_VerticalScreenConfig.itemCount, (index) => _LoremRow.random(_random));
-    _fixedRows = List.generate(_VerticalScreenConfig.itemCount, (index) => _FixedHeightRow.random(_random, _VerticalScreenConfig.fixedHeights));
+    _loremRows = List.generate(
+        _VerticalScreenConfig.itemCount, (index) => _LoremRow.random(_random));
+    _fixedRows = List.generate(
+        _VerticalScreenConfig.itemCount,
+        (index) => _FixedHeightRow.random(
+            _random, _VerticalScreenConfig.fixedHeights));
     _scrollController = _buildController();
   }
 
@@ -73,7 +77,8 @@ class _VerticalScreenState extends State<VerticalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('Vertical Scrolling with Alignment Control')),
+      appBar: AppBar(
+          title: const Text('Vertical Scrolling with Alignment Control')),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -98,9 +103,14 @@ class _VerticalScreenState extends State<VerticalScreen> {
               Expanded(
                 child: SegmentedButton<_RowHeightMode>(
                   segments: const [
-                    ButtonSegment(value: _RowHeightMode.synthetic, label: Text('Synthetic')),
-                    ButtonSegment(value: _RowHeightMode.lorem, label: Text('Lorem text')),
-                    ButtonSegment(value: _RowHeightMode.fixed, label: Text('Fixed 20/40/60')),
+                    ButtonSegment(
+                        value: _RowHeightMode.synthetic,
+                        label: Text('Synthetic')),
+                    ButtonSegment(
+                        value: _RowHeightMode.lorem, label: Text('Lorem text')),
+                    ButtonSegment(
+                        value: _RowHeightMode.fixed,
+                        label: Text('Fixed 20/40/60')),
                   ],
                   selected: <_RowHeightMode>{_rowHeightMode},
                   onSelectionChanged: _onRowHeightModeChanged,
@@ -208,9 +218,11 @@ class _VerticalScreenState extends State<VerticalScreen> {
       final sized = SizedBox(
         height: fixedRow.height,
         child: ColoredBox(
-          color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
+          color:
+              index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
           child: Center(
-            child: Text('Row $index (rev ${fixedRow.revision}): ${fixedRow.height.toStringAsFixed(0)}px'),
+            child: Text(
+                'Row $index (rev ${fixedRow.revision}): ${fixedRow.height.toStringAsFixed(0)}px'),
           ),
         ),
       );
@@ -218,15 +230,18 @@ class _VerticalScreenState extends State<VerticalScreen> {
     }
 
     final content = _rowHeightMode == _RowHeightMode.lorem
-        ? Text('Row $index (rev ${_loremRows[index].revision}): ${_loremRows[index].text}')
-        : Text('Row $index (${_calculateItemHeight(index).toStringAsFixed(0)}px)');
+        ? Text(
+            'Row $index (rev ${_loremRows[index].revision}): ${_loremRows[index].text}')
+        : Text(
+            'Row $index (${_calculateItemHeight(index).toStringAsFixed(0)}px)');
     // Saturated, clearly alternating colors with a visible divider -- pale
     // near-white shades made adjacent rows' edges hard to tell apart on a
     // short viewport.
     final row = Container(
       decoration: BoxDecoration(
         color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
-        border: const Border(bottom: BorderSide(color: Color(0xFF9E9E9E), width: 1)),
+        border: const Border(
+            bottom: BorderSide(color: Color(0xFF9E9E9E), width: 1)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -275,8 +290,12 @@ class _VerticalScreenState extends State<VerticalScreen> {
   /// rather than one whose heights were fixed for the app's whole lifetime.
   Future<void> _scrollToRandomIndex() async {
     final index = _random.nextInt(_VerticalScreenConfig.itemCount);
-    final reshuffled = _rowHeightMode == _RowHeightMode.synthetic ? const <int>{} : _reshuffleRandomRows();
-    final reshufflePrefix = reshuffled.isEmpty ? '' : 'Reshuffled rows ${(reshuffled.toList()..sort()).join(', ')}. ';
+    final reshuffled = _rowHeightMode == _RowHeightMode.synthetic
+        ? const <int>{}
+        : _reshuffleRandomRows();
+    final reshufflePrefix = reshuffled.isEmpty
+        ? ''
+        : 'Reshuffled rows ${(reshuffled.toList()..sort()).join(', ')}. ';
     setState(() {
       _scrollStatus = '$reshufflePrefix'
           'Scrolling to random index $index (${_VerticalScreenConfig.maxScrollDuration.inMilliseconds} ms)…';
@@ -291,7 +310,8 @@ class _VerticalScreenState extends State<VerticalScreen> {
 
       if (mounted) {
         setState(() {
-          _scrollStatus = 'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
+          _scrollStatus =
+              'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
         });
       }
     } on ScrollCancelledException catch (e) {
@@ -340,7 +360,8 @@ class _VerticalScreenState extends State<VerticalScreen> {
           case _RowHeightMode.lorem:
             _loremRows[index] = _loremRows[index].reshuffled(_random);
           case _RowHeightMode.fixed:
-            _fixedRows[index] = _fixedRows[index].reshuffled(_random, _VerticalScreenConfig.fixedHeights);
+            _fixedRows[index] = _fixedRows[index]
+                .reshuffled(_random, _VerticalScreenConfig.fixedHeights);
         }
       }
     });
@@ -355,7 +376,8 @@ class _VerticalScreenState extends State<VerticalScreen> {
   IndexedScrollController _buildController() {
     switch (_rowHeightMode) {
       case _RowHeightMode.synthetic:
-        return IndexedScrollController(scrollDuration: _VerticalScreenConfig.maxScrollDuration);
+        return IndexedScrollController(
+            scrollDuration: _VerticalScreenConfig.maxScrollDuration);
       case _RowHeightMode.lorem:
         return IndexedScrollController(
           scrollDuration: _VerticalScreenConfig.maxScrollDuration,
@@ -411,7 +433,9 @@ class _LoremRow {
   }
 
   _LoremRow reshuffled(Random random) {
-    return _LoremRow(text: lorem(paragraphs: 1, words: 5 + random.nextInt(60)), revision: revision + 1);
+    return _LoremRow(
+        text: lorem(paragraphs: 1, words: 5 + random.nextInt(60)),
+        revision: revision + 1);
   }
 }
 

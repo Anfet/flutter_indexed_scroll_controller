@@ -49,7 +49,8 @@ class ScrollCancelledException implements Exception {
   const ScrollCancelledException(this.reason, this.requestedIndex);
 
   @override
-  String toString() => 'ScrollCancelledException(reason: $reason, requestedIndex: $requestedIndex)';
+  String toString() =>
+      'ScrollCancelledException(reason: $reason, requestedIndex: $requestedIndex)';
 }
 
 class _OperationFingerprintSnapshot {
@@ -103,9 +104,12 @@ class IndexedScrollController extends ScrollController {
 
   static const double _alreadyAtTargetTolerancePixels = 1.0;
 
-  double _extentOf(Size size) => position.axis == Axis.horizontal ? size.width : size.height;
+  double _extentOf(Size size) =>
+      position.axis == Axis.horizontal ? size.width : size.height;
 
-  bool get _isReversed => position.axisDirection == AxisDirection.up || position.axisDirection == AxisDirection.left;
+  bool get _isReversed =>
+      position.axisDirection == AxisDirection.up ||
+      position.axisDirection == AxisDirection.left;
 
   int _currentOperationId = 0;
 
@@ -234,13 +238,15 @@ class IndexedScrollController extends ScrollController {
     return physicalSliverIndex == 2 * logicalIndex;
   }
 
-  void _unregisterLiveOwner(_RenderIndexedScrollItem owner, {required int index}) {
+  void _unregisterLiveOwner(_RenderIndexedScrollItem owner,
+      {required int index}) {
     if (_liveOwners[index] == owner) {
       _liveOwners.remove(index);
     }
   }
 
-  void _registerSeparatorSize(int index, Size size, _RenderIndexedScrollSeparator owner) {
+  void _registerSeparatorSize(
+      int index, Size size, _RenderIndexedScrollSeparator owner) {
     final existingOwner = _liveSeparatorOwners[index];
     if (existingOwner != null && existingOwner != owner) {
       throw StateError(
@@ -254,7 +260,8 @@ class IndexedScrollController extends ScrollController {
     _liveSeparatorOwners[index] = owner;
   }
 
-  void _unregisterLiveSeparatorOwner(_RenderIndexedScrollSeparator owner, {required int index}) {
+  void _unregisterLiveSeparatorOwner(_RenderIndexedScrollSeparator owner,
+      {required int index}) {
     if (_liveSeparatorOwners[index] == owner) {
       _liveSeparatorOwners.remove(index);
     }
@@ -334,7 +341,8 @@ class IndexedScrollController extends ScrollController {
       // missing separator here just means index is the list's last item --
       // ListView.separated never builds a trailing separator for it.
       final separatorSize = _separatorSizes[index];
-      final separatorExtent = separatorSize == null ? 0.0 : _extentOf(separatorSize);
+      final separatorExtent =
+          separatorSize == null ? 0.0 : _extentOf(separatorSize);
       return itemExtent + separatorExtent;
     }
     if (!_separatorModeActive) {
@@ -402,7 +410,10 @@ class IndexedScrollController extends ScrollController {
   }
 
   void _checkSearchCanReachIndexedListOrThrow() {
-    if (!_precedingScrollExtent.isFinite || (_sizes.isEmpty && position.hasContentDimensions && !position.maxScrollExtent.isFinite)) {
+    if (!_precedingScrollExtent.isFinite ||
+        (_sizes.isEmpty &&
+            position.hasContentDimensions &&
+            !position.maxScrollExtent.isFinite)) {
       throw StateError(
         'Cannot scroll to an indexed item because a sliver with an unknown '
         'number of children appears before this list. Its preceding scroll '
@@ -432,30 +443,38 @@ class IndexedScrollController extends ScrollController {
   ) {
     if (_currentOperationId != myOperationId) {
       if (_disposed) {
-        throw ScrollCancelledException(ScrollCancelReason.disposed, scrollToIndex);
+        throw ScrollCancelledException(
+            ScrollCancelReason.disposed, scrollToIndex);
       }
       if (_invalidatedOperationId == myOperationId) {
-        throw ScrollCancelledException(ScrollCancelReason.dataInvalidated, scrollToIndex);
+        throw ScrollCancelledException(
+            ScrollCancelReason.dataInvalidated, scrollToIndex);
       }
       if (_explicitlyCancelledOperationId == myOperationId) {
-        throw ScrollCancelledException(ScrollCancelReason.explicitCancel, scrollToIndex);
+        throw ScrollCancelledException(
+            ScrollCancelReason.explicitCancel, scrollToIndex);
       }
       if (_userGestureCancelledOperationId == myOperationId) {
-        throw ScrollCancelledException(ScrollCancelReason.userGesture, scrollToIndex);
+        throw ScrollCancelledException(
+            ScrollCancelReason.userGesture, scrollToIndex);
       }
-      throw ScrollCancelledException(ScrollCancelReason.superseded, scrollToIndex);
+      throw ScrollCancelledException(
+          ScrollCancelReason.superseded, scrollToIndex);
     }
     if (!hasClients || positions.isEmpty) {
-      throw ScrollCancelledException(ScrollCancelReason.detached, scrollToIndex);
+      throw ScrollCancelledException(
+          ScrollCancelReason.detached, scrollToIndex);
     }
     if (_userDragging) {
-      throw ScrollCancelledException(ScrollCancelReason.userGesture, scrollToIndex);
+      throw ScrollCancelledException(
+          ScrollCancelReason.userGesture, scrollToIndex);
     }
     if (_hasOperationDataChanged(fingerprintSnapshot)) {
       _stopCoasting();
       _invalidatedOperationId = myOperationId;
       _currentOperationId++;
-      throw ScrollCancelledException(ScrollCancelReason.dataInvalidated, scrollToIndex);
+      throw ScrollCancelledException(
+          ScrollCancelReason.dataInvalidated, scrollToIndex);
     }
   }
 
@@ -468,7 +487,11 @@ class IndexedScrollController extends ScrollController {
     if (fingerprintCallback == null || itemCountSnapshot == null) {
       return null;
     }
-    var corridorHiIndex = laidOutRangeMax == null ? targetItemIndex : (laidOutRangeMax > targetItemIndex ? laidOutRangeMax : targetItemIndex);
+    var corridorHiIndex = laidOutRangeMax == null
+        ? targetItemIndex
+        : (laidOutRangeMax > targetItemIndex
+            ? laidOutRangeMax
+            : targetItemIndex);
     final highestValidIndex = itemCountSnapshot - 1;
     if (corridorHiIndex > highestValidIndex) {
       corridorHiIndex = highestValidIndex;
@@ -476,7 +499,8 @@ class IndexedScrollController extends ScrollController {
     return _OperationFingerprintSnapshot(
       targetItemIndex: targetItemIndex,
       corridorHiIndex: corridorHiIndex,
-      fingerprints: List<Object?>.generate(corridorHiIndex + 1, fingerprintCallback),
+      fingerprints:
+          List<Object?>.generate(corridorHiIndex + 1, fingerprintCallback),
     );
   }
 
@@ -486,7 +510,8 @@ class IndexedScrollController extends ScrollController {
     }
     final itemCountCallback = itemCount!;
     final currentItemCount = itemCountCallback();
-    if (snapshot.targetItemIndex >= currentItemCount || snapshot.corridorHiIndex >= currentItemCount) {
+    if (snapshot.targetItemIndex >= currentItemCount ||
+        snapshot.corridorHiIndex >= currentItemCount) {
       return true;
     }
     final fingerprintCallback = contentFingerprint!;
@@ -573,7 +598,8 @@ class IndexedScrollController extends ScrollController {
     for (final index in _liveOwners.keys) {
       final offset = _sliverLayoutOffsetOf(index);
       if (offset == null) continue;
-      if (anchorIndex == null || (index - itemIndex).abs() < (anchorIndex - itemIndex).abs()) {
+      if (anchorIndex == null ||
+          (index - itemIndex).abs() < (anchorIndex - itemIndex).abs()) {
         anchorIndex = index;
         anchorOffset = offset;
       }
@@ -613,7 +639,9 @@ class IndexedScrollController extends ScrollController {
       if (pd is SliverMultiBoxAdaptorParentData) {
         final physicalIndex = pd.index;
         if (physicalIndex == null) return null;
-        return _matchesExpectedSlot(index, physicalIndex) ? pd.layoutOffset : null;
+        return _matchesExpectedSlot(index, physicalIndex)
+            ? pd.layoutOffset
+            : null;
       }
     }
     return null;
@@ -642,9 +670,12 @@ class IndexedScrollController extends ScrollController {
     var stalledSteps = 0;
 
     bool progressed() {
-      final distance = (_targetPixelsEstimateForStallCheck(targetItemIndex) - position.pixels).abs();
+      final distance = (_targetPixelsEstimateForStallCheck(targetItemIndex) -
+              position.pixels)
+          .abs();
       final range = _laidOutIndexRange;
-      final registrationSum = _corridorRegistrationSum(targetItemIndex, snapshot);
+      final registrationSum =
+          _corridorRegistrationSum(targetItemIndex, snapshot);
       final materialized = _targetIsMaterialized(targetItemIndex);
 
       var madeProgress = false;
@@ -663,7 +694,9 @@ class IndexedScrollController extends ScrollController {
       } else if (!madeProgress && lastRange == null && range != null) {
         madeProgress = true;
       }
-      if (!madeProgress && lastRegistrationSum != null && registrationSum != lastRegistrationSum) {
+      if (!madeProgress &&
+          lastRegistrationSum != null &&
+          registrationSum != lastRegistrationSum) {
         madeProgress = true;
       }
       if (!madeProgress && !lastMaterialized && materialized) {
@@ -695,7 +728,9 @@ class IndexedScrollController extends ScrollController {
       var stepAdvancedPosition = true;
 
       if (nextMismatch != null) {
-        final onScreen = range != null && nextMismatch >= range.$1 && nextMismatch <= range.$2;
+        final onScreen = range != null &&
+            nextMismatch >= range.$1 &&
+            nextMismatch <= range.$2;
         if (onScreen) {
           final registrationsBefore = registrationCountFor(nextMismatch);
           _liveOwners[nextMismatch]?.invalidateMeasurement();
@@ -703,19 +738,23 @@ class IndexedScrollController extends ScrollController {
           _checkOperationLive(operationId, requestedIndex, snapshot);
           if (registrationCountFor(nextMismatch) <= registrationsBefore ||
               !hasFingerprintFor(nextMismatch) ||
-              fingerprintFor(nextMismatch) != snapshot!.fingerprints[nextMismatch]) {
+              fingerprintFor(nextMismatch) !=
+                  snapshot!.fingerprints[nextMismatch]) {
             throw StateError(
               'Missing fresh registration for index $nextMismatch after recovery anchor frame; rebuild the list before calling scrollTo again.',
             );
           }
-          stepAdvancedPosition = false; // an anchor-frame recheck never moves position.pixels.
+          stepAdvancedPosition =
+              false; // an anchor-frame recheck never moves position.pixels.
         } else {
           final forwards = range == null || nextMismatch > range.$2;
-          stepAdvancedPosition = await _frontierStepTowards(forwards, stride, operationId, requestedIndex, snapshot);
+          stepAdvancedPosition = await _frontierStepTowards(
+              forwards, stride, operationId, requestedIndex, snapshot);
         }
       } else {
         final forwards = range == null || targetItemIndex > range.$2;
-        stepAdvancedPosition = await _frontierStepTowards(forwards, stride, operationId, requestedIndex, snapshot);
+        stepAdvancedPosition = await _frontierStepTowards(
+            forwards, stride, operationId, requestedIndex, snapshot);
       }
 
       final madeProgress = progressed();
@@ -758,8 +797,10 @@ class IndexedScrollController extends ScrollController {
 
     final rowZeroRegistrationsBefore = registrationCountFor(0);
 
-    final contentStart = _clampToBounds(_finitePrecedingScrollExtentOrThrow() + _leadingAxisPadding);
-    if ((contentStart - position.pixels).abs() > _alreadyAtTargetTolerancePixels) {
+    final contentStart = _clampToBounds(
+        _finitePrecedingScrollExtentOrThrow() + _leadingAxisPadding);
+    if ((contentStart - position.pixels).abs() >
+        _alreadyAtTargetTolerancePixels) {
       position.jumpTo(contentStart);
       _checkOperationLive(operationId, requestedIndex, snapshot);
       await WidgetsBinding.instance.endOfFrame;
@@ -785,7 +826,8 @@ class IndexedScrollController extends ScrollController {
       } else {
         stalledSteps = 0;
       }
-      if (!await _stepTowards(false, stride, operationId, requestedIndex, snapshot)) {
+      if (!await _stepTowards(
+          false, stride, operationId, requestedIndex, snapshot)) {
         throw StateError(
           'The absolute reflow toward index $targetItemIndex reached a physical scroll bound before row 0 '
           'materialized. See scrollTo\'s Dartdoc.',
@@ -798,7 +840,10 @@ class IndexedScrollController extends ScrollController {
     _checkOperationLive(operationId, requestedIndex, snapshot);
     if (registrationCountFor(0) <= rowZeroRegistrationsBefore ||
         !_targetIsMaterialized(0) ||
-        (snapshot != null && 0 <= snapshot.corridorHiIndex && (!hasFingerprintFor(0) || fingerprintFor(0) != snapshot.fingerprints[0]))) {
+        (snapshot != null &&
+            0 <= snapshot.corridorHiIndex &&
+            (!hasFingerprintFor(0) ||
+                fingerprintFor(0) != snapshot.fingerprints[0]))) {
       throw StateError(
         'Missing fresh registration for index 0 after the reflow anchor frame toward index $targetItemIndex; '
         'rebuild the list before calling scrollTo again.',
@@ -809,7 +854,9 @@ class IndexedScrollController extends ScrollController {
     stalledSteps = 0;
     double? lastDistanceToTarget;
     while (!_targetIsMaterialized(targetItemIndex)) {
-      final distance = (_targetPixelsEstimateForStallCheck(targetItemIndex) - position.pixels).abs();
+      final distance = (_targetPixelsEstimateForStallCheck(targetItemIndex) -
+              position.pixels)
+          .abs();
       final priorDistance = lastDistanceToTarget;
       final madeProgress = priorDistance == null || distance < priorDistance;
       lastDistanceToTarget = distance;
@@ -825,7 +872,8 @@ class IndexedScrollController extends ScrollController {
       } else {
         stalledSteps = 0;
       }
-      if (!await _stepTowards(true, stride, operationId, requestedIndex, snapshot)) {
+      if (!await _stepTowards(
+          true, stride, operationId, requestedIndex, snapshot)) {
         throw StateError(
           'The absolute reflow toward index $targetItemIndex reached a physical scroll bound before the '
           'target materialized. See scrollTo\'s Dartdoc.',
@@ -836,7 +884,8 @@ class IndexedScrollController extends ScrollController {
     _liveOwners[targetItemIndex]?.invalidateMeasurement();
     await WidgetsBinding.instance.endOfFrame;
     _checkOperationLive(operationId, requestedIndex, snapshot);
-    if (registrationCountFor(targetItemIndex) <= targetRegistrationsBefore || !_targetIsMaterialized(targetItemIndex)) {
+    if (registrationCountFor(targetItemIndex) <= targetRegistrationsBefore ||
+        !_targetIsMaterialized(targetItemIndex)) {
       throw StateError(
         'Missing fresh registration for target index $targetItemIndex after the reflow anchor frame; '
         'rebuild the list before calling scrollTo again.',
@@ -848,11 +897,15 @@ class IndexedScrollController extends ScrollController {
     if (_hasCompletePrefix(targetItemIndex)) {
       return _leadingAxisPadding + _prefixExtentBefore(targetItemIndex);
     }
-    return targetItemIndex >= ((_laidOutIndexRange?.$1) ?? 0) ? double.infinity : 0.0;
+    return targetItemIndex >= ((_laidOutIndexRange?.$1) ?? 0)
+        ? double.infinity
+        : 0.0;
   }
 
-  int _corridorRegistrationSum(int targetItemIndex, _OperationFingerprintSnapshot? snapshot) {
-    final hi = snapshot?.corridorHiIndex ?? (_laidOutIndexRange?.$2 ?? targetItemIndex);
+  int _corridorRegistrationSum(
+      int targetItemIndex, _OperationFingerprintSnapshot? snapshot) {
+    final hi = snapshot?.corridorHiIndex ??
+        (_laidOutIndexRange?.$2 ?? targetItemIndex);
     var sum = 0;
     for (var i = 0; i <= hi; i++) {
       sum += registrationCountFor(i);
@@ -883,7 +936,8 @@ class IndexedScrollController extends ScrollController {
     double requestedIndex,
     _OperationFingerprintSnapshot? snapshot,
   ) async {
-    final next = _clampToBounds(position.pixels + (forwards ? stride : -stride));
+    final next =
+        _clampToBounds(position.pixels + (forwards ? stride : -stride));
     if ((next - position.pixels).abs() <= _alreadyAtTargetTolerancePixels) {
       return false;
     }
@@ -894,7 +948,8 @@ class IndexedScrollController extends ScrollController {
     return true;
   }
 
-  double? _frontierJumpTarget(bool forwards, _OperationFingerprintSnapshot? snapshot) {
+  double? _frontierJumpTarget(
+      bool forwards, _OperationFingerprintSnapshot? snapshot) {
     final range = _laidOutIndexRange;
     if (range == null) return null;
     final frontierIndex = forwards ? range.$2 : range.$1;
@@ -905,15 +960,20 @@ class IndexedScrollController extends ScrollController {
     if (offset == null || !offset.isFinite) return null;
     if (snapshot != null &&
         frontierIndex <= snapshot.corridorHiIndex &&
-        (!hasFingerprintFor(frontierIndex) || fingerprintFor(frontierIndex) != snapshot.fingerprints[frontierIndex])) {
+        (!hasFingerprintFor(frontierIndex) ||
+            fingerprintFor(frontierIndex) !=
+                snapshot.fingerprints[frontierIndex])) {
       return null;
     }
 
-    final base = _finitePrecedingScrollExtentOrThrow() + _leadingAxisPadding + offset;
+    final base =
+        _finitePrecedingScrollExtentOrThrow() + _leadingAxisPadding + offset;
 
     if (!forwards) return base;
     if (!_sizes.containsKey(frontierIndex)) return null;
-    return base + _extentOf(_sizeOrThrow(frontierIndex)) + _separatorExtentBetween(frontierIndex);
+    return base +
+        _extentOf(_sizeOrThrow(frontierIndex)) +
+        _separatorExtentBetween(frontierIndex);
   }
 
   Future<bool> _frontierStepTowards(
@@ -926,7 +986,9 @@ class IndexedScrollController extends ScrollController {
     final frontierTarget = _frontierJumpTarget(forwards, snapshot);
     if (frontierTarget != null) {
       final strideTarget = position.pixels + (forwards ? stride : -stride);
-      final frontierGoesFurther = forwards ? frontierTarget > strideTarget : frontierTarget < strideTarget;
+      final frontierGoesFurther = forwards
+          ? frontierTarget > strideTarget
+          : frontierTarget < strideTarget;
       if (frontierGoesFurther) {
         final next = _clampToBounds(frontierTarget);
         if ((next - position.pixels).abs() > _alreadyAtTargetTolerancePixels) {
@@ -938,7 +1000,8 @@ class IndexedScrollController extends ScrollController {
         }
       }
     }
-    return _stepTowards(forwards, stride, operationId, requestedIndex, snapshot);
+    return _stepTowards(
+        forwards, stride, operationId, requestedIndex, snapshot);
   }
 
   Future _animateTo(
@@ -1041,8 +1104,11 @@ class IndexedScrollController extends ScrollController {
         }
 
         final atOrPastPhysicalBound = position.hasContentDimensions &&
-            (animateSign > 0 ? position.pixels >= position.maxScrollExtent : position.pixels <= position.minScrollExtent);
-        final madeProgress = _sizes.length != measuredCountBefore || (position.pixels != positionBefore && !atOrPastPhysicalBound);
+            (animateSign > 0
+                ? position.pixels >= position.maxScrollExtent
+                : position.pixels <= position.minScrollExtent);
+        final madeProgress = _sizes.length != measuredCountBefore ||
+            (position.pixels != positionBefore && !atOrPastPhysicalBound);
         if (madeProgress) {
           stalledSteps = 0;
         } else {
@@ -1071,22 +1137,29 @@ class IndexedScrollController extends ScrollController {
     _checkNoWatchIndexMismatch(itemIndex);
     _checkNoOrphanSeparators();
 
-    final corridorDirty = fingerprintSnapshot != null && _hasFingerprintMismatchInPrefix(fingerprintSnapshot);
+    final corridorDirty = fingerprintSnapshot != null &&
+        _hasFingerprintMismatchInPrefix(fingerprintSnapshot);
     var sawBelowTargetMismatch = false;
     if (corridorDirty) {
-      sawBelowTargetMismatch = await _alignGeometryWithCache(itemIndex, myOperationId, scrollToIndex, fingerprintSnapshot);
+      sawBelowTargetMismatch = await _alignGeometryWithCache(
+          itemIndex, myOperationId, scrollToIndex, fingerprintSnapshot);
       scrollPosition = position.pixels;
       viewportSize = position.viewportDimension;
     }
 
-    final priorItems = _anchoredPriorExtent(itemIndex) ?? _prefixExtentBefore(itemIndex);
+    final priorItems =
+        _anchoredPriorExtent(itemIndex) ?? _prefixExtentBefore(itemIndex);
 
     var fraction = scrollToIndex - scrollToIndex.truncate();
     var extent = _rowExtentOrThrow(itemIndex, alignmentTarget);
     var effectiveAlignment = _isReversed ? 1.0 - alignment : alignment;
     var alignmentAdjust = -(viewportSize - extent) * effectiveAlignment;
     var targetPixels = _clampToBounds(
-      _finitePrecedingScrollExtentOrThrow() + _leadingAxisPadding + priorItems + extent * fraction + alignmentAdjust,
+      _finitePrecedingScrollExtentOrThrow() +
+          _leadingAxisPadding +
+          priorItems +
+          extent * fraction +
+          alignmentAdjust,
     );
     var remaining = (targetPixels - scrollPosition).abs();
     var scrollLimit = viewportSize;
@@ -1101,7 +1174,12 @@ class IndexedScrollController extends ScrollController {
 
     if (!_targetIsMaterialized(itemIndex)) {
       final stride = viewportSize + _viewportCacheExtent;
-      var guard = stride > 0 && position.hasContentDimensions ? ((position.maxScrollExtent - position.minScrollExtent).abs() / stride).ceil() + 2 : 8;
+      var guard = stride > 0 && position.hasContentDimensions
+          ? ((position.maxScrollExtent - position.minScrollExtent).abs() /
+                      stride)
+                  .ceil() +
+              2
+          : 8;
       var stepsTaken = 0;
       while (!_targetIsMaterialized(itemIndex)) {
         if (stride <= 0 || stepsTaken >= guard) {
@@ -1112,7 +1190,8 @@ class IndexedScrollController extends ScrollController {
         }
         stepsTaken++;
         final forwards = animateSign > 0;
-        if (!await _stepTowards(forwards, stride, myOperationId, scrollToIndex, fingerprintSnapshot)) {
+        if (!await _stepTowards(forwards, stride, myOperationId, scrollToIndex,
+            fingerprintSnapshot)) {
           throw StateError(
             'Target index $itemIndex did not materialize before the scrollable reached its bound; '
             'see scrollTo\'s Dartdoc.',
@@ -1124,7 +1203,8 @@ class IndexedScrollController extends ScrollController {
     }
 
     if (sawBelowTargetMismatch) {
-      await _reflowFromContentStart(itemIndex, myOperationId, scrollToIndex, fingerprintSnapshot);
+      await _reflowFromContentStart(
+          itemIndex, myOperationId, scrollToIndex, fingerprintSnapshot);
       scrollPosition = position.pixels;
       viewportSize = position.viewportDimension;
     }
@@ -1138,7 +1218,11 @@ class IndexedScrollController extends ScrollController {
       );
     }
     targetPixels = _clampToBounds(
-      _finitePrecedingScrollExtentOrThrow() + _leadingAxisPadding + liveRowStart + extent * fraction + alignmentAdjust,
+      _finitePrecedingScrollExtentOrThrow() +
+          _leadingAxisPadding +
+          liveRowStart +
+          extent * fraction +
+          alignmentAdjust,
     );
 
     if (targetPixels == operationStartPixels) {
@@ -1149,10 +1233,14 @@ class IndexedScrollController extends ScrollController {
     } else {
       if (position.pixels != operationStartPixels) {
         final distanceFromStart = (targetPixels - operationStartPixels).abs();
-        final legStart = distanceFromStart <= viewportSize ? operationStartPixels : targetPixels + step * -1;
-        if ((legStart - position.pixels).abs() > _alreadyAtTargetTolerancePixels) {
+        final legStart = distanceFromStart <= viewportSize
+            ? operationStartPixels
+            : targetPixels + step * -1;
+        if ((legStart - position.pixels).abs() >
+            _alreadyAtTargetTolerancePixels) {
           position.jumpTo(_clampToBounds(legStart));
-          _checkOperationLive(myOperationId, scrollToIndex, fingerprintSnapshot);
+          _checkOperationLive(
+              myOperationId, scrollToIndex, fingerprintSnapshot);
         }
       }
 
@@ -1161,7 +1249,8 @@ class IndexedScrollController extends ScrollController {
         await WidgetsBinding.instance.endOfFrame;
         _checkOperationLive(myOperationId, scrollToIndex, fingerprintSnapshot);
       } else {
-        await position.animateTo(targetPixels, duration: duration, curve: curve);
+        await position.animateTo(targetPixels,
+            duration: duration, curve: curve);
         _checkOperationLive(myOperationId, scrollToIndex, fingerprintSnapshot);
       }
     }
@@ -1247,7 +1336,8 @@ class IndexedScrollController extends ScrollController {
     }
 
     if (_userDragging) {
-      throw ScrollCancelledException(ScrollCancelReason.userGesture, scrollToIndex);
+      throw ScrollCancelledException(
+          ScrollCancelReason.userGesture, scrollToIndex);
     }
 
     final myOperationId = ++_currentOperationId;
@@ -1255,7 +1345,8 @@ class IndexedScrollController extends ScrollController {
 
     try {
       final targetItemIndex = scrollToIndex.truncate();
-      final fingerprintSnapshot = _captureOperationFingerprintSnapshot(targetItemIndex, itemCountSnapshot, _laidOutIndexRange?.$2);
+      final fingerprintSnapshot = _captureOperationFingerprintSnapshot(
+          targetItemIndex, itemCountSnapshot, _laidOutIndexRange?.$2);
 
       var viewportSize = position.viewportDimension;
       var scrollPosition = position.pixels;
@@ -1264,9 +1355,13 @@ class IndexedScrollController extends ScrollController {
 
       var hasCompletePrefix = _hasCompletePrefix(targetItemIndex);
 
-      final corridorDirty = hasCompletePrefix && fingerprintSnapshot != null && _hasFingerprintMismatchInPrefix(fingerprintSnapshot);
-      final needsMaterialization = hasCompletePrefix && !_targetIsMaterialized(targetItemIndex);
-      final canTakeFastPath = hasCompletePrefix && !corridorDirty && !needsMaterialization;
+      final corridorDirty = hasCompletePrefix &&
+          fingerprintSnapshot != null &&
+          _hasFingerprintMismatchInPrefix(fingerprintSnapshot);
+      final needsMaterialization =
+          hasCompletePrefix && !_targetIsMaterialized(targetItemIndex);
+      final canTakeFastPath =
+          hasCompletePrefix && !corridorDirty && !needsMaterialization;
 
       if (!hasCompletePrefix) {
         if (scrollPosition != 0.0) {
@@ -1301,9 +1396,15 @@ class IndexedScrollController extends ScrollController {
             var extent = _rowExtentOrThrow(targetItemIndex, alignmentTarget);
             var effectiveAlignment = _isReversed ? 1.0 - alignment : alignment;
             var alignmentAdjust = -(viewportSize - extent) * effectiveAlignment;
-            var targetPixels = _finitePrecedingScrollExtentOrThrow() + _leadingAxisPadding + liveRowStart + extent * fraction + alignmentAdjust;
-            if ((targetPixels - scrollPosition).abs() <= _alreadyAtTargetTolerancePixels) {
-              _checkOperationLive(myOperationId, scrollToIndex, fingerprintSnapshot);
+            var targetPixels = _finitePrecedingScrollExtentOrThrow() +
+                _leadingAxisPadding +
+                liveRowStart +
+                extent * fraction +
+                alignmentAdjust;
+            if ((targetPixels - scrollPosition).abs() <=
+                _alreadyAtTargetTolerancePixels) {
+              _checkOperationLive(
+                  myOperationId, scrollToIndex, fingerprintSnapshot);
               return;
             }
           }

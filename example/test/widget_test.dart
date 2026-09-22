@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('renders home screen with fingerprint example entry', (tester) async {
+  testWidgets('renders home screen with fingerprint example entry',
+      (tester) async {
     await tester.pumpWidget(const ExampleApp());
 
     expect(find.text('Indexed Scroll Controller Examples'), findsOneWidget);
@@ -16,13 +17,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('renders the fingerprint-invalidation example with both scenarios', (tester) async {
+  testWidgets(
+      'renders the fingerprint-invalidation example with both scenarios',
+      (tester) async {
     await tester.pumpWidget(const ExampleApp());
 
     await tester.tap(find.text('Fingerprint Invalidation'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Automatic fingerprint-based invalidation'), findsOneWidget);
+    expect(
+        find.text('Automatic fingerprint-based invalidation'), findsOneWidget);
     expect(find.text('Row 0: 80 px, revision 0'), findsOneWidget);
     expect(find.text('Cancel scroll on data change'), findsOneWidget);
     expect(find.text('Grow off-screen row, no reset'), findsOneWidget);
@@ -36,14 +40,16 @@ void main() {
       ),
     );
 
-    expect(find.text('Automatic fingerprint-based invalidation'), findsOneWidget);
+    expect(
+        find.text('Automatic fingerprint-based invalidation'), findsOneWidget);
     expect(find.text('Row 0: 80 px, revision 0'), findsOneWidget);
     expect(find.text('Cancel scroll on data change'), findsOneWidget);
     expect(find.text('Grow off-screen row, no reset'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('renders home screen with vertical example entry', (tester) async {
+  testWidgets('renders home screen with vertical example entry',
+      (tester) async {
     await tester.pumpWidget(const ExampleApp());
 
     expect(find.text('Indexed Scroll Controller Examples'), findsOneWidget);
@@ -51,20 +57,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('renders vertical screen and can perform indexed scroll', (tester) async {
+  testWidgets('renders vertical screen and can perform indexed scroll',
+      (tester) async {
     await tester.pumpWidget(const ExampleApp());
 
     await tester.tap(find.text('Vertical'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Vertical Scrolling with Alignment Control'), findsOneWidget);
+    expect(
+        find.text('Vertical Scrolling with Alignment Control'), findsOneWidget);
     expect(find.text('Top (0.0)'), findsOneWidget);
     expect(find.text('Scroll to Random Index (1s)'), findsOneWidget);
     expect(find.text('Row 0 (60px)'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('vertical screen alignment buttons are selectable', (tester) async {
+  testWidgets('vertical screen alignment buttons are selectable',
+      (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: VerticalScreen(),
@@ -79,7 +88,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('vertical screen scrollTo updates offset on successful scroll', (tester) async {
+  testWidgets('vertical screen scrollTo updates offset on successful scroll',
+      (tester) async {
     // A fixed seed makes the picked target index (and thus the resulting
     // offset) reproducible without exposing manual index entry in the app.
     await tester.pumpWidget(
@@ -98,16 +108,22 @@ void main() {
     final offsetTexts = find
         .byType(Text)
         .evaluate()
-        .map((w) => (w.widget as Text).data ?? (w.widget as Text).textSpan?.toPlainText() ?? '')
+        .map((w) =>
+            (w.widget as Text).data ??
+            (w.widget as Text).textSpan?.toPlainText() ??
+            '')
         .where((t) => t.startsWith('Current offset:'))
         .toList();
 
     expect(offsetTexts, isNotEmpty, reason: 'Should have offset display');
-    expect(offsetTexts.first, isNot('Current offset: -'), reason: 'A completed scroll must report a numeric offset, not the pre-attach placeholder');
+    expect(offsetTexts.first, isNot('Current offset: -'),
+        reason:
+            'A completed scroll must report a numeric offset, not the pre-attach placeholder');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('vertical screen alignment change affects scroll position', (tester) async {
+  testWidgets('vertical screen alignment change affects scroll position',
+      (tester) async {
     // Two different seeds land on two different target indices; each run
     // still resolves to a single fixed index deterministically. Each
     // pumpWidget uses a distinct Key: without one, Flutter reuses the same
@@ -150,11 +166,15 @@ void main() {
 
     expect(offsetAlignment0, isNotNull);
     expect(offsetAlignment1, isNotNull);
-    expect(offsetAlignment0 != offsetAlignment1, true, reason: 'Different alignments should produce different offsets for same index');
+    expect(offsetAlignment0 != offsetAlignment1, true,
+        reason:
+            'Different alignments should produce different offsets for same index');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('vertical screen padding toggle changes the scroll offset for the same index', (tester) async {
+  testWidgets(
+      'vertical screen padding toggle changes the scroll offset for the same index',
+      (tester) async {
     // ISC-72 review: confirms the padding CheckboxListTile actually takes
     // effect on the NEXT scrollTo, not merely that the switch flips visually.
     // This is the scenario _recreateController()'s invalidateMeasurements()
@@ -204,7 +224,8 @@ void main() {
     expect(
       offsetWithPadding! - offsetWithoutPadding!,
       closeTo(40.0, 1.0),
-      reason: 'Enabling the 40px leading padding must shift the scroll offset for the '
+      reason:
+          'Enabling the 40px leading padding must shift the scroll offset for the '
           'same target index by exactly 40px -- if the toggle were a no-op (e.g. because '
           'invalidateMeasurements() ran on a controller with no rows registered '
           'yet), both offsets would be identical instead.',
@@ -212,7 +233,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('vertical screen reverse toggle actually reverses the visual order', (tester) async {
+  testWidgets(
+      'vertical screen reverse toggle actually reverses the visual order',
+      (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: VerticalScreen(),
@@ -244,7 +267,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('renders home screen with horizontal example entry', (tester) async {
+  testWidgets('renders home screen with horizontal example entry',
+      (tester) async {
     await tester.pumpWidget(const ExampleApp());
 
     expect(find.text('Indexed Scroll Controller Examples'), findsOneWidget);
@@ -252,19 +276,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('renders horizontal screen and can perform indexed scroll', (tester) async {
+  testWidgets('renders horizontal screen and can perform indexed scroll',
+      (tester) async {
     await tester.pumpWidget(const ExampleApp());
 
     await tester.tap(find.text('Horizontal'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Horizontal Scrolling with Alignment Control'), findsOneWidget);
+    expect(find.text('Horizontal Scrolling with Alignment Control'),
+        findsOneWidget);
     expect(find.text('Scroll to Random Index (1s)'), findsOneWidget);
     expect(find.text('Left (0.0)'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('horizontal screen alignment buttons are selectable', (tester) async {
+  testWidgets('horizontal screen alignment buttons are selectable',
+      (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: HorizontalScreen(),
@@ -279,7 +306,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('horizontal screen scrollTo updates offset on successful scroll', (tester) async {
+  testWidgets('horizontal screen scrollTo updates offset on successful scroll',
+      (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: HorizontalScreen(random: Random(1)),
@@ -297,16 +325,22 @@ void main() {
     final offsetTexts = find
         .byType(Text)
         .evaluate()
-        .map((w) => (w.widget as Text).data ?? (w.widget as Text).textSpan?.toPlainText() ?? '')
+        .map((w) =>
+            (w.widget as Text).data ??
+            (w.widget as Text).textSpan?.toPlainText() ??
+            '')
         .where((t) => t.startsWith('Current offset:'))
         .toList();
 
     expect(offsetTexts, isNotEmpty, reason: 'Should have offset display');
-    expect(offsetTexts.first, isNot('Current offset: -'), reason: 'A completed scroll must report a numeric offset, not the pre-attach placeholder');
+    expect(offsetTexts.first, isNot('Current offset: -'),
+        reason:
+            'A completed scroll must report a numeric offset, not the pre-attach placeholder');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('horizontal screen alignment change affects scroll position', (tester) async {
+  testWidgets('horizontal screen alignment change affects scroll position',
+      (tester) async {
     // Each pumpWidget uses a distinct Key: without one, Flutter reuses the
     // same State (HorizontalScreen has no key of its own), so the second run
     // would continue the FIRST run's already-advanced Random stream instead
@@ -347,11 +381,15 @@ void main() {
 
     expect(offsetAlignment0, isNotNull);
     expect(offsetAlignment1, isNotNull);
-    expect(offsetAlignment0 != offsetAlignment1, true, reason: 'Different alignments should produce different offsets for same index');
+    expect(offsetAlignment0 != offsetAlignment1, true,
+        reason:
+            'Different alignments should produce different offsets for same index');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('horizontal screen padding toggle changes the scroll offset for the same index', (tester) async {
+  testWidgets(
+      'horizontal screen padding toggle changes the scroll offset for the same index',
+      (tester) async {
     // Mirrors the vertical screen's padding-toggle test: Random(15) picks
     // small index 1, keeping the scroll on scrollTo()'s already-measured
     // fast path. Each pumpWidget uses a distinct Key: without one, Flutter
@@ -360,7 +398,8 @@ void main() {
     // stream instead of replaying it from the same seed.
     await tester.pumpWidget(
       MaterialApp(
-        home: HorizontalScreen(key: const ValueKey('run-1'), random: Random(15)),
+        home:
+            HorizontalScreen(key: const ValueKey('run-1'), random: Random(15)),
       ),
     );
     await tester.pumpAndSettle();
@@ -373,7 +412,8 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: HorizontalScreen(key: const ValueKey('run-2'), random: Random(15)),
+        home:
+            HorizontalScreen(key: const ValueKey('run-2'), random: Random(15)),
       ),
     );
     await tester.pumpAndSettle();
@@ -392,13 +432,16 @@ void main() {
     expect(
       offsetWithPadding! - offsetWithoutPadding!,
       closeTo(40.0, 1.0),
-      reason: 'Enabling the 40px leading padding must shift the scroll offset for the '
+      reason:
+          'Enabling the 40px leading padding must shift the scroll offset for the '
           'same target index by exactly 40px.',
     );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('horizontal screen reverse toggle actually reverses the visual order', (tester) async {
+  testWidgets(
+      'horizontal screen reverse toggle actually reverses the visual order',
+      (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: HorizontalScreen(),
@@ -433,8 +476,15 @@ void main() {
 
 double? _extractOffset() {
   final finder = find.byType(Text);
-  final texts = finder.evaluate().map((w) => (w.widget as Text).data ?? (w.widget as Text).textSpan?.toPlainText() ?? '').toList();
-  final offsetText = texts.firstWhere((t) => t.startsWith('Current offset:'), orElse: () => '');
+  final texts = finder
+      .evaluate()
+      .map((w) =>
+          (w.widget as Text).data ??
+          (w.widget as Text).textSpan?.toPlainText() ??
+          '')
+      .toList();
+  final offsetText = texts.firstWhere((t) => t.startsWith('Current offset:'),
+      orElse: () => '');
   if (offsetText.isEmpty) return null;
   final match = RegExp(r'Current offset: ([\d.]+)').firstMatch(offsetText);
   if (match == null) return null;

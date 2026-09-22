@@ -47,7 +47,8 @@ class _FingerprintScreenState extends State<FingerprintScreen> {
   Future<void> _runIsc47Scenario() async {
     setState(() {
       _isScenarioRunning = true;
-      _status = 'Scrolling to row $_scenarioTargetIndex. Row 0 will change after ${_dataChangeDelay.inMilliseconds} ms.';
+      _status =
+          'Scrolling to row $_scenarioTargetIndex. Row 0 will change after ${_dataChangeDelay.inMilliseconds} ms.';
     });
 
     final scroll = _scrollController.scrollTo(
@@ -73,7 +74,8 @@ class _FingerprintScreenState extends State<FingerprintScreen> {
         height: item.height == 80.0 ? 240.0 : 80.0,
         revision: item.revision + 1,
       );
-      _status = 'Row 0 changed while scrollTo($_scenarioTargetIndex) is still running. Waiting for the result…';
+      _status =
+          'Row 0 changed while scrollTo($_scenarioTargetIndex) is still running. Waiting for the result…';
     });
 
     try {
@@ -82,7 +84,8 @@ class _FingerprintScreenState extends State<FingerprintScreen> {
         return;
       }
       setState(() {
-        _status = 'Unexpected success: this operation should have been cancelled '
+        _status =
+            'Unexpected success: this operation should have been cancelled '
             'after the data change.';
       });
     } on ScrollCancelledException catch (error) {
@@ -162,7 +165,8 @@ class _FingerprintScreenState extends State<FingerprintScreen> {
   void _resetScenario() {
     setState(() {
       _items[0] = const _ExampleItem(index: 0, height: 80.0);
-      _items[_offscreenChangedIndex] = const _ExampleItem(index: _offscreenChangedIndex, height: 80.0);
+      _items[_offscreenChangedIndex] =
+          const _ExampleItem(index: _offscreenChangedIndex, height: 80.0);
       _status = 'Reset. Rows 0 and $_offscreenChangedIndex have their '
           'original height and fingerprint.';
     });
@@ -172,7 +176,8 @@ class _FingerprintScreenState extends State<FingerprintScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Automatic fingerprint-based invalidation')),
+      appBar:
+          AppBar(title: const Text('Automatic fingerprint-based invalidation')),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -194,10 +199,13 @@ class _FingerprintScreenState extends State<FingerprintScreen> {
                     child: SizedBox(
                       height: item.height,
                       child: ColoredBox(
-                        color: index.isEven ? const Color(0xFFE8F0FE) : const Color(0xFFF4F4F4),
+                        color: index.isEven
+                            ? const Color(0xFFE8F0FE)
+                            : const Color(0xFFF4F4F4),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Text('Row ${item.index}: ${item.height.toStringAsFixed(0)} px, revision ${item.revision}'),
+                          child: Text(
+                              'Row ${item.index}: ${item.height.toStringAsFixed(0)} px, revision ${item.revision}'),
                         ),
                       ),
                     ),
@@ -214,14 +222,17 @@ class _FingerprintScreenState extends State<FingerprintScreen> {
                   children: [
                     Expanded(
                       child: FilledButton(
-                        onPressed: _isScenarioRunning ? null : _runIsc47Scenario,
+                        onPressed:
+                            _isScenarioRunning ? null : _runIsc47Scenario,
                         child: const Text('Cancel scroll on data change'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton(
-                        onPressed: _isScenarioRunning ? null : _runOffscreenRecoveryScenario,
+                        onPressed: _isScenarioRunning
+                            ? null
+                            : _runOffscreenRecoveryScenario,
                         child: const Text('Grow off-screen row, no reset'),
                       ),
                     ),

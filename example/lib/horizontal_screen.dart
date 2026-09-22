@@ -58,7 +58,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Horizontal Scrolling with Alignment Control')),
+      appBar: AppBar(
+          title: const Text('Horizontal Scrolling with Alignment Control')),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -175,7 +176,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
         key: ValueKey(_listGeneration),
         scrollDirection: Axis.horizontal,
         reverse: _isReverse,
-        padding: _hasPadding ? const EdgeInsets.only(left: 40) : EdgeInsets.zero,
+        padding:
+            _hasPadding ? const EdgeInsets.only(left: 40) : EdgeInsets.zero,
         controller: _scrollController,
         itemCount: _itemCount,
         itemBuilder: (context, index) => _buildCard(index),
@@ -190,11 +192,13 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
       child: SizedBox(
         width: width,
         child: ColoredBox(
-          color: index.isEven ? const Color(0xFFE8F0FE) : const Color(0xFFF4F4F4),
+          color:
+              index.isEven ? const Color(0xFFE8F0FE) : const Color(0xFFF4F4F4),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Center(
-              child: Text('Card $index\n(${width.toStringAsFixed(0)}px)', textAlign: TextAlign.center),
+              child: Text('Card $index\n(${width.toStringAsFixed(0)}px)',
+                  textAlign: TextAlign.center),
             ),
           ),
         ),
@@ -209,7 +213,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
   Future<void> _scrollToRandomIndex() async {
     final index = _random.nextInt(_itemCount);
     setState(() {
-      _scrollStatus = 'Scrolling to random index $index (${_maxScrollDuration.inMilliseconds} ms)…';
+      _scrollStatus =
+          'Scrolling to random index $index (${_maxScrollDuration.inMilliseconds} ms)…';
     });
 
     try {
@@ -221,7 +226,8 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
 
       if (mounted) {
         setState(() {
-          _scrollStatus = 'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
+          _scrollStatus =
+              'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
         });
       }
     } on ScrollCancelledException catch (e) {

@@ -25,7 +25,8 @@ class _SeparatorsScreenState extends State<SeparatorsScreen> {
   static const Duration _scrollDuration = Duration(seconds: 1);
 
   late final _random = widget._random ?? Random();
-  late final _scrollController = IndexedScrollController(scrollDuration: _scrollDuration);
+  late final _scrollController =
+      IndexedScrollController(scrollDuration: _scrollDuration);
   ScrollAlignmentTarget _alignmentTarget = ScrollAlignmentTarget.row;
   String _scrollStatus = '';
 
@@ -119,9 +120,13 @@ class _SeparatorsScreenState extends State<SeparatorsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: _scrollStatus.startsWith('Error') ? const Color(0xFFFFEBEE) : const Color(0xFFFFF8E1),
+                  color: _scrollStatus.startsWith('Error')
+                      ? const Color(0xFFFFEBEE)
+                      : const Color(0xFFFFF8E1),
                   border: Border.all(
-                    color: _scrollStatus.startsWith('Error') ? const Color(0xFFEF5350) : const Color(0xFFFBC02D),
+                    color: _scrollStatus.startsWith('Error')
+                        ? const Color(0xFFEF5350)
+                        : const Color(0xFFFBC02D),
                   ),
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -140,7 +145,8 @@ class _SeparatorsScreenState extends State<SeparatorsScreen> {
                 // wrapped with separator(index: i), not left as a plain
                 // widget -- otherwise _checkNoOrphanSeparators() throws a
                 // StateError instead of silently landing at the wrong offset.
-                separatorBuilder: (context, index) => _scrollController.separator(
+                separatorBuilder: (context, index) =>
+                    _scrollController.separator(
                   index: index,
                   child: Container(
                     height: _separatorExtent,
@@ -152,7 +158,9 @@ class _SeparatorsScreenState extends State<SeparatorsScreen> {
                   index: index,
                   child: Container(
                     height: _itemExtent,
-                    color: index.isEven ? const Color(0xFFBBDEFB) : const Color(0xFFFFE0B2),
+                    color: index.isEven
+                        ? const Color(0xFFBBDEFB)
+                        : const Color(0xFFFFE0B2),
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text('Item $index'),

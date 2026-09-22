@@ -44,11 +44,14 @@ class OffsetStatusText extends StatelessWidget {
           TextSpan(
             style: baseStyle,
             children: [
-              TextSpan(text: 'Current offset: ${controller.offset.toStringAsFixed(1)} px'),
+              TextSpan(
+                  text:
+                      'Current offset: ${controller.offset.toStringAsFixed(1)} px'),
               if (boundaryLabel != null)
                 TextSpan(
                   text: boundaryLabel,
-                  style: const TextStyle(color: Color(0xFF8A6D00), fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Color(0xFF8A6D00), fontWeight: FontWeight.bold),
                 ),
             ],
           ),
