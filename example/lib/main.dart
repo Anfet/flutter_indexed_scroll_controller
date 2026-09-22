@@ -1,5 +1,6 @@
 import 'package:example/fingerprint_screen.dart';
 import 'package:example/horizontal_screen.dart';
+import 'package:example/separators_screen.dart';
 import 'package:example/vertical_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -63,6 +64,17 @@ class HomeScreen extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (context) => const HorizontalScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            title: const Text('ListView.separated'),
+            subtitle: const Text('separator() and ScrollAlignmentTarget'),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => const SeparatorsScreen(),
                 ),
               );
             },

@@ -34,6 +34,12 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_CURRENT_VERSION }}
           channel: stable
+      # `dart format` resolves analysis_options.yaml's `include:` against
+      # the pub package graph; without `pub get` first it cannot find
+      # flutter_lints and silently falls back to different formatting
+      # decisions, producing false "changed" files that never show up
+      # locally where dependencies are already resolved.
+      - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed .
 
   analyze:

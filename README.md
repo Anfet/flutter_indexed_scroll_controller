@@ -51,9 +51,38 @@ final controller = IndexedScrollController(
 
 When data changes, the controller compares the fingerprint of each row to detect which measurements are invalid. The fingerprint does not estimate geometry; it is only a tag for invalidation. After a detected change, the controller re-measures the affected row and any preceding rows whose layout may have shifted.
 
-## Separators and gestures
+## Separators
 
-For ordinary separators, include the separator in the same `watch`-ed row. To align a `ListView.separated` item without its following separator, wrap the separator with `separator(index: index, ...)` and pass `alignmentTarget: ScrollAlignmentTarget.item` to `scrollTo`.
+`ListView.builder` rows that include their own separator (for example a `Column` with the item and a trailing divider) need nothing extra: just `watch` the whole row as usual.
+
+For `ListView.separated`, wrap every item with `watch` and every separator with `separator(index: index, ...)`, keyed by the same logical item index the separator follows:
+
+```dart
+ListView.separated(
+  controller: controller,
+  itemCount: items.length,
+  itemBuilder: (context, index) => controller.watch(
+    index: index,
+    child: ListTile(title: Text(items[index].title)),
+  ),
+  separatorBuilder: (context, index) => controller.separator(
+    index: index,
+    child: const Divider(),
+  ),
+);
+```
+
+Every separator must be wrapped this way, even a zero-size one (`separator(index: index, child: const SizedBox())`) — an unwrapped separator throws `StateError` rather than silently landing at the wrong offset, because `watch`'s logical indices would otherwise skip every separator's physical slot.
+
+By default, `scrollTo`'s `alignment` measures against the whole row (item plus its trailing separator) — `ScrollAlignmentTarget.row`. Pass `alignmentTarget: ScrollAlignmentTarget.item` to align the item alone, ignoring its separator:
+
+```dart
+await controller.scrollTo(10, alignment: 1, alignmentTarget: ScrollAlignmentTarget.item);
+```
+
+`ScrollAlignmentTarget.item` requires that item's separator to have been registered via `separator()` — it is meaningless without one.
+
+## Gestures
 
 Wrap the scrollable with `IndexedScrollGestureDetector` when a user drag must cancel an active `scrollTo` operation:
 
@@ -68,4 +97,4 @@ IndexedScrollGestureDetector(
 
 ## Example
 
-See the [example](example) application for vertical, horizontal, padding, reverse, and fingerprint-invalidation scenarios.
+See the [example](example) application for vertical, horizontal, padding, reverse, `ListView.separated`, and fingerprint-invalidation scenarios.

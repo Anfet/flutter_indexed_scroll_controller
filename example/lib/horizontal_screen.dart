@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:indexed_scroll_controller/indexed_scroll_controller.dart';
 
+import 'offset_status_text.dart';
+
 class HorizontalScreen extends StatefulWidget {
   /// Overrides the source of "Scroll to Random Index"'s target. Defaults to
   /// an unseeded [Random] (genuinely random, as the app shows it); tests
@@ -53,22 +55,151 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
     super.dispose();
   }
 
-  double _calculateItemWidth(int index) {
-    return 80.0 + (index % 6) * 35.0;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Horizontal Scrolling with Alignment Control')),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildControls(),
+          _buildOffsetStatus(),
+          if (_scrollStatus.isNotEmpty) _buildScrollStatusBanner(),
+          const SizedBox(height: 16),
+          Expanded(child: _buildList()),
+        ],
+      ),
+    );
   }
 
-  void _recreateController() {
-    _scrollController.dispose();
-    _scrollController = IndexedScrollController(
-      scrollDuration: _maxScrollDuration,
+  Widget _buildControls() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: SegmentedButton<double>(
+                  segments: const [
+                    ButtonSegment(value: 0.0, label: Text('Left (0.0)')),
+                    ButtonSegment(value: 0.5, label: Text('Center (0.5)')),
+                    ButtonSegment(value: 1.0, label: Text('Right (1.0)')),
+                  ],
+                  selected: <double>{_selectedAlignment},
+                  onSelectionChanged: (Set<double> newSelection) {
+                    setState(() {
+                      _selectedAlignment = newSelection.first;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text('Options:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: CheckboxListTile(
+                  value: _isReverse,
+                  onChanged: (value) {
+                    setState(() {
+                      _isReverse = value ?? false;
+                      _recreateController();
+                    });
+                  },
+                  title: const Text('Reverse'),
+                  dense: true,
+                ),
+              ),
+              Expanded(
+                child: CheckboxListTile(
+                  value: _hasPadding,
+                  onChanged: (value) {
+                    setState(() {
+                      _hasPadding = value ?? false;
+                      _recreateController();
+                    });
+                  },
+                  title: const Text('Padding'),
+                  dense: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: _scrollToRandomIndex,
+              child: const Text('Scroll to Random Index (1s)'),
+            ),
+          ),
+        ],
+      ),
     );
-    // No invalidateMeasurements() call here: this controller is brand new
-    // and has never registered a row (_liveOwners is empty), so there is
-    // nothing yet to force through a fresh layout. Every row registers its
-    // size and leading padding from scratch the first time this controller
-    // attaches and lays out, which the changing _listGeneration key (used
-    // below) guarantees happens rather than reusing stale RenderObjects.
-    _listGeneration++;
+  }
+
+  Widget _buildOffsetStatus() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: OffsetStatusText(controller: _scrollController),
+    );
+  }
+
+  Widget _buildScrollStatusBanner() {
+    final isError = _scrollStatus.startsWith('Error');
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isError ? const Color(0xFFFFEBEE) : const Color(0xFFFFF8E1),
+          border: Border.all(
+            color: isError ? const Color(0xFFEF5350) : const Color(0xFFFBC02D),
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Text(_scrollStatus),
+      ),
+    );
+  }
+
+  Widget _buildList() {
+    return IndexedScrollGestureDetector(
+      controller: _scrollController,
+      child: ListView.builder(
+        key: ValueKey(_listGeneration),
+        scrollDirection: Axis.horizontal,
+        reverse: _isReverse,
+        padding: _hasPadding ? const EdgeInsets.only(left: 40) : EdgeInsets.zero,
+        controller: _scrollController,
+        itemCount: _itemCount,
+        itemBuilder: (context, index) => _buildCard(index),
+      ),
+    );
+  }
+
+  Widget _buildCard(int index) {
+    final width = _calculateItemWidth(index);
+    return _scrollController.watch(
+      index: index,
+      child: SizedBox(
+        width: width,
+        child: ColoredBox(
+          color: index.isEven ? const Color(0xFFE8F0FE) : const Color(0xFFF4F4F4),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: Text('Card $index\n(${width.toStringAsFixed(0)}px)', textAlign: TextAlign.center),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Jumps to a uniformly random item, at a duration capped to
@@ -78,8 +209,7 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
   Future<void> _scrollToRandomIndex() async {
     final index = _random.nextInt(_itemCount);
     setState(() {
-      _scrollStatus =
-          'Scrolling to random index $index (${_maxScrollDuration.inMilliseconds} ms)…';
+      _scrollStatus = 'Scrolling to random index $index (${_maxScrollDuration.inMilliseconds} ms)…';
     });
 
     try {
@@ -91,8 +221,7 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
 
       if (mounted) {
         setState(() {
-          _scrollStatus =
-              'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
+          _scrollStatus = 'Success: Scrolled to random index $index (alignment: $_selectedAlignment)';
         });
       }
     } on ScrollCancelledException catch (e) {
@@ -110,156 +239,21 @@ class _HorizontalScreenState extends State<HorizontalScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-          title: const Text('Horizontal Scrolling with Alignment Control')),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: SegmentedButton<double>(
-                        segments: const [
-                          ButtonSegment(value: 0.0, label: Text('Left (0.0)')),
-                          ButtonSegment(
-                              value: 0.5, label: Text('Center (0.5)')),
-                          ButtonSegment(value: 1.0, label: Text('Right (1.0)')),
-                        ],
-                        selected: <double>{_selectedAlignment},
-                        onSelectionChanged: (Set<double> newSelection) {
-                          setState(() {
-                            _selectedAlignment = newSelection.first;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text('Options:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: CheckboxListTile(
-                        value: _isReverse,
-                        onChanged: (value) {
-                          setState(() {
-                            _isReverse = value ?? false;
-                            _recreateController();
-                          });
-                        },
-                        title: const Text('Reverse'),
-                        dense: true,
-                      ),
-                    ),
-                    Expanded(
-                      child: CheckboxListTile(
-                        value: _hasPadding,
-                        onChanged: (value) {
-                          setState(() {
-                            _hasPadding = value ?? false;
-                            _recreateController();
-                          });
-                        },
-                        title: const Text('Padding'),
-                        dense: true,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _scrollToRandomIndex,
-                    child: const Text('Scroll to Random Index (1s)'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListenableBuilder(
-              listenable: _scrollController,
-              builder: (context, child) {
-                if (!_scrollController.hasClients) {
-                  return const Text('Current offset: -');
-                }
-                return Text(
-                    'Current offset: ${_scrollController.offset.toStringAsFixed(1)} px');
-              },
-            ),
-          ),
-          if (_scrollStatus.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _scrollStatus.startsWith('Error')
-                      ? const Color(0xFFFFEBEE)
-                      : const Color(0xFFFFF8E1),
-                  border: Border.all(
-                    color: _scrollStatus.startsWith('Error')
-                        ? const Color(0xFFEF5350)
-                        : const Color(0xFFFBC02D),
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Text(_scrollStatus),
-              ),
-            ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: IndexedScrollGestureDetector(
-              controller: _scrollController,
-              child: ListView.builder(
-                key: ValueKey(_listGeneration),
-                scrollDirection: Axis.horizontal,
-                reverse: _isReverse,
-                padding: _hasPadding
-                    ? const EdgeInsets.only(left: 40)
-                    : EdgeInsets.zero,
-                controller: _scrollController,
-                itemCount: _itemCount,
-                itemBuilder: (context, index) {
-                  final width = _calculateItemWidth(index);
-                  return _scrollController.watch(
-                    index: index,
-                    child: SizedBox(
-                      width: width,
-                      child: ColoredBox(
-                        color: index.isEven
-                            ? const Color(0xFFE8F0FE)
-                            : const Color(0xFFF4F4F4),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Center(
-                            child: Text(
-                                'Card $index\n(${width.toStringAsFixed(0)}px)',
-                                textAlign: TextAlign.center),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
+  void _recreateController() {
+    _scrollController.dispose();
+    _scrollController = IndexedScrollController(
+      scrollDuration: _maxScrollDuration,
     );
+    // No invalidateMeasurements() call here: this controller is brand new
+    // and has never registered a row (_liveOwners is empty), so there is
+    // nothing yet to force through a fresh layout. Every row registers its
+    // size and leading padding from scratch the first time this controller
+    // attaches and lays out, which the changing _listGeneration key (used
+    // below) guarantees happens rather than reusing stale RenderObjects.
+    _listGeneration++;
+  }
+
+  double _calculateItemWidth(int index) {
+    return 80.0 + (index % 6) * 35.0;
   }
 }

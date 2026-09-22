@@ -108,7 +108,7 @@ void main() {
     });
 
     testWidgets(
-        'alignmentTarget: item and alignmentTarget: row agree in the sibling-slot form',
+        'alignmentTarget: item and alignmentTarget: row differ by the separator extent when alignment != 0',
         (tester) async {
       final controllerRow = IndexedScrollController(
           scrollDuration: const Duration(milliseconds: 100));
@@ -146,9 +146,13 @@ void main() {
       );
       final itemOffset = controllerItem.position.pixels;
 
-      expect(itemOffset, closeTo(rowOffset, 0.5),
+      // alignmentTarget: row aligns against item+separator (100px), so at
+      // alignment: 1.0 (bottom) its target offset sits separatorExtent
+      // (20px) further down than alignmentTarget: item, which aligns
+      // against the item alone (80px).
+      expect(rowOffset - itemOffset, closeTo(separatorExtent, 0.5),
           reason:
-              'In the sibling-slot form, a row\'s own _sizes entry never includes its separator, so both targets read the same extent.');
+              'alignmentTarget: row must include the trailing separator in the extent it aligns against, unlike alignmentTarget: item.');
     });
   });
 
